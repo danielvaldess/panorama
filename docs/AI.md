@@ -45,3 +45,34 @@ r = httpx.post(
 
 > En la interfaz, la IA es **invisible**: se muestra "resumen asistido" o
 > "sugerencia", nunca "modelo" ni "API conectada".
+
+## Agente respaldado por Notion
+
+Demo del patrón `dato → validación determinista → IA → registro`:
+
+```bash
+set NOTION_TOKEN=ntn_...        # integración (New connection)
+set OPENROUTER_API_KEY=sk-or-...
+python agent/notion_agent.py
+```
+
+Lee entradas **Pendiente** de una base de Notion, aplica **reglas deterministas**
+(prioridad por tema + nº de fuentes, confianza, y **abstención** si no hay
+fuentes), redacta un **resumen** con IA y **actualiza el registro** en Notion.
+
+## Modelos `:free` en OpenRouter (selección)
+
+| Modelo | Uso |
+|--------|-----|
+| `inclusionai/ling-3.0-flash-sante:free` | Resumen fiable en español (**usado por defecto**) |
+| `dots-studio/dots-3-note-preview:free` | Alternativa general |
+| `nvidia/nemotron-3.5-lightning:free` | Respaldo (expone razonamiento) |
+
+**Aprendizajes:**
+- Muchos modelos `:free` son **de razonamiento**: si `max_tokens` es bajo, el
+  `content` viene vacío (el razonamiento consume los tokens). Solución: usar
+  `max_tokens` alto (~1200) y, si el `content` viene vacío, **pasar al siguiente
+  modelo** (no usar el razonamiento en inglés).
+- Los `:free` se **rate-limiten** a veces (HTTP 429) → por eso el agente prueba
+  una **lista de modelos** y cae en una **plantilla local** si todos fallan.
+- Disponibilidad limitada: **50 requests/día** a `:free`. Cachear y dosificar.
