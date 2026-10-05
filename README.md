@@ -78,13 +78,27 @@ Interfaz **empresarial de newsroom**, con la identidad de **TVN Media**:
 
 ```
 web/            mockup de la interfaz (mesa de prioridades)
+pipeline/       fuentes (medios + GDELT) → dedupe → prioridad + evidencia
+eval/           métricas (baseline vs modelo, citas, abstención)
+agent/          agente respaldado por Notion
 docs/
   DESIGN.md     sistema de diseño (identidad TVN)
   AI.md         integración con OpenRouter
   SERVER.md     infraestructura y despliegue
+  RECURSOS-EXISTENTES.md  APIs/datasets reutilizables
+  RETOS-ANALISIS.md       patrones de los retos
   notion/       playbook + bases de datos
   screenshots/  capturas
 methods/        utilidades reutilizables (capturas, PDF, diagramas, Notion)
+```
+
+### Pipeline (priorización con evidencia)
+
+```bash
+pip install httpx
+python -m pipeline.run            # determinista (medios + GDELT → citas → prioridad)
+python -m pipeline.run --ai       # + resúmenes con OpenRouter
+python -m pipeline.run --notion   # + publicar fichas en Notion
 ```
 
 ## Despliegue
