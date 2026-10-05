@@ -26,51 +26,57 @@
     .edition{background:#fff;border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
     .edition b{font-family:var(--f-title);font-weight:700;color:var(--text)}
     .edition .grow{flex:1}
-    .pill{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+    .pill{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase}
     .pill.ok{color:#fff;background:var(--ok)}
     button.refresh{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:var(--radius);padding:7px 14px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;font-size:11.5px;cursor:pointer}
     button.refresh:hover{color:var(--primary);border-color:var(--primary)}
-    .layout{display:grid;grid-template-columns:216px 1fr 380px;min-height:calc(100vh - 101px)}
+    .layout{display:grid;grid-template-columns:216px 1fr;min-height:calc(100vh - 101px)}
     .sidebar{background:#fff;border-right:1px solid var(--border);padding:14px 0}
-    .sidebar a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-weight:700;font-family:var(--f-title);font-size:14px;border-left:3px solid transparent}
+    .sidebar a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-weight:700;font-family:var(--f-title);font-size:14px;border-left:3px solid transparent;cursor:pointer}
     .sidebar a.active{color:var(--primary);border-left-color:var(--primary);background:#eef4f9}
     .sidebar .dot{width:7px;height:7px;border-radius:50%;background:var(--soft)}
     .sidebar a.active .dot{background:var(--red)}
-    .main{padding:24px 26px}
+    .sidebar .badge{margin-left:auto;background:var(--red);color:#fff;border-radius:20px;font-size:10px;padding:1px 7px}
+    .main{padding:24px 26px;max-width:1100px}
     .main h1{font-family:var(--f-title);font-weight:800;font-size:24px}
     .main .sub{color:var(--muted);margin:4px 0 18px}
-    .filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-    .fchip{border:1px solid var(--border);background:#fff;border-radius:20px;padding:6px 14px;font-size:12.5px;cursor:pointer;color:var(--muted);font-weight:700}
-    .fchip.active{background:var(--primary);border-color:var(--primary);color:#fff}
-    .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer;transition:border-color .15s, box-shadow .15s}
-    .item:hover{border-color:var(--blue);box-shadow:0 6px 18px rgba(0,85,136,.08)}
+    .grid2{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+    .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer}
+    .item:hover{border-color:var(--blue)}
     .item.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
-    .rank{font-family:var(--f-title);font-weight:800;font-size:22px;color:var(--soft);text-align:center;line-height:1}
+    .rank{font-family:var(--f-title);font-weight:800;font-size:22px;color:var(--soft);text-align:center}
     .kicker{font-family:var(--f-title);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--red);margin-bottom:3px}
     .title{font-family:var(--f-title);font-weight:700;font-size:16.5px;line-height:1.3}
-    .meta{display:flex;gap:12px;color:var(--muted);font-size:12.5px;margin-top:7px;flex-wrap:wrap}
+    .meta{display:flex;gap:12px;color:var(--muted);font-size:12.5px;margin-top:7px;flex-wrap:wrap;align-items:center}
     .score{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:120px}
-    .bar{width:104px;height:6px;background:var(--bg-soft);border-radius:6px;overflow:hidden}
-    .bar span{display:block;height:100%;background:var(--primary)}
-    .chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-    .chip.a{color:#fff;background:var(--red)}
-    .chip.m{color:#fff;background:var(--warn)}
-    .chip.ok{color:#fff;background:var(--ok)}
-    .chip.rev{color:#7a4b00;background:#fdeecb}
-    .detail{background:#fff;border-left:1px solid var(--border);padding:22px}
-    .detail .kicker{color:var(--blue)}
-    .detail h2{font-family:var(--f-title);font-weight:800;font-size:20px;line-height:1.28;margin:2px 0 12px}
-    .block{margin-top:18px}
-    .block h3{font-family:var(--f-title);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+    .bar{width:104px;height:6px;background:var(--bg-soft);border-radius:6px;overflow:hidden}.bar span{display:block;height:100%;background:var(--primary)}
+    .chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase}
+    .chip.a{color:#fff;background:var(--red)}.chip.m{color:#fff;background:var(--warn)}.chip.ok{color:#fff;background:var(--ok)}.chip.rev{color:#7a4b00;background:#fdeecb}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+    .detail{position:sticky;top:16px}
+    .detail h2{font-family:var(--f-title);font-weight:800;font-size:19px;line-height:1.28;margin:2px 0 12px}
+    .block{margin-top:16px}.block h3{font-family:var(--f-title);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
     .assist{background:#f4f8fb;border:1px solid #d8e6f0;border-left:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;font-size:14px}
-    .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-    ul.sources{list-style:none}
-    ul.sources li{padding:8px 0;border-bottom:1px solid var(--bg-soft);font-size:13.5px}
+    .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;margin-bottom:4px}
+    ul.sources{list-style:none}ul.sources li{padding:8px 0;border-bottom:1px solid var(--bg-soft);font-size:13.5px}
     ul.sources a{color:var(--primary);text-decoration:none;font-weight:700}
-    ul.sources .src-meta{color:var(--soft);font-size:12px}
-    .empty{color:var(--soft);padding:30px;text-align:center}
-    .foot{padding:12px 22px;color:var(--soft);font-size:12px}
-    @media(max-width:1100px){.layout{grid-template-columns:1fr}.sidebar,.detail{display:none}}
+    table{width:100%;border-collapse:collapse;font-size:13.5px}
+    th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 10px;border-bottom:1px solid var(--border)}
+    td{padding:10px;border-bottom:1px solid var(--bg-soft);vertical-align:top}
+    td a{color:var(--primary);text-decoration:none}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+    .kpi .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}.kpi .v{font-family:var(--f-title);font-weight:800;font-size:28px;color:var(--primary)}
+    .actions{display:flex;gap:10px;margin-top:20px}
+    .btn{border:none;border-radius:var(--radius);padding:11px 16px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:12.5px;cursor:pointer}
+    .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+    .btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border)}
+    button.danger{border:1px solid rgba(224,7,16,.4);color:var(--red);background:#fff;border-radius:var(--radius);padding:11px 16px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;font-size:12.5px;cursor:pointer}
+    .empty{color:var(--soft);padding:34px;text-align:center}
+    .foot{padding:14px 26px;color:var(--soft);font-size:12px}
+    .toast{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:13px 18px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(20px);transition:all .3s;z-index:60;font-size:13.5px}
+    .toast.show{opacity:1;transform:none}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{display:flex;flex-wrap:wrap}.grid2{grid-template-columns:1fr}.detail{position:static}}
   </style>
 </head>
 <body>
@@ -82,12 +88,12 @@
       PANORAMA
     </div>
     <div class="spacer"></div>
-    <input class="search" placeholder="Buscar en la mesa, temas o fuentes…" />
+    <input class="search" id="search" placeholder="Buscar en la mesa, temas o fuentes…" />
     <div class="top-user">Daniel Valdés · Editor</div>
   </header>
 
   <div class="edition">
-    <b>Mesa de Prioridades</b>
+    <b id="sectionTitle">Mesa de Prioridades</b>
     <span>·</span>
     <span id="date"></span>
     <span class="grow"></span>
@@ -97,128 +103,198 @@
   </div>
 
   <div class="layout">
-    <nav class="sidebar">
-      <a href="#" class="active"><span class="dot"></span> Prioridades</a>
-      <a href="#"><span class="dot"></span> Bandeja</a>
-      <a href="#"><span class="dot"></span> Fuentes</a>
-      <a href="#"><span class="dot"></span> Verificación</a>
-      <a href="#"><span class="dot"></span> Borradores</a>
-      <a href="#"><span class="dot"></span> Reportes</a>
+    <nav class="sidebar" id="nav">
+      <a data-section="prioridades" class="active"><span class="dot"></span> Prioridades</a>
+      <a data-section="bandeja"><span class="dot"></span> Bandeja</a>
+      <a data-section="fuentes"><span class="dot"></span> Fuentes</a>
+      <a data-section="verificacion"><span class="dot"></span> Verificación</a>
+      <a data-section="borradores"><span class="dot"></span> Borradores <span class="badge" id="draftCount" style="display:none"></span></a>
+      <a data-section="reportes"><span class="dot"></span> Reportes</a>
     </nav>
 
-    <main class="main">
-      <h1>Prioridades del día</h1>
-      <p class="sub" id="subtitle">Temas ordenados por relevancia editorial, con sus fuentes. La decisión es tuya.</p>
-      <div class="filters">
-        <button class="fchip active">Todas</button>
-        <button class="fchip">Prioridad alta</button>
-        <button class="fchip">Por verificar</button>
-        <button class="fchip">Panamá</button>
-      </div>
-      <div id="list"><div class="empty">Cargando prioridades…</div></div>
-    </main>
-
-    <aside class="detail" id="detail">
-      <div class="kicker">Ficha del tema</div>
-      <p class="empty">Selecciona un tema para ver su ficha con fuentes citadas.</p>
-    </aside>
+    <main class="main" id="content"><div class="empty">Cargando…</div></main>
   </div>
 
-  <footer class="foot">Panorama · Inteligencia editorial para la redacción · demostración con fuentes reales</footer>
+  <footer class="foot">Panorama · Inteligencia editorial para la redacción · fuentes reales en vivo</footer>
+  <div class="toast" id="toast"></div>
 
   <script>
-    const el = (id) => document.getElementById(id);
-    document.getElementById("date").textContent =
-      new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const confChip = c => c === "Alto" ? "ok" : c === "Bajo" ? "rev" : "m";
+    $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
-    let DATA = null;
+    let DATA = null, section = "prioridades", selected = 0, query = "";
+    let drafts = JSON.parse(localStorage.getItem("pg_drafts") || "[]");
+    let discarded = JSON.parse(localStorage.getItem("pg_discarded") || "[]");
+    const save = () => { localStorage.setItem("pg_drafts", JSON.stringify(drafts)); localStorage.setItem("pg_discarded", JSON.stringify(discarded)); };
 
-    function timeAgo(iso) {
-      if (!iso) return "";
-      const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-      if (s < 60) return "actualizado hace segundos";
-      if (s < 3600) return `actualizado hace ${Math.floor(s/60)} min`;
-      return `actualizado hace ${Math.floor(s/3600)} h`;
+    function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
+
+    function fichas() {
+      const q = query.toLowerCase();
+      return (DATA?.fichas || [])
+        .filter(f => !discarded.includes(f.title))
+        .filter(f => !q || (f.title + " " + f.sources.map(s => s.name).join(" ")).toLowerCase().includes(q));
     }
-    function confChip(c) { return c === "Alto" ? "ok" : c === "Bajo" ? "rev" : "m"; }
 
-    function renderDetail(f) {
-      if (!f) return;
+    function render() {
+      $("nav").querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.section === section));
+      const n = drafts.length;
+      const b = $("draftCount");
+      b.style.display = n ? "inline" : "none"; b.textContent = n;
+      if (!DATA) { $("content").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`; return; }
+      if (section === "prioridades") return renderPrioridades();
+      if (section === "bandeja") return renderBandeja();
+      if (section === "fuentes") return renderFuentes();
+      if (section === "verificacion") return renderVerificacion();
+      if (section === "borradores") return renderBorradores();
+      if (section === "reportes") return renderReportes();
+    }
+
+    function detailHTML(f) {
+      if (!f) return "";
       const chips = `<span class="chip ${confChip(f.confidence)}">Confianza ${f.confidence}</span>
         <span class="chip ${f.status === "Sin evidencia" ? "rev" : "ok"}">${f.status}</span>`;
-      const sources = (f.sources || []).map(s =>
-        `<li><a href="${s.url}" target="_blank" rel="noopener">${s.name}</a> <span class="src-meta">·</span></li>`).join("");
+      const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("");
       const summary = f.summary
-        ? `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Redactado a partir de las fuentes citadas</small>${f.summary}</div></div>`
+        ? `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Redactado a partir de las fuentes citadas</small>${esc(f.summary)}</div></div>`
         : `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Sin resumen</small>Disponible para los temas principales.</div></div>`;
-      el("detail").innerHTML = `
-        <div class="kicker">Ficha del tema</div>
-        <h2>${f.title}</h2>
+      return `<div class="card detail">
+        <div class="kicker" style="color:var(--blue)">Ficha del tema</div>
+        <h2>${esc(f.title)}</h2>
         <div class="meta" style="margin-bottom:6px">${chips}</div>
         ${summary}
-        <div class="block"><h3>Fuentes citadas (${(f.sources||[]).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
-        <div class="block"><h3>Nivel de confianza</h3>
-          <div><span class="chip ${confChip(f.confidence)}">${f.confidence}</span> · ${(f.sources||[]).length} fuente(s) independiente(s).</div></div>
-        <div class="actions" style="display:flex;gap:10px;margin-top:22px">
-          <button class="refresh" style="background:var(--primary);color:#fff;border-color:var(--primary)">Enviar a revisión</button>
-          <button class="refresh">Descartar</button>
-        </div>`;
+        <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
+        <div class="actions">
+          <button class="btn btn-primary" data-act="review" data-i="${selected}">Enviar a revisión</button>
+          <button class="btn btn-ghost" data-act="discard" data-i="${selected}">Descartar</button>
+        </div></div>`;
     }
 
-    function renderList() {
-      if (!DATA || !DATA.fichas || !DATA.fichas.length) {
-        el("list").innerHTML = `<div class="empty">Sin temas por ahora.</div>`;
-        return;
-      }
-      el("list").innerHTML = DATA.fichas.map((f, i) => {
+    function renderPrioridades() {
+      const fs = fichas();
+      const list = fs.length ? fs.map((f, i) => {
         const n = (f.sources || []).length;
-        const srcs = (f.sources || []).map(s => s.name).join(", ");
-        return `<article class="item" data-i="${i}">
+        return `<article class="item ${i === selected ? "selected" : ""}" data-i="${i}">
           <div class="rank">${i + 1}</div>
-          <div>
-            <div class="kicker">${f.status === "Sin evidencia" ? "Sin verificar" : "Prioridad"} · ${n} fuente(s)</div>
-            <div class="title">${f.title}</div>
-            <div class="meta"><span>${srcs || "sin fuente"}</span>
-              <span class="chip ${confChip(f.confidence)}">Confianza ${f.confidence}</span></div>
-          </div>
+          <div><div class="kicker">${f.status === "Sin evidencia" ? "Sin verificar" : "Prioridad"} · ${n} fuente(s)</div>
+            <div class="title">${esc(f.title)}</div>
+            <div class="meta"><span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
+              <span class="chip ${confChip(f.confidence)}">${esc(f.confidence)}</span></div></div>
           <div class="score"><div class="bar"><span style="width:${Math.round(f.score * 100)}%"></span></div>
-            <span class="chip ${f.status === "Sin evidencia" ? "rev" : "ok"}">${f.status}</span></div>
-        </article>`;
-      }).join("");
-      document.querySelectorAll(".item").forEach(a =>
-        a.addEventListener("click", () => {
-          document.querySelectorAll(".item").forEach(x => x.classList.remove("selected"));
-          a.classList.add("selected");
-          renderDetail(DATA.fichas[+a.dataset.i]);
-        }));
-      renderDetail(DATA.fichas[0]);
-      document.querySelector(".item")?.classList.add("selected");
+            <span class="chip ${f.status === "Sin evidencia" ? "rev" : "ok"}">${esc(f.status)}</span></div></article>`;
+      }).join("") : `<div class="empty">Sin temas.</div>`;
+      $("content").innerHTML = `<h1>Prioridades del día</h1>
+        <p class="sub">Temas ordenados por relevancia editorial, con sus fuentes. La decisión es tuya.</p>
+        <div class="grid2"><div>${list}</div><div>${detailHTML(fs[selected])}</div></div>`;
+      $("content").querySelectorAll(".item").forEach(a => a.onclick = () => { selected = +a.dataset.i; renderPrioridades(); });
+      bindActions(fs);
     }
+
+    function renderBandeja() {
+      const rows = (DATA.feed || []).slice(0, 80).map(x =>
+        `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
+      $("content").innerHTML = `<h1>Bandeja de fuentes</h1>
+        <p class="sub">Publicaciones recientes leídas de las fuentes (tras eliminar duplicados).</p>
+        <div class="card"><table><thead><tr><th>Titular</th><th>Fuente</th><th></th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="3" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
+    }
+
+    function renderFuentes() {
+      const rows = (DATA.sources || []).map(s =>
+        `<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td>
+         <td>${"★".repeat(s.reliability)}${"—".repeat(5 - s.reliability)}</td>
+         <td><span class="chip ok">${esc(s.status)}</span></td></tr>`).join("");
+      $("content").innerHTML = `<h1>Fuentes</h1>
+        <p class="sub">Fuentes activas y su confiabilidad. Todas "al día".</p>
+        <div class="card"><table><thead><tr><th>Fuente</th><th>Confiabilidad</th><th>Estado</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+
+    function renderVerificacion() {
+      const fs = fichas().filter(f => (f.sources || []).length < 2 || f.confidence !== "Alto" || f.status === "Sin evidencia");
+      const rows = fs.length ? fs.map(f =>
+        `<tr><td><span class="chip ${confChip(f.confidence)}">${esc(f.confidence)}</span></td>
+         <td>${esc(f.title)}</td><td>${(f.sources || []).length} fuente(s)</td>
+         <td>${f.status === "Sin evidencia" ? `<span class="chip rev">Sin evidencia</span>` : `<span class="chip m">Una sola fuente</span>`}</td></tr>`).join("")
+        : `<tr><td colspan="4" class="empty">Todo verificado.</td></tr>`;
+      $("content").innerHTML = `<h1>Verificación</h1>
+        <p class="sub">Temas que requieren revisión: una sola fuente o sin evidencia suficiente.</p>
+        <div class="card"><table><thead><tr><th>Confianza</th><th>Tema</th><th>Fuentes</th><th>Estado</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+
+    function renderBorradores() {
+      const rows = drafts.length ? drafts.map((f, i) =>
+        `<tr><td>${esc(f.title)}</td><td>${(f.sources || []).length}</td>
+         <td><button class="refresh" data-approve="${i}">Aprobar</button>
+             <button class="refresh" data-return="${i}">Devolver</button></td></tr>`).join("")
+        : `<tr><td colspan="3" class="empty">No hay temas en revisión.</td></tr>`;
+      $("content").innerHTML = `<h1>Borradores</h1>
+        <p class="sub">Temas enviados a revisión por el editor. Nada se publica sin aprobación.</p>
+        <div class="card"><table><thead><tr><th>Tema</th><th>Fuentes</th><th>Acciones</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+      $("content").querySelectorAll("[data-approve]").forEach(b => b.onclick = () => {
+        drafts.splice(+b.dataset.approve, 1); save(); toast("Tema aprobado."); render();
+      });
+      $("content").querySelectorAll("[data-return]").forEach(b => b.onclick = () => {
+        drafts.splice(+b.dataset.return, 1); save(); toast("Tema devuelto a prioridades."); render();
+      });
+    }
+
+    function renderReportes() {
+      const m = DATA.metrics || {}, c = DATA.counts || {};
+      const kpi = (l, v) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+      $("content").innerHTML = `<h1>Reportes</h1>
+        <p class="sub">Actividad de la mesa y calidad de las fuentes.</p>
+        <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
+          ${kpi("Multi-fuente", m.multi_source || 0)}${kpi("Cobertura de citas", (m.citation_coverage ?? 0))}</div>
+        <div class="card"><h3 style="font-family:var(--f-title)">Detalle</h3>
+        <table><tbody>
+          <tr><td>Tras eliminar duplicados</td><td>${m.after_dedupe || 0}</td></tr>
+          <tr><td>Ratio de duplicados</td><td>${m.dedupe_ratio ?? 0}</td></tr>
+          <tr><td>Temas de una sola fuente</td><td>${m.single_source || 0}</td></tr>
+          <tr><td>Sin evidencia (abstención)</td><td>${m.abstain || 0}</td></tr>
+          <tr><td>Score promedio</td><td>${m.avg_score ?? 0}</td></tr>
+        </tbody></table></div>`;
+    }
+
+    function bindActions(fs) {
+      $("content").querySelectorAll("[data-act]").forEach(b => b.onclick = (e) => {
+        e.stopPropagation();
+        const f = fs[+b.dataset.i];
+        if (!f) return;
+        if (b.dataset.act === "review") {
+          if (!drafts.some(d => d.title === f.title)) drafts.push(f);
+          discarded.push(f.title); save(); selected = 0; toast("Enviado a revisión."); render();
+        } else if (b.dataset.act === "discard") {
+          discarded.push(f.title); save(); selected = 0; toast("Tema descartado."); render();
+        }
+      });
+    }
+
+    $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selected = 0; render(); } });
+    $("search").addEventListener("input", (e) => { query = e.target.value; selected = 0; if (section === "prioridades") renderPrioridades(); });
 
     async function load(force) {
+      if (force) { $("content").innerHTML = `<div class="empty">Actualizando desde las fuentes…</div>`; }
       try {
-        el("subtitle").textContent = "Actualizando desde las fuentes…";
         const r = force ? await fetch("/api/refresh", { method: "POST" }) : await fetch("/api/fichas");
         DATA = await r.json();
-        if (DATA.generating || !DATA.fichas || DATA.fichas.length === 0) {
-          el("subtitle").textContent = "Leyendo fuentes y priorizando…";
-          el("list").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`;
-          setTimeout(() => load(false), 6000);
-          return;
+        if (DATA.generating || !DATA.fichas || !DATA.fichas.length) {
+          $("content").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`;
+          setTimeout(() => load(false), 6000); return;
         }
         const c = DATA.counts || {};
-        el("subtitle").textContent =
-          `Temas ordenados por relevancia editorial. ${c.fetched || "?"} publicaciones leídas, ${c.fichas || 0} temas priorizados.`;
-        el("updated").textContent = timeAgo(DATA.generated_at);
-        renderList();
-      } catch (e) {
-        el("list").innerHTML = `<div class="empty">No se pudieron cargar las prioridades.</div>`;
-      }
+        $("updated").textContent = DATA.generated_at ? "actualizado hace instantes" : "";
+        $("status").textContent = `${c.fetched || 0} publicaciones · ${c.fichas || 0} temas`;
+        render();
+      } catch (e) { $("content").innerHTML = `<div class="empty">No se pudieron cargar los datos.</div>`; }
     }
-
-    document.getElementById("refresh").addEventListener("click", () => load(true));
+    $("refresh").addEventListener("click", () => load(true));
     load(false);
-    setInterval(() => load(false), 120000);
+    setInterval(() => { if (section === "prioridades") load(false); }, 120000);
   </script>
 </body>
 </html>

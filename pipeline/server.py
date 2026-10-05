@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from pipeline import process, sources
+from eval import metrics
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "900"))
@@ -56,16 +57,28 @@ def _ai_summary(title: str, sources_list: list[dict]) -> str:
     return ""
 
 
+def _sources_catalog() -> list[dict]:
+    rel = process.SOURCE_RELIABILITY
+    cat = [{"name": n, "url": u, "reliability": rel.get(n, 3), "status": "al día"} for n, u in sources.FEEDS]
+    cat.append({"name": "GDELT", "url": "https://www.gdeltproject.org/", "reliability": 4, "status": "al día"})
+    return cat
+
+
 def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
     raw = sources.fetch_all(gdelt_query="Panamá")
     deduped = process.dedupe(raw)
     groups = process.cluster(deduped)
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
+    feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
+            for x in deduped[:120]]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "fichas": len(fichas)},
         "fichas": fichas,
+        "feed": feed,
+        "sources": _sources_catalog(),
+        "metrics": metrics.summarize(raw, deduped, fichas),
         "ai_ready": False,
     }
 
