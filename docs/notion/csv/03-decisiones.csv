@@ -1,0 +1,2 @@
+Fecha,Decisión,Alternativas,Por qué,Impacto,Estado
+2026-10-06,Priorizar con scoring determinista (no con el LLM),Dejar que el LLM asigne la prioridad,Reproducibilidad y explicabilidad (rúbrica de evidencias),Score auditable y testeable,Propuesta

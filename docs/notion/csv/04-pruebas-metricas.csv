@@ -1,0 +1,4 @@
+Fecha,Qué se probó,Método,Baseline,Resultado,Mejora,Limitación detectada,Evidencia
+2026-10-07,Relevancia de titulares para el usuario,Precisión@10 sobre 30 ítems etiquetados a mano,Keyword/BM25 + recencia,Pendiente,Pendiente,Pendiente,
+2026-10-07,Cobertura de citas,Porcentaje de afirmaciones con fuente válida,LLM sin RAG,Pendiente,Pendiente,Alucinación cuando no hay fuente,
+2026-10-07,Abstención correcta,Tasa de abstención cuando la evidencia es insuficiente,Siempre responde,Pendiente,Pendiente,Sobre-abstención en temas ambiguos,
