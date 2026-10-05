@@ -1,8 +1,6 @@
-"""Fuentes de noticias: RSS de medios + GDELT. Normaliza a un formato común.
+"""Fuentes de noticias: RSS de medios (feedparser) + GDELT. Normaliza a un formato común.
 
-Uso:
-    python -m pipeline.run
-    pip install httpx
+Estándares: feedparser (RSS/Atom), httpx (HTTP).
 """
 from __future__ import annotations
 
@@ -11,8 +9,8 @@ import re
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from xml.etree import ElementTree as ET
 
+import feedparser
 import httpx
 
 UA = "Panorama/0.1 (hackIAthon Panama 2026)"
@@ -30,17 +28,6 @@ def _clean(s: str | None) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", s or "")).strip()
 
 
-def _local(tag: str) -> str:
-    return tag.split("}")[-1].lower()
-
-
-def _child(el, names):
-    for c in list(el):
-        if _local(c.tag) in names:
-            return "".join(c.itertext())
-    return ""
-
-
 def _iso(s: str | None):
     if not s:
         return None
@@ -53,6 +40,15 @@ def _iso(s: str | None):
             return None
 
 
+def _struct_iso(st):
+    if not st:
+        return None
+    try:
+        return datetime(*st[:6], tzinfo=timezone.utc).isoformat()
+    except Exception:
+        return None
+
+
 def _id(title: str, url: str) -> str:
     return hashlib.sha1(f"{title}|{url}".encode("utf-8")).hexdigest()[:12]
 
@@ -60,29 +56,22 @@ def _id(title: str, url: str) -> str:
 def fetch_feed(name: str, url: str) -> list[dict]:
     out: list[dict] = []
     try:
-        r = httpx.get(url, headers={"User-Agent": UA}, timeout=20, follow_redirects=True)
-        r.raise_for_status()
-        root = ET.fromstring(r.content)
+        d = feedparser.parse(url, agent=UA)
     except Exception:
         return out
-    for it in root.iter():
-        if _local(it.tag) not in ("item", "entry"):
-            continue
-        title = _clean(_child(it, {"title"}))
-        link = _child(it, {"link"})
-        if not link:
-            for c in list(it):
-                if _local(c.tag) == "link" and c.get("href"):
-                    link = c.get("href")
-                    break
+    for e in getattr(d, "entries", []):
+        title = _clean(e.get("title"))
+        link = (e.get("link") or "").strip()
         if not title or not link:
             continue
+        published = _struct_iso(e.get("published_parsed") or e.get("updated_parsed")) \
+            or _iso(e.get("published") or e.get("updated") or e.get("pubDate"))
         out.append({
             "title": title,
-            "url": link.strip(),
+            "url": link,
             "source": name,
-            "published": _iso(_child(it, {"pubdate", "published", "updated", "date"})),
-            "snippet": _clean(_child(it, {"description", "summary", "content"}))[:400],
+            "published": published,
+            "snippet": _clean(e.get("summary") or e.get("description"))[:400],
             "topics": [],
             "id": _id(title, link),
         })
@@ -90,9 +79,9 @@ def fetch_feed(name: str, url: str) -> list[dict]:
 
 
 def fetch_gdelt(query: str, maxrecords: int = 50) -> list[dict]:
-    """Artículos recientes de GDELT (global, multilingüe, gratis)."""
+    """Artículos recientes de GDELT (global, multilingüe, gratis). Máx. 1 req/5 s."""
     out: list[dict] = []
-    time.sleep(5)  # GDELT: máx. 1 request cada 5 s
+    time.sleep(5)
     try:
         r = httpx.get(GDELT, params={
             "query": query, "mode": "artlist", "maxrecords": maxrecords,
