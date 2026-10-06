@@ -24,6 +24,7 @@ FEEDS = [
     ("Google News", "https://news.google.com/rss?hl=es-419&gl=PA&ceid=PA:es-419"),
     ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+econom%C3%ADa&hl=es-419&gl=PA&ceid=PA:es-419"),
     ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+seguridad&hl=es-419&gl=PA&ceid=PA:es-419"),
+    ("Oficial (gob.pa)", "https://news.google.com/rss/search?q=site:gob.pa&hl=es-419&gl=PA&ceid=PA:es-419"),
 ]
 
 
@@ -59,21 +60,25 @@ def fetch_feed(name: str, url: str) -> list[dict]:
         d = feedparser.parse(url, agent=UA)
     except Exception:
         return out
+    official_feed = name.startswith("Oficial")
     for e in getattr(d, "entries", []):
         raw_title = _clean(e.get("title"))
         link = (e.get("link") or "").strip()
         if not raw_title or not link:
             continue
-        if name == "Google News":
+        if name == "Google News" or official_feed:
             title, source = _split_google(raw_title)
         else:
             title, source = raw_title, name
         published = _struct_iso(e.get("published_parsed") or e.get("updated_parsed"))
-        out.append({
+        item = {
             "title": title, "url": link, "source": source, "published": published,
             "snippet": _clean(e.get("summary") or e.get("description"))[:400],
             "topics": [], "id": _id(title, link),
-        })
+        }
+        if official_feed:
+            item["official"] = True
+        out.append(item)
     return out
 
 
