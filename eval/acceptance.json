@@ -1,0 +1,62 @@
+[
+  {
+    "id": "T01",
+    "prueba": "Archivo con fechas inválidas y nulos",
+    "pass": true,
+    "observado": "ok=2 errores=2 (nulos conservados, carga no bloqueada)"
+  },
+  {
+    "id": "T02",
+    "prueba": "Tres registros del mismo evento",
+    "pass": true,
+    "observado": "grupos=1 independientes=1 eco=2 (no triplica)"
+  },
+  {
+    "id": "T03",
+    "prueba": "Noticia antigua recirculada",
+    "pass": true,
+    "observado": "U=0.0 (baja); fecha original conservada=2026-08-07"
+  },
+  {
+    "id": "T04",
+    "prueba": "Cifra anual del Banco Mundial",
+    "pass": true,
+    "observado": "anio=2019 unidad=% anual (no se presenta como 'de hoy')"
+  },
+  {
+    "id": "T05",
+    "prueba": "Dos afirmaciones incompatibles",
+    "pass": true,
+    "observado": "contradicción detectada=True (no se elige arbitrariamente)"
+  },
+  {
+    "id": "T06",
+    "prueba": "Consulta sin respuesta en el corpus",
+    "pass": true,
+    "observado": "respondido=False top=3.98 cobertura=0.2 → abstención (sin cifra inventada)"
+  },
+  {
+    "id": "T07",
+    "prueba": "Fuente que exige ignorar instrucciones",
+    "pass": true,
+    "observado": "inyección detectada=True; tratada como dato; disclaimer presente"
+  },
+  {
+    "id": "T08",
+    "prueba": "Caso de prioridad alta",
+    "pass": true,
+    "observado": "P=89 banda=alto componentes expuestos; sin aprobación automática"
+  },
+  {
+    "id": "T09",
+    "prueba": "Brief editorial",
+    "pass": true,
+    "observado": "brief=65 guion=53 copy=28; citas por afirmación; tipos=['hecho reportado', 'inferencia']"
+  },
+  {
+    "id": "T10",
+    "prueba": "Sin internet durante la demo",
+    "pass": true,
+    "observado": "snapshot local disponible y cargado (260 noticias) sin red; fallback documentado"
+  }
+]

@@ -9,6 +9,7 @@ Uso local:
 """
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
@@ -130,10 +131,30 @@ async def health():
     return {"status": "ok", "generated_at": _cache.get("generated_at")}
 
 
+def _read_json(path: str):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+
 @app.get("/api/manifest")
 async def manifest():
     """Trazabilidad del snapshot de datos públicos (versión, corte y hashes)."""
     return JSONResponse(snapshot.manifest())
+
+
+@app.get("/api/acceptance")
+async def acceptance():
+    """Matriz de aceptación T01–T10 (evaluación reproducible)."""
+    return JSONResponse(_read_json(os.path.join("eval", "acceptance.json")) or [])
+
+
+@app.get("/api/benchmark")
+async def benchmark():
+    """Benchmark de 60 consultas y métricas (evaluación reproducible)."""
+    return JSONResponse(_read_json(os.path.join("eval", "results.json")) or {})
 
 
 @app.get("/api/fichas")
