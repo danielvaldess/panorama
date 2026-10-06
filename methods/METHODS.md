@@ -115,8 +115,8 @@ tabla de stack y sección de autores con fotos circulares.
 
 ## 9. Entorno del servidor (resumen)
 
-Ver [`SERVER.md`](SERVER.md): CT112 `dokku-hackathon` → app `hackathon-sandbox`
-en `sandbox.sweetcode.studio`, auto-deploy cada 3 min.
+Ver [`SERVER.md`](SERVER.md): CT112 `dokku-hackathon` → app `panorama`
+en `panorama.sweetcode.studio`, auto-deploy cada 3 min.
 
 ---
 

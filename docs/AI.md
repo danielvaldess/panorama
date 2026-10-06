@@ -49,7 +49,7 @@ fuente. El resultado se muestra como *"N medios, M son eco"*.
 
 - **Producción (Dokku):** en la config de la app, nunca en el repo.
   ```bash
-  dokku config:set hackathon-sandbox OPENROUTER_API_KEY=... OPENROUTER_MODEL=...
+  dokku config:set panorama OPENROUTER_API_KEY=... OPENROUTER_MODEL=...
   ```
 - **Local:** en `.env` (ignorado por git). Plantilla en `.env.example`.
 - **CI:** en *GitHub Actions secrets* si llega a hacer falta.

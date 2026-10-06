@@ -19,14 +19,14 @@
 </p>
 
 <p align="center">
-  <a href="https://sandbox.sweetcode.studio"><b>Demo en vivo</b></a>
+  <a href="https://panorama.sweetcode.studio"><b>Demo en vivo</b></a>
 </p>
 
 ---
 
 ## ¿Qué es?
 
-**Panorama** (nombre provisional) es una herramienta de **mesa editorial** para
+**Panorama** es una herramienta de **mesa editorial** para
 medios: toma **noticias públicas y datos oficiales**, los **prioriza** según la
 relevancia para el usuario y entrega cada tema en una **ficha con evidencia
 verificable** (fuentes citadas, nivel de confianza y contradicciones).
@@ -41,7 +41,7 @@ es humana**. Nada se publica soló — el flujo siempre pasa por una **revisión
 
 ![Mesa de prioridades](docs/screenshots/01-mesa-prioridades.png)
 
-▶ **https://sandbox.sweetcode.studio**
+▶ **https://panorama.sweetcode.studio**
 
 ## Cómo funciona
 

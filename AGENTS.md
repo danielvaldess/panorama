@@ -1,4 +1,4 @@
-# AGENTS.md — hackathon-sandbox
+# AGENTS.md — panorama
 
 Contexto para sesiones de opencode en este repo.
 
