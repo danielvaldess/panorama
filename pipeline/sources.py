@@ -1,43 +1,34 @@
-"""Fuentes de noticias: RSS de medios (feedparser) + GDELT. Normaliza a un formato común.
-
-Estándares: feedparser (RSS/Atom), httpx (HTTP).
-"""
+"""Fuentes de noticias: RSS de medios (feedparser) + GDELT.
+Solo se conservan las noticias de las últimas MAX_AGE_HOURS (por defecto 24)."""
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import time
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+from datetime import datetime, timedelta, timezone
 
 import feedparser
 import httpx
 
 UA = "Panorama/0.1 (hackIAthon Panama 2026)"
 GDELT = "https://api.gdeltproject.org/api/v2/doc/doc"
+MAX_AGE_HOURS = int(os.environ.get("MAX_AGE_HOURS", "24"))
 
 # Medios (RSS). Los que fallen se ignoran.
 FEEDS = [
     ("TVN Noticias", "https://www.tvn-2.com/rss/"),
     ("La Prensa", "https://www.prensa.com/arc/outboundfeeds/rss/"),
-    ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1&hl=es-419&gl=PA&ceid=PA:es-419"),
+    ("Foco Panamá", "https://focopanama.com/feed/"),
+    ("TVMax", "https://www.tvmax-9.com/rss/"),
+    ("Google News", "https://news.google.com/rss?hl=es-419&gl=PA&ceid=PA:es-419"),
+    ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+econom%C3%ADa&hl=es-419&gl=PA&ceid=PA:es-419"),
+    ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+seguridad&hl=es-419&gl=PA&ceid=PA:es-419"),
 ]
 
 
 def _clean(s: str | None) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", s or "")).strip()
-
-
-def _iso(s: str | None):
-    if not s:
-        return None
-    try:
-        return parsedate_to_datetime(s).astimezone(timezone.utc).isoformat()
-    except Exception:
-        try:
-            return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc).isoformat()
-        except Exception:
-            return None
 
 
 def _struct_iso(st):
@@ -53,6 +44,15 @@ def _id(title: str, url: str) -> str:
     return hashlib.sha1(f"{title}|{url}".encode("utf-8")).hexdigest()[:12]
 
 
+def _split_google(title: str) -> tuple[str, str]:
+    """Google News: 'Titular - Medio' → (titular, medio)."""
+    if " - " in title:
+        head, _, outlet = title.rpartition(" - ")
+        if head and outlet:
+            return head.strip(), outlet.strip()
+    return title, "Google News"
+
+
 def fetch_feed(name: str, url: str) -> list[dict]:
     out: list[dict] = []
     try:
@@ -60,20 +60,19 @@ def fetch_feed(name: str, url: str) -> list[dict]:
     except Exception:
         return out
     for e in getattr(d, "entries", []):
-        title = _clean(e.get("title"))
+        raw_title = _clean(e.get("title"))
         link = (e.get("link") or "").strip()
-        if not title or not link:
+        if not raw_title or not link:
             continue
-        published = _struct_iso(e.get("published_parsed") or e.get("updated_parsed")) \
-            or _iso(e.get("published") or e.get("updated") or e.get("pubDate"))
+        if name == "Google News":
+            title, source = _split_google(raw_title)
+        else:
+            title, source = raw_title, name
+        published = _struct_iso(e.get("published_parsed") or e.get("updated_parsed"))
         out.append({
-            "title": title,
-            "url": link,
-            "source": name,
-            "published": published,
+            "title": title, "url": link, "source": source, "published": published,
             "snippet": _clean(e.get("summary") or e.get("description"))[:400],
-            "topics": [],
-            "id": _id(title, link),
+            "topics": [], "id": _id(title, link),
         })
     return out
 
@@ -96,15 +95,32 @@ def fetch_gdelt(query: str, maxrecords: int = 50) -> list[dict]:
         url = a.get("url", "")
         if not title or not url:
             continue
+        published = None
+        sd = a.get("seendate")  # p. ej. 20250920T123000Z
+        if sd and len(sd) >= 15:
+            try:
+                published = datetime.strptime(sd, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc).isoformat()
+            except Exception:
+                published = None
         out.append({
-            "title": title,
-            "url": url,
-            "source": a.get("domain") or "GDELT",
-            "published": None,
-            "snippet": "",
-            "topics": [],
-            "id": _id(title, url),
+            "title": title, "url": url, "source": a.get("domain") or "GDELT",
+            "published": published, "snippet": "", "topics": [], "id": _id(title, url),
         })
+    return out
+
+
+def _recent(items: list[dict]) -> list[dict]:
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=MAX_AGE_HOURS)
+    out: list[dict] = []
+    for it in items:
+        p = it.get("published")
+        if not p:
+            continue  # sin fecha -> no es "de hoy"
+        try:
+            if datetime.fromisoformat(p) >= cutoff:
+                out.append(it)
+        except Exception:
+            continue
     return out
 
 
@@ -113,4 +129,4 @@ def fetch_all(gdelt_query: str = "Panamá", max_gdelt: int = 40) -> list[dict]:
     for name, url in FEEDS:
         items += fetch_feed(name, url)
     items += fetch_gdelt(gdelt_query, max_gdelt)
-    return items
+    return _recent(items)

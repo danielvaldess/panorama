@@ -35,7 +35,10 @@ _cache: dict = {"fichas": [], "generated_at": None}
 
 def _sources_catalog() -> list[dict]:
     rel = process.SOURCE_RELIABILITY
-    cat = [{"name": n, "url": u, "reliability": rel.get(n, 3), "status": "al día"} for n, u in sources.FEEDS]
+    seen: dict[str, str] = {}
+    for n, u in sources.FEEDS:
+        seen[n] = u
+    cat = [{"name": n, "url": u, "reliability": rel.get(n, 3), "status": "al día"} for n, u in seen.items()]
     cat.append({"name": "GDELT", "url": "https://www.gdeltproject.org/", "reliability": 4, "status": "al día"})
     return cat
 

@@ -9,7 +9,9 @@ from rapidfuzz import fuzz
 
 # Confiabilidad por fuente (1-5).
 SOURCE_RELIABILITY = {
-    "TVN Noticias": 5, "La Prensa": 5, "Google News": 3,
+    "TVN Noticias": 5, "TVN": 5, "La Prensa": 5, "Telemetro": 4, "TVMax": 4,
+    "Panamá América": 4, "La Estrella": 4, "Crítica": 3, "El Siglo": 3,
+    "Mi Diario": 3, "Foco Panamá": 3, "Google News": 3,
     "tvn-2.com": 5, "prensa.com": 5, "telemetro.com": 4, "laestrella.com.pa": 4,
 }
 DEFAULT_RELIABILITY = 3
@@ -64,18 +66,21 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
     rel = _norm(bm25(query, [tokens(r) for r in reps]))
     fichas = []
     for i, g in enumerate(groups):
-        sources = sorted({x["source"] for x in g})
+        uniq: dict[str, str] = {}
+        for x in g:
+            uniq.setdefault(x["source"], x["url"])
+        sources = sorted(uniq)
         rel_i = rel[i] if i < len(rel) else 0.0
         fresh = 1.0 if any(x.get("published") for x in g) else 0.5
         relia = max(SOURCE_RELIABILITY.get(s, DEFAULT_RELIABILITY) for s in sources) / 5
         score = round(0.55 * rel_i + 0.30 * fresh + 0.15 * relia, 2)
-        abstain = not sources or all(not x["url"] for x in g)
+        abstain = not sources or all(not u for u in uniq.values())
         fichas.append({
             "title": g[0]["title"],
             "score": score,
             "confidence": "Bajo" if abstain else ("Alto" if len(sources) >= 2 else "Medio"),
             "status": "Sin evidencia" if abstain else "Priorizado",
-            "sources": [{"name": x["source"], "url": x["url"]} for x in g],
+            "sources": [{"name": n, "url": u} for n, u in uniq.items()],
             "relevance": round(rel_i, 2),
         })
     return sorted(fichas, key=lambda f: -f["score"])
