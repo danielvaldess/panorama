@@ -38,14 +38,19 @@ trabajar, no requisitos del reto.
 
 **Aplicado a Panorama:** mismo principio de **contenedor reproducible** y separación back/front, pero desplegamos con **Docker + Dokku** y **Cloudflare Tunnel** (sin depender de GCP).
 
-## 4 · Ricardo Gómez — Cursor para trabajar (transcripción parcial)
+## 4 · Ricardo Gómez — Cursor para trabajar
 
 **Ideas clave**
-- **Cursor**: editor con IA integrada, con **contexto de los archivos**; importa proyectos de VS Code.
-- **Reglas de usuario** (idioma, concisión, dar alternativas, priorizar lo técnico) → ahorro de tiempo y consistencia.
+- **Cursor**: editor con IA integrada y **contexto de los archivos**; importa proyectos de VS Code.
+- **Reglas de usuario** (idioma, concisión, alternativas, priorizar lo técnico) → ahorro de tiempo y consistencia.
 - **3 modos**: **agente** (multi-archivo, ejecuta), **pregunta** (explica), **background** (lee sin modificar).
+- **Prompts iterativos > prompt gigante.** Evitar el *prompt overengineering* (pedir todo de una vez → código confuso/ambiguo). Dividir en pasos y revisar cada resultado.
+- **Memoria de contexto**: recuerda lo reciente → no repetir toda la historia; trabajar por pasos.
+- **Notebooks**: "diario compartido" con decisiones de arquitectura, convenciones, plantillas y prompts reutilizables; se referencian con `@nombre`.
+- **Project Rules** (`.cursor/rules/`): guía de estilo/arquitectura/nombres/tecnologías, **versionada con el repo** (colaborativa); se aplica siempre o a archivos/directorios; se pueden reutilizar de `cursor.directory`. *Mientras más claras las reglas, más consistente la IA.*
+- **Commits con IA** (`@commit`): analiza el diff y redacta un mensaje claro (adiós a "cambio final") → documentación automática.
 
-**Aplicado a Panorama:** trabajamos con un asistente con **reglas de proyecto** (`AGENTS.md`) que cumple ese rol; separamos "explicar" de "ejecutar".
+**Aplicado a Panorama:** reglas de proyecto en **`AGENTS.md`** (mismo rol que las Project Rules); trabajo por pasos (fases F1–F7); separamos "explicar" de "ejecutar".
 
 ## 5 · Jorge Hugo Cruz — RPA + IA (web scraping)
 
@@ -73,4 +78,4 @@ trabajar, no requisitos del reto.
 - **Generación con estructura** y **anti-alucinación/abstención** (`draft.py`, `guard.py`).
 - **Docker reproducible** + deploy (Dokku + Cloudflare Tunnel).
 - **Datos por API pública** (sin scraping).
-- Nota: la mentoría de **Ricardo quedó parcial** (transcripción ~6 min de 30).
+- **Prompts iterativos** y reglas de proyecto para consistencia.
