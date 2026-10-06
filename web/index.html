@@ -4,25 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Panorama · Mesa de Prioridades — TVN Media</title>
+  <title>Panorama · Mesa editorial — TVN Media</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700;800&family=Oxygen:wght@300;400;700&display=swap" rel="stylesheet" />
   <style>
     :root{
       --primary:#005588; --primary-dark:#00466f; --red:#e00710; --blue:#0077c8; --cyan:#06accb;
-      --text:#2a2a2a; --muted:#6b6b6b; --soft:#9b9b9b; --border:#c7c7c7; --bg-soft:#ebebeb;
-      --ok:#1f9d4d; --warn:#e0a800; --radius:4px; --f-title:"Raleway",sans-serif; --f-ui:"Oxygen",system-ui,sans-serif;
+      --text:#2a2a2a; --muted:#6b6b6b; --soft:#9b9b9b; --border:#c7c7c7; --bg-soft:#ebebeb; --bg:#f5f6f8;
+      --ok:#1f9d4d; --warn:#e0a800; --radius:6px; --f-title:"Raleway",sans-serif; --f-ui:"Oxygen",system-ui,sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:var(--f-ui);color:var(--text);background:#f5f6f8;font-size:15px;line-height:1.5}
-    .topbar{height:60px;background:var(--primary);color:#fff;display:flex;align-items:center;gap:20px;padding:0 22px}
+    body{font-family:var(--f-ui);color:var(--text);background:var(--bg);font-size:15px;line-height:1.55}
+    a{color:var(--primary)}
+    .topbar{height:60px;background:var(--primary);color:#fff;display:flex;align-items:center;gap:20px;padding:0 22px;position:sticky;top:0;z-index:40}
     .brand{display:flex;align-items:center;gap:12px;font-family:var(--f-title);font-weight:800;letter-spacing:.5px;font-size:20px}
-    .brand svg{width:28px;height:28px}
+    .brand svg{width:26px;height:26px}
+    .brand small{font-family:var(--f-ui);font-weight:300;opacity:.85;font-size:12px;letter-spacing:0}
     .topbar .spacer{flex:1}
     .search{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:var(--radius);color:#fff;padding:8px 14px;font-family:var(--f-ui);width:300px;outline:none}
     .search::placeholder{color:rgba(255,255,255,.7)}
-    .top-user{font-size:13.5px;opacity:.95}
+    .top-user{font-size:13.5px;opacity:.95;white-space:nowrap}
     .edition{background:#fff;border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
     .edition b{font-family:var(--f-title);font-weight:700;color:var(--text)}
     .edition .grow{flex:1}
@@ -30,53 +32,77 @@
     .pill.ok{color:#fff;background:var(--ok)}
     button.refresh{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:var(--radius);padding:7px 14px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;font-size:11.5px;cursor:pointer}
     button.refresh:hover{color:var(--primary);border-color:var(--primary)}
-    .layout{display:grid;grid-template-columns:216px 1fr;min-height:calc(100vh - 101px)}
-    .sidebar{background:#fff;border-right:1px solid var(--border);padding:14px 0}
+    .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 101px)}
+    .sidebar{background:#fff;border-right:1px solid var(--border);padding:14px 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow:auto}
     .sidebar a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-weight:700;font-family:var(--f-title);font-size:14px;border-left:3px solid transparent;cursor:pointer}
     .sidebar a.active{color:var(--primary);border-left-color:var(--primary);background:#eef4f9}
     .sidebar .dot{width:7px;height:7px;border-radius:50%;background:var(--soft)}
     .sidebar a.active .dot{background:var(--red)}
     .sidebar .badge{margin-left:auto;background:var(--red);color:#fff;border-radius:20px;font-size:10px;padding:1px 7px}
-    .main{padding:24px 26px;max-width:1100px}
+    .main{padding:24px 26px 60px;max-width:1180px;width:100%}
     .main h1{font-family:var(--f-title);font-weight:800;font-size:24px}
     .main .sub{color:var(--muted);margin:4px 0 18px}
-    .grid2{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
-    .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer}
-    .item:hover{border-color:var(--blue)}
-    .item.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
+    .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer;transition:border-color .15s, box-shadow .15s}
+    .item:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(0,85,136,.08)}
+    .item .go{align-self:center;color:var(--soft);font-size:20px}
+    .item:hover .go{color:var(--primary)}
     .rank{font-family:var(--f-title);font-weight:800;font-size:22px;color:var(--soft);text-align:center}
     .kicker{font-family:var(--f-title);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--red);margin-bottom:3px}
     .title{font-family:var(--f-title);font-weight:700;font-size:16.5px;line-height:1.3}
-    .meta{display:flex;gap:12px;color:var(--muted);font-size:12.5px;margin-top:7px;flex-wrap:wrap;align-items:center}
+    .meta{display:flex;gap:10px;color:var(--muted);font-size:12.5px;margin-top:7px;flex-wrap:wrap;align-items:center}
     .score{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:120px}
     .bar{width:104px;height:6px;background:var(--bg-soft);border-radius:6px;overflow:hidden}.bar span{display:block;height:100%;background:var(--primary)}
-    .chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase}
+    .chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-transform:uppercase;white-space:nowrap}
     .chip.a{color:#fff;background:var(--red)}.chip.m{color:#fff;background:var(--warn)}.chip.ok{color:#fff;background:var(--ok)}.chip.rev{color:#7a4b00;background:#fdeecb}
+    .chip.ghost{color:var(--muted);background:var(--bg-soft)}
     .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}
-    .detail{position:sticky;top:16px}
-    .detail h2{font-family:var(--f-title);font-weight:800;font-size:19px;line-height:1.28;margin:2px 0 12px}
-    .block{margin-top:16px}.block h3{font-family:var(--f-title);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+    .crumbs{margin-bottom:14px}
+    .crumbs a{font-family:var(--f-title);font-weight:700;font-size:13px;text-decoration:none;color:var(--muted)}
+    .crumbs a:hover{color:var(--primary)}
+    .detail-head{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px}
+    .detail-head h1{font-family:var(--f-title);font-weight:800;font-size:25px;line-height:1.25;margin:2px 0 10px}
+    .detail-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+    .stack>*{margin-bottom:16px}
+    .block h3{font-family:var(--f-title);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+    .block+.block{margin-top:16px}
+    .lead{font-size:15px}
     .assist{background:#f4f8fb;border:1px solid #d8e6f0;border-left:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;font-size:14px}
     .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;margin-bottom:4px}
-    ul.sources{list-style:none}ul.sources li{padding:8px 0;border-bottom:1px solid var(--bg-soft);font-size:13.5px}
-    ul.sources a{color:var(--primary);text-decoration:none;font-weight:700}
+    .draftfield{margin-top:12px}
+    .draftfield b{font-family:var(--f-title);font-size:13px;color:var(--text)}
+    .draftfield .val{margin-top:3px;color:#333}
+    ol.qs{margin:6px 0 0 18px}
+    ul.sources{list-style:none}ul.sources li{padding:9px 0;border-bottom:1px solid var(--bg-soft);font-size:13.5px}
+    ul.sources li:last-child{border-bottom:none}
+    ul.sources a{text-decoration:none;font-weight:700}
+    .claim{padding:9px 0;border-bottom:1px solid var(--bg-soft);font-size:13.5px}
+    .claim:last-child{border-bottom:none}
+    .claim .t{font-family:var(--f-title);font-weight:700;font-size:11px;text-transform:uppercase;color:var(--red)}
+    .claim .c{color:var(--soft);font-size:12px}
     table{width:100%;border-collapse:collapse;font-size:13.5px}
     th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 10px;border-bottom:1px solid var(--border)}
     td{padding:10px;border-bottom:1px solid var(--bg-soft);vertical-align:top}
-    td a{color:var(--primary);text-decoration:none}
     .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px}
     .kpi .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}.kpi .v{font-family:var(--f-title);font-weight:800;font-size:28px;color:var(--primary)}
-    .actions{display:flex;gap:10px;margin-top:20px}
-    .btn{border:none;border-radius:var(--radius);padding:11px 16px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:12.5px;cursor:pointer}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .btn{border:none;border-radius:var(--radius);padding:10px 14px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:12px;cursor:pointer}
     .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
     .btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border)}
-    button.danger{border:1px solid rgba(224,7,16,.4);color:var(--red);background:#fff;border-radius:var(--radius);padding:11px 16px;font-family:var(--f-title);font-weight:700;text-transform:uppercase;font-size:12.5px;cursor:pointer}
+    .btn-ghost:hover{color:var(--primary);border-color:var(--primary)}
+    .metric{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bg-soft)}
+    .metric:last-child{border-bottom:none}
+    .metric b{font-family:var(--f-title)}
+    .comp{display:flex;align-items:center;gap:10px;margin:8px 0}
+    .comp .lbl{width:96px;font-size:12.5px;color:var(--muted)}
+    .comp .track{flex:1;height:7px;background:var(--bg-soft);border-radius:6px;overflow:hidden}
+    .comp .track span{display:block;height:100%;background:var(--blue)}
+    .comp .num{width:34px;text-align:right;font-family:var(--f-title);font-weight:700;font-size:12.5px}
     .empty{color:var(--soft);padding:34px;text-align:center}
     .foot{padding:14px 26px;color:var(--soft);font-size:12px}
     .toast{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:13px 18px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(20px);transition:all .3s;z-index:60;font-size:13.5px}
     .toast.show{opacity:1;transform:none}
-    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{display:flex;flex-wrap:wrap}.grid2{grid-template-columns:1fr}.detail{position:static}}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
@@ -85,10 +111,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
       </svg>
-      PANORAMA
+      PANORAMA <small>Mesa editorial · TVN Media</small>
     </div>
     <div class="spacer"></div>
-    <input class="search" id="search" placeholder="Buscar en la mesa, temas o fuentes…" />
+    <input class="search" id="search" placeholder="Buscar temas, medios o señales…" />
     <div class="top-user">Daniel Valdés · Editor</div>
   </header>
 
@@ -100,53 +126,52 @@
     <span class="pill ok" id="status">Fuentes al día</span>
     <span id="updated"></span>
     <button class="refresh" id="refresh">Actualizar</button>
-    <button class="refresh" id="analyze" style="border-color:var(--primary);color:var(--primary)">Analizar con IA</button>
   </div>
 
   <div class="layout">
     <nav class="sidebar" id="nav">
       <a data-section="prioridades" class="active"><span class="dot"></span> Prioridades</a>
-      <a data-section="bandeja"><span class="dot"></span> Bandeja</a>
+      <a data-section="bandeja"><span class="dot"></span> Bandeja de entrada</a>
       <a data-section="fuentes"><span class="dot"></span> Fuentes</a>
       <a data-section="verificacion"><span class="dot"></span> Verificación</a>
       <a data-section="borradores"><span class="dot"></span> Borradores <span class="badge" id="draftCount" style="display:none"></span></a>
       <a data-section="reportes"><span class="dot"></span> Reportes</a>
     </nav>
 
-    <main class="main" id="content"><div class="empty">Cargando…</div></main>
+    <main class="main" id="content"><div class="empty">Cargando la mesa…</div></main>
   </div>
 
-  <footer class="foot">Panorama · Inteligencia editorial para la redacción · fuentes reales en vivo</footer>
+  <footer class="foot">Panorama · Copiloto editorial para la redacción · TVN Media</footer>
   <div class="toast" id="toast"></div>
 
   <script>
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const confChip = c => c === "Alto" ? "ok" : c === "Bajo" ? "rev" : "m";
-    const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     const bandChip = b => b === "alto" ? "ok" : b === "bajo" ? "rev" : "m";
+    const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
+    const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
+    const SECTIONS = { prioridades: "Mesa de Prioridades", bandeja: "Bandeja de entrada", fuentes: "Fuentes", verificacion: "Verificación", borradores: "Borradores", reportes: "Reportes" };
+    const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
+    const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
+
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
-    let DATA = null, section = "prioridades", selected = 0, query = "";
-    let drafts = JSON.parse(localStorage.getItem("pg_drafts") || "[]");
-    let discarded = JSON.parse(localStorage.getItem("pg_discarded") || "[]");
-    const save = () => { localStorage.setItem("pg_drafts", JSON.stringify(drafts)); localStorage.setItem("pg_discarded", JSON.stringify(discarded)); };
+    let DATA = null, section = "prioridades", selectedId = null, query = "";
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
-
+    const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
     function fichas() {
       const q = query.toLowerCase();
-      return (DATA?.fichas || [])
-        .filter(f => !discarded.includes(f.title))
-        .filter(f => !q || (f.title + " " + f.sources.map(s => s.name).join(" ")).toLowerCase().includes(q));
+      return (DATA?.fichas || []).filter(f => !q || (f.title + " " + (f.sources || []).map(s => s.name).join(" ") + " " + (f.tema || "")).toLowerCase().includes(q));
     }
 
     function render() {
-      $("nav").querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.section === section));
+      $("nav").querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.section === section && !selectedId));
       const n = (DATA?.fichas || []).filter(f => ["en revisión", "requiere evidencia", "aprobado como borrador"].includes(f.review_state)).length;
-      const b = $("draftCount");
-      b.style.display = n ? "inline" : "none"; b.textContent = n;
-      if (!DATA) { $("content").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`; return; }
+      const b = $("draftCount"); b.style.display = n ? "inline" : "none"; b.textContent = n;
+      $("sectionTitle").textContent = selectedId ? "Ficha del tema" : (SECTIONS[section] || "Mesa");
+      if (!DATA) { $("content").innerHTML = `<div class="empty">Preparando la mesa…</div>`; return; }
+      if (selectedId) return renderDetail();
       if (section === "prioridades") return renderPrioridades();
       if (section === "bandeja") return renderBandeja();
       if (section === "fuentes") return renderFuentes();
@@ -155,100 +180,132 @@
       if (section === "reportes") return renderReportes();
     }
 
-    function detailHTML(f) {
-      if (!f) return "";
-      const v = f.verification || {};
-      const c = f.components || {};
-      const chips = `<span class="chip ${bandChip(f.band)}">Prioridad ${f.score ?? 0}/100 · ${esc(f.band || "")}</span>
-        <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
-        <span class="chip m">Evidencia: ${esc(f.evidence_state || "")}</span>`;
-      const comp = `<div class="block"><h3>Puntaje explicado (reglas ${esc(f.rules_version || "")})</h3>
-        <div class="meta"><span class="chip">R ${c.R ?? 0}</span><span class="chip">I ${c.I ?? 0}</span>
-          <span class="chip">U ${c.U ?? 0}</span><span class="chip">N ${c.N ?? 0}</span><span class="chip">E ${c.E ?? 0}</span></div>
-        <div style="margin-top:6px;color:var(--soft);font-size:12.5px">P = 30R + 25I + 20U + 15N + 10E = <b>${f.score ?? 0}</b> / 100</div></div>`;
-      const evidence = `<div class="block"><h3>Evidencia</h3>
-        <div class="meta">
-          ${v.official ? `<span class="chip ok">${v.official} fuente oficial</span>` : ""}
-          <span class="chip m">${v.independent || 0} origen(es) independiente(s)</span>
-          ${v.echo ? `<span class="chip rev">${v.echo} copia(s) / eco</span>` : ""}
-          ${v.wire ? `<span class="chip rev">agencia</span>` : ""}
-        </div>
-        <div style="margin-top:6px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div></div>`;
-      const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("");
-      const summary = f.summary
-        ? `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Redactado a partir de las fuentes citadas</small>${esc(f.summary)}</div></div>`
-        : `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Sin resumen</small>Disponible para los temas principales.</div></div>`;
-      const why = f.why ? `<div class="block"><h3>Por qué importa</h3><div>${esc(f.why)}</div></div>` : "";
-      const topics = (f.topics || []).length
-        ? `<div class="block"><h3>Temas</h3><div class="meta">${f.topics.map(t => `<span class="chip rev">${esc(t)}</span>`).join(" ")}</div></div>`
-        : "";
-      const d = f.draft || {};
-      const claims = (d.afirmaciones || []).map(a => `<li><b>${esc(a.tipo)}:</b> ${esc(a.texto)} <small style="color:var(--soft)">[${esc((a.ids_fuente || []).join(", "))}]</small></li>`).join("");
-      const editorial = d.brief ? `<div class="block"><h3>Paquete editorial</h3>
-        <div class="assist"><small>Título propuesto</small><b>${esc(d.titulo_propuesto || "")}</b></div>
-        <div style="margin-top:10px"><b>Brief (≤250 palabras)</b><div style="margin-top:4px">${esc(d.brief)}</div></div>
-        <div style="margin-top:10px"><b>Guion 45–60 s</b><div style="margin-top:4px">${esc(d.guion_45_60s || "")}</div></div>
-        <div style="margin-top:10px"><b>Copy digital (≤80 palabras)</b><div style="margin-top:4px">${esc(d.copy_digital || "")}</div></div>
-        <div style="margin-top:10px"><b>3 preguntas de investigación</b><ol style="margin:6px 0 0 18px">${(d.preguntas || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol></div>
-        <div style="margin-top:10px"><b>Afirmaciones y citas</b><ul class="sources" style="margin-top:4px">${claims || "<li>Sin afirmaciones</li>"}</ul></div>
-        <div style="margin-top:10px;color:var(--soft);font-size:12px">${esc(d.disclaimer || "")}${d.abstain ? " · <b>Abstención:</b> falta evidencia." : ""}</div>
-      </div>` : "";
-      const review = `<div class="block"><h3>Decisión humana</h3>
-        <div class="meta"><span class="chip m">${esc(f.review_state || "nuevo")}</span></div>
-        <div class="actions">${["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"].map(s => `<button class="btn btn-ghost" data-review="${esc(s)}" data-id="${esc(f.id || "")}">${esc(s)}</button>`).join("")}</div></div>`;
-      const g = "";
-      return `<div class="card detail">
-        <div class="kicker" style="color:var(--blue)">Ficha del tema</div>
-        <h2>${esc(f.title)}</h2>
-        <div class="meta" style="margin-bottom:6px">${chips}${g}</div>
-        ${summary}
-        ${why}
-        ${topics}
-        ${comp}
-        ${evidence}
-        ${editorial}
-        <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
-        ${review}
-        </div>`;
-    }
+    function openDetail(id) { selectedId = id; location.hash = "#/tema/" + id; window.scrollTo(0, 0); render(); }
+    function closeDetail() { selectedId = null; location.hash = ""; render(); }
 
     function renderPrioridades() {
       const fs = fichas();
       const list = fs.length ? fs.map((f, i) => {
         const v = f.verification || {};
-        return `<article class="item ${i === selected ? "selected" : ""}" data-i="${i}">
+        return `<article class="item" data-id="${esc(f.id)}">
           <div class="rank">${i + 1}</div>
-          <div><div class="kicker">${esc(f.state || "Sin verificar")} · ${v.independent || 0} origen(es)${v.official ? " · ofic." : ""}</div>
+          <div>
+            <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
             <div class="title">${esc(f.title)}</div>
-            <div class="meta"><span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
-              <span class="chip ${bandChip(f.band)}">${esc(f.band || "")}</span>
-              <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span></div></div>
-          <div class="score"><div class="bar"><span style="width:${Math.min(100, f.score || 0)}%"></span></div>
-            <span class="kicker">${esc(f.band || "")} · ${f.score || 0}/100</span></div></article>`;
-      }).join("") : `<div class="empty">Sin temas.</div>`;
-      $("content").innerHTML = `<h1>Prioridades del día</h1>
-        <p class="sub">Temas ordenados por relevancia editorial. La prioridad mide importancia; el estado mide evidencia. La decisión es tuya.</p>
-        <div class="grid2"><div>${list}</div><div>${detailHTML(fs[selected])}</div></div>`;
-      $("content").querySelectorAll(".item").forEach(a => a.onclick = () => { selected = +a.dataset.i; renderPrioridades(); });
-      bindReview(fs);
+            <div class="meta">
+              <span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
+              <span class="chip ${bandChip(f.band)}">${f.score || 0}/100</span>
+              <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span>
+              <span class="chip ghost">Evidencia: ${esc((f.evidence_state || "").split(" ")[0])}</span>
+            </div>
+          </div>
+          <div class="go">›</div>
+        </article>`;
+      }).join("") : `<div class="empty">Sin temas para mostrar.</div>`;
+      $("content").innerHTML = `<h1>Mesa de Prioridades</h1>
+        <p class="sub">Temas ordenados por importancia editorial. Abre cualquiera para ver su ficha completa. La decisión final es del editor.</p>
+        ${list}`;
+      $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
+    }
+
+    function renderDetail() {
+      const f = byId(selectedId);
+      if (!f) { closeDetail(); return; }
+      const v = f.verification || {}, c = f.components || {}, d = f.draft || {};
+      const comp = COMP.map(([k, lbl]) => {
+        const val = c[k] ?? 0;
+        return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${val.toFixed(2)}</div></div>`;
+      }).join("");
+      const claims = (d.afirmaciones || []).map(a => `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div><div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}</div></div>`).join("") || "<div class='c'>Sin afirmaciones.</div>";
+      const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
+      const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
+      const reviewBtns = REVIEW.map(s => `<button class="btn btn-ghost" data-review="${esc(s)}">${esc(s)}</button>`).join("");
+
+      $("content").innerHTML = `
+        <div class="crumbs"><a id="back">← Volver a la mesa</a></div>
+        <div class="detail-head">
+          <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
+          <h1>${esc(f.title)}</h1>
+          <div class="meta">
+            <span class="chip ${bandChip(f.band)}">Prioridad ${f.score || 0}/100 · ${esc(f.band || "")}</span>
+            <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
+            <span class="chip ghost">Evidencia: ${esc(f.evidence_state || "")}</span>
+            <span class="chip ghost">Estado: ${esc(f.review_state || "nuevo")}</span>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="stack">
+            <div class="card block">
+              <h3>Qué se reporta</h3>
+              <div class="assist"><small>Resumen editorial</small>${esc(d.brief || "Sin resumen.")}</div>
+            </div>
+            <div class="card block">
+              <h3>Paquete editorial</h3>
+              <div class="draftfield"><b>Título propuesto</b><div class="val">${esc(d.titulo_propuesto || f.title)}</div></div>
+              <div class="draftfield"><b>Guion 45–60 s</b><div class="val">${esc(d.guion_45_60s || "")}</div></div>
+              <div class="draftfield"><b>Copy digital</b><div class="val">${esc(d.copy_digital || "")}</div></div>
+              <div class="draftfield"><b>Preguntas de investigación</b><ol class="qs">${(d.preguntas || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol></div>
+            </div>
+            <div class="card block">
+              <h3>Afirmaciones y citas</h3>
+              ${claims}
+            </div>
+          </div>
+          <div class="stack">
+            <div class="card block">
+              <h3>Por qué está en esta posición</h3>
+              ${comp}
+              <div class="metric" style="margin-top:10px"><span>Prioridad total</span><b>${f.score || 0}/100</b></div>
+              <div class="metric"><span>Acción sugerida</span><b>${esc(d.accion_recomendada || "")}</b></div>
+            </div>
+            <div class="card block">
+              <h3>Evidencia</h3>
+              <div class="metric"><span>Fuentes oficiales</span><b>${v.official || 0}</b></div>
+              <div class="metric"><span>Orígenes independientes</span><b>${v.independent || 0}</b></div>
+              <div class="metric"><span>Copias / eco</span><b>${v.echo || 0}</b></div>
+              <div class="metric"><span>Estado</span><b>${esc(f.evidence_state || "")}</b></div>
+              <div class="c" style="margin-top:8px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div>
+            </div>
+            <div class="card block">
+              <h3>Qué falta comprobar</h3>
+              <ul class="sources">${pend || "<li>Nada pendiente.</li>"}</ul>
+            </div>
+            <div class="card block">
+              <h3>Fuentes citadas (${(f.sources || []).length})</h3>
+              <ul class="sources">${sources}</ul>
+            </div>
+            <div class="card block">
+              <h3>Decisión del editor</h3>
+              <div class="actions">${reviewBtns}</div>
+              <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">${esc(d.disclaimer || "")}${d.abstain ? " · <b>No hay evidencia suficiente: se recomienda no publicar.</b>" : ""}</div>
+            </div>
+          </div>
+        </div>`;
+      $("back").onclick = closeDetail;
+      $("content").querySelectorAll("[data-review]").forEach(b => b.onclick = async () => {
+        try {
+          await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: f.id, state: b.dataset.review, reviewer: "Editor" }) });
+          f.review_state = b.dataset.review; toast("Estado actualizado: " + b.dataset.review); render();
+        } catch { toast("No se pudo guardar el estado."); }
+      });
     }
 
     function renderBandeja() {
-      const rows = (DATA.feed || []).slice(0, 80).map(x =>
+      const rows = (DATA.feed || []).slice(0, 120).map(x =>
         `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
-      $("content").innerHTML = `<h1>Bandeja de fuentes</h1>
-        <p class="sub">Publicaciones recientes leídas de las fuentes (tras eliminar duplicados).</p>
-        <div class="card"><table><thead><tr><th>Titular</th><th>Fuente</th><th></th></tr></thead>
+      $("content").innerHTML = `<h1>Bandeja de entrada</h1>
+        <p class="sub">Publicaciones leídas de las fuentes en las últimas horas (sin duplicados).</p>
+        <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th></th></tr></thead>
         <tbody>${rows || `<tr><td colspan="3" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
     }
 
     function renderFuentes() {
       const rows = (DATA.sources || []).map(s =>
         `<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td>
-         <td>${"★".repeat(s.reliability)}${"—".repeat(5 - s.reliability)}</td>
+         <td>${"★".repeat(s.reliability)}${"☆".repeat(5 - s.reliability)}</td>
          <td><span class="chip ok">${esc(s.status)}</span></td></tr>`).join("");
       $("content").innerHTML = `<h1>Fuentes</h1>
-        <p class="sub">Fuentes activas y su confiabilidad. Todas "al día".</p>
+        <p class="sub">Medios y datos oficiales que alimentan la mesa, con su confiabilidad.</p>
         <div class="card"><table><thead><tr><th>Fuente</th><th>Confiabilidad</th><th>Estado</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
     }
@@ -258,105 +315,89 @@
       const rows = fs.length ? fs.map(f => {
         const v = f.verification || {};
         return `<tr><td><span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span></td>
-         <td>${esc(f.title)}</td><td>${esc(f.evidence_state || "")}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td>
-         <td>${v.echo || 0}${v.wire ? " · agencia" : ""}</td>
-         <td style="color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</td></tr>`;
-      }).join("") : `<tr><td colspan="7" class="empty">Todo con evidencia suficiente.</td></tr>`;
+         <td><a href="#/tema/${esc(f.id)}" data-open="${esc(f.id)}">${esc(f.title)}</a></td>
+         <td>${esc(f.evidence_state || "")}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td><td>${v.echo || 0}</td></tr>`;
+      }).join("") : `<tr><td colspan="6" class="empty">Todo con evidencia suficiente.</td></tr>`;
       $("content").innerHTML = `<h1>Verificación</h1>
-        <p class="sub">Temas sin prueba suficiente: un solo origen, eco entre medios o fuentes que se contradicen. Repetir un titular en más medios no lo verifica.</p>
-        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Indep.</th><th>Oficial</th><th>Eco</th><th>Motivo</th></tr></thead>
+        <p class="sub">Temas que necesitan más evidencia: un solo origen, eco entre medios o versiones que se contradicen. Repetir un titular en más medios no lo verifica.</p>
+        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Indep.</th><th>Oficial</th><th>Eco</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
+      $("content").querySelectorAll("[data-open]").forEach(a => a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.open); });
     }
 
     function renderBorradores() {
-      const states = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
-      const fs = fichas().filter(f => states.includes(f.review_state));
+      const fs = fichas().filter(f => REVIEW.includes(f.review_state));
       const rows = fs.length ? fs.map(f =>
-        `<tr><td>${esc(f.title)}</td><td><span class="chip m">${esc(f.review_state)}</span></td><td>${(f.sources || []).length}</td></tr>`).join("")
-        : `<tr><td colspan="3" class="empty">No hay temas con decisión registrada.</td></tr>`;
+        `<tr><td><a href="#/tema/${esc(f.id)}" data-open="${esc(f.id)}">${esc(f.title)}</a></td><td><span class="chip m">${esc(f.review_state)}</span></td><td>${(f.sources || []).length}</td></tr>`).join("")
+        : `<tr><td colspan="3" class="empty">Aún no hay temas con decisión registrada.</td></tr>`;
       $("content").innerHTML = `<h1>Borradores</h1>
-        <p class="sub">Temas con decisión humana registrada. Nada se publica sin aprobación.</p>
+        <p class="sub">Temas con decisión del editor. Nada se publica sin aprobación humana.</p>
         <div class="card"><table><thead><tr><th>Tema</th><th>Estado</th><th>Fuentes</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
+      $("content").querySelectorAll("[data-open]").forEach(a => a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.open); });
     }
 
     function renderReportes() {
-      const m = DATA.metrics || {}, c = DATA.counts || {}, a = DATA.ai || {};
+      const m = DATA.metrics || {}, c = DATA.counts || {};
       const kpi = (l, v) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;
-      const ai = a.analyzed
-        ? `<div class="card" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Análisis asistido por IA · baseline vs. modelo</h3>
-           <table><tbody>
-             <tr><td>Temas analizados por IA</td><td>${a.analyzed}</td></tr>
-             <tr><td>Relevancia media · baseline (BM25)</td><td>${a.baseline_avg}</td></tr>
-             <tr><td>Relevancia media · asistida (IA)</td><td>${a.ai_avg}</td></tr>
-             <tr><td><b>Concordancia de orden (Spearman)</b></td><td><b>${a.concordance}</b></td></tr>
-             <tr><td colspan="2" style="color:var(--soft);font-size:12px">El baseline pondera por palabra clave; la IA por significado. La IA aporta extracción, síntesis y abstención que el baseline no puede.</td></tr>
-           </tbody></table></div>`
-        : `<div class="card" style="margin-top:16px"><div class="empty">Análisis con IA en proceso…</div></div>`;
       $("content").innerHTML = `<h1>Reportes</h1>
-        <p class="sub">Actividad de la mesa y calidad de las fuentes.</p>
+        <p class="sub">Actividad de la mesa y control de calidad.</p>
         <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
-          ${kpi("P promedio (0–100)", m.avg_score ?? 0)}${kpi("Con fuente oficial", m.official || 0)}</div>
-        <div class="card"><h3 style="font-family:var(--f-title)">Prioridad, verificación y evidencia</h3>
-        <table><tbody>
-          <tr><td>Tras eliminar duplicados</td><td>${m.after_dedupe || 0}</td></tr>
-          <tr><td>Ratio de duplicados</td><td>${m.dedupe_ratio ?? 0}</td></tr>
-          <tr><td>Bandas · alto / medio / bajo</td><td>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</td></tr>
-          <tr><td>Evidencia · suficiente / parcial / insuficiente</td><td>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</td></tr>
-          <tr><td>Temas con un solo origen</td><td>${m.single_source || 0}</td></tr>
-          <tr><td>Copias detectadas (eco)</td><td>${m.echo_copies || 0}</td></tr>
-          <tr><td>Sin verificar / contradichos (abstención)</td><td>${m.abstain || 0}</td></tr>
-        </tbody></table></div>${ai}`;
+          ${kpi("Con fuente oficial", m.official || 0)}${kpi("Prioridad promedio", m.avg_score ?? 0)}</div>
+        <div class="card"><h3 style="font-family:var(--f-title)">Calidad de la cobertura</h3>
+          <div class="metric"><span>Bandas · alta / media / baja</span><b>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</b></div>
+          <div class="metric"><span>Evidencia · suficiente / parcial / insuficiente</span><b>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</b></div>
+          <div class="metric"><span>Temas con un solo origen</span><b>${m.single_source || 0}</b></div>
+          <div class="metric"><span>Copias detectadas (eco)</span><b>${m.echo_copies || 0}</b></div>
+          <div class="metric"><span>Sin verificar / contradichos</span><b>${m.abstain || 0}</b></div>
+        </div>
+        <div class="card" id="quality" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">Cargando…</div></div>`;
+      loadQuality();
     }
 
-    function bindReview(fs) {
-      $("content").querySelectorAll("[data-review]").forEach(b => b.onclick = async (e) => {
-        e.stopPropagation();
-        try {
-          await fetch("/api/review", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: b.dataset.id, state: b.dataset.review, reviewer: "Editor" })
-          });
-          const f = fs[selected];
-          if (f && f.id === b.dataset.id) f.review_state = b.dataset.review;
-          toast("Estado: " + b.dataset.review);
-          render();
-        } catch (err) { toast("No se pudo guardar el estado."); }
-      });
+    async function loadQuality() {
+      try {
+        const [a, b] = await Promise.all([fetch("/api/acceptance").then(r => r.json()), fetch("/api/benchmark").then(r => r.json())]);
+        const mm = b.metrics || {};
+        const pass = (a || []).filter(x => x.pass).length, tot = (a || []).length;
+        const el = $("quality"); if (!el) return;
+        el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3>
+          <div class="metric"><span>Controles superados</span><b>${pass}/${tot}</b></div>
+          <div class="metric"><span>Temas con cita verificable</span><b>${Math.round((mm.citation_coverage ?? 0) * 100)}%</b></div>
+          <div class="metric"><span>Consultas sin respuesta rechazadas</span><b>${Math.round((mm.abstencion_correcta ?? 0) * 100)}%</b></div>
+          <div class="metric"><span>Instrucciones maliciosas bloqueadas</span><b>${Math.round((mm.adversarial_seguro ?? 0) * 100)}%</b></div>
+          <div class="metric"><span>Tiempo de respuesta (mediana)</span><b>${mm.latencia_ms_mediana ?? 0} ms</b></div>`;
+      } catch (e) { const el = $("quality"); if (el) el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">No disponible.</div>`; }
     }
 
-    $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selected = 0; render(); } });
-    $("search").addEventListener("input", (e) => { query = e.target.value; selected = 0; if (section === "prioridades") renderPrioridades(); });
+    $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selectedId = null; location.hash = ""; render(); } });
+    $("search").addEventListener("input", (e) => { query = e.target.value; if (section === "prioridades" && !selectedId) renderPrioridades(); });
+    window.addEventListener("hashchange", () => {
+      const m = location.hash.match(/^#\/tema\/(.+)$/);
+      if (m) { selectedId = m[1]; render(); }
+      else if (selectedId) { selectedId = null; render(); }
+    });
 
     async function load(force) {
-      if (force) { $("content").innerHTML = `<div class="empty">Actualizando desde las fuentes…</div>`; }
+      if (force) $("content").innerHTML = `<div class="empty">Actualizando la mesa…</div>`;
       try {
         const r = force ? await fetch("/api/refresh", { method: "POST" }) : await fetch("/api/fichas");
         DATA = await r.json();
         if (DATA.generating || !DATA.fichas || !DATA.fichas.length) {
-          $("content").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`;
+          $("content").innerHTML = `<div class="empty">Preparando la mesa…</div>`;
           setTimeout(() => load(false), 6000); return;
         }
         const c = DATA.counts || {};
-        $("updated").textContent = DATA.generated_at ? "actualizado hace instantes" : "";
+        $("updated").textContent = "actualizado hace instantes";
         $("status").textContent = `${c.fetched || 0} publicaciones · ${c.fichas || 0} temas`;
         render();
-      } catch (e) { $("content").innerHTML = `<div class="empty">No se pudieron cargar los datos.</div>`; }
+      } catch (e) { $("content").innerHTML = `<div class="empty">No se pudo cargar la mesa.</div>`; }
     }
+
     $("refresh").addEventListener("click", () => load(true));
-    $("analyze").addEventListener("click", async () => {
-      const b = $("analyze"); b.disabled = true; const t = b.textContent; b.textContent = "Analizando…";
-      toast("Ejecutando análisis con IA…");
-      try {
-        const r = await fetch("/api/analyze", { method: "POST" });
-        DATA = await r.json();
-        render();
-        toast("Análisis con IA listo.");
-      } catch (e) { toast("No se pudo ejecutar la IA."); }
-      finally { b.disabled = false; b.textContent = t; }
-    });
+    const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
     load(false);
-    setInterval(() => { if (section === "prioridades") load(false); }, 120000);
+    setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 180000);
   </script>
 </body>
 </html>
