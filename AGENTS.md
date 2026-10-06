@@ -31,3 +31,12 @@ automáticamente.**
 
 La organización evalúa el **trabajo trazable en Notion**. Regla: registrar avances
 **el mismo día** (bitácora, decisiones, pruebas). El playbook está en `docs/notion/`.
+
+## Reglas y prompts (aprendizajes de las mentorías)
+
+- **Reglas del proyecto:** [`.cursor/rules/panorama.mdc`](.cursor/rules/panorama.mdc)
+  (stack, convenciones, seguridad, qué no hacer). Versionadas con el repo.
+- **Prompts y convenciones reutilizables:** [`docs/PROMPTS.md`](docs/PROMPTS.md)
+  (equivalente a los *notebooks* de Cursor + prompt estructurado).
+- **Aprendizajes de las mentorías:** [`docs/MENTORIAS.md`](docs/MENTORIAS.md).
+- **Cumplimiento del reto:** [`docs/CUMPLIMIENTO-RETO.md`](docs/CUMPLIMIENTO-RETO.md).
