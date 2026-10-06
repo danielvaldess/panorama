@@ -4,30 +4,30 @@ Contexto para sesiones de opencode en este repo.
 
 ## Qué es
 
-Espacio de trabajo del equipo **SWEETCODE** para el **hackIAthon Panamá 2026**.
-El reto **aún no está confirmado**; cuando se anuncie, actualizar este archivo y el
-`README.md` con el alcance real, el stack y la arquitectura.
+Proyecto oficial del **hackIAthon Panamá 2026** (4ta edición), reto **TVN Media**
+— *"De la señal a la decisión"*: un copiloto de inteligencia informativa que
+convierte **noticias públicas + datos oficiales** en una **bandeja priorizada**,
+**fichas de evidencia** y **borradores** para **decisión humana**. **No publica
+automáticamente.**
 
-## Estado / pendientes
+## Estado
 
-- Reto oficial: **pendiente**
-- Stack: **por definir** (probable prototipo web; puede requerir IA)
-- Fuente de verdad del proceso: **Notion** (obligatorio en el evento)
+- Reto: **confirmado** — modalidad **editorial TVN (100%)**; banca fuera de alcance.
+- Stack: **Python / FastAPI + SPA**, desplegado en Dokku (`panorama.sweetcode.studio`).
+- Datos: **snapshot congelado** en `data/raw/` (ver `data/diccionario.md`).
 
 ## Convenciones
 
-- Rama por defecto `main`; ramas de trabajo `feat/*`, `fix/*`, `docs/*`.
+- Rama por defecto `main`; trabajo en `feat/*`, `fix/*`, `docs/*`.
 - Commits estilo Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
 - Sin secretos en el repo: usar variables de entorno y `.env` (ignorado).
-- Documentación: mantener `README.md` como la explicación del proyecto.
+
+## Datos y reproducibilidad
+
+- Regenerar el snapshot: `python -m pipeline.ingest`
+- Correr el prototipo: `uvicorn pipeline.server:app --reload` (usa el snapshot si existe; si no, *fallback* a fuentes en vivo).
 
 ## Notion
 
-La organización evalúa el **trabajo trazable en Notion**. El playbook y las
-plantillas de bases de datos están en [`docs/notion/`](docs/notion/). Regla:
-registrar avances **el mismo día** (bitácora, decisiones, pruebas).
-
-## Entorno
-
-- No hay stack definido todavía. Antes de instalar dependencias o crear
-  estructura, confirmar el reto y acordar el stack con el equipo.
+La organización evalúa el **trabajo trazable en Notion**. Regla: registrar avances
+**el mismo día** (bitácora, decisiones, pruebas). El playbook está en `docs/notion/`.

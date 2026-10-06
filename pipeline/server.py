@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from pipeline import process, sources
+from pipeline import process, sources, snapshot
 from pipeline import ai as ai_mod
 from eval import metrics
 
@@ -45,7 +45,9 @@ def _sources_catalog() -> list[dict]:
 
 def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
-    raw = sources.fetch_all(gdelt_query="Panamá")
+    # D5: preferir el snapshot congelado; si no existe, fallback a fuentes en vivo.
+    used_snapshot = snapshot.available()
+    raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
     groups = process.cluster(raw)  # agrupa TODO (incluye eco) para medir verificación
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
     deduped = process.dedupe(raw)  # solo para el feed y métricas
@@ -60,6 +62,10 @@ def _build_fast() -> dict:
         "sources": _sources_catalog(),
         "metrics": metrics.summarize(raw, deduped, fichas),
         "ai_ready": False,
+        "snapshot": (
+            {"used": True, **{k: v for k, v in snapshot.manifest().items() if k in ("version", "fecha_corte_UTC")}}
+            if used_snapshot else {"used": False}
+        ),
     }
 
 
@@ -115,6 +121,12 @@ app = FastAPI(title="Panorama API", lifespan=lifespan)
 @app.get("/health")
 async def health():
     return {"status": "ok", "generated_at": _cache.get("generated_at")}
+
+
+@app.get("/api/manifest")
+async def manifest():
+    """Trazabilidad del snapshot de datos públicos (versión, corte y hashes)."""
+    return JSONResponse(snapshot.manifest())
 
 
 @app.get("/api/fichas")
