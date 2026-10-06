@@ -1,0 +1,119 @@
+"""Paquete editorial (modalidad TVN): afirmaciones con citas, brief, guion y copy.
+
+Determinista y honesto: si solo hay **titular/metadatos**, lo declara y **no inventa**
+hechos, entrevistas, citas ni cifras. Si la evidencia es insuficiente, **se abstiene**
+y explica qué falta comprobar.
+"""
+from __future__ import annotations
+
+DISCLAIMER = "Basado únicamente en titular/metadatos; no se leyó el artículo completo."
+
+TEMA_FOCO = {
+    "economia": "impacto en la economía familiar y el bolsillo",
+    "logistica": "operación del Canal y la logística nacional",
+    "turismo": "actividad turística y su efecto económico",
+    "servicios": "servicios públicos y calidad de vida",
+    "eventos_naturales": "seguridad y gestión de riesgo",
+    "regulacion": "marco legal y control institucional",
+    "general": "interés público general",
+}
+
+ATRIBUCION = ("según", "dijo", "afirmó", "anunció", "informó", "declaró", "aseguró", "advirtió")
+
+
+def _words(s: str) -> int:
+    return len((s or "").split())
+
+
+def _fit(s: str, limit: int) -> str:
+    w = (s or "").split()
+    return s if len(w) <= limit else " ".join(w[:limit]).rstrip(".,;:") + "…"
+
+
+def _claims(title: str, sources: list[dict]) -> list[dict]:
+    ids = [s.get("name") for s in sources] or ["sin fuente"]
+    low = title.lower()
+    claims = [{"texto": title, "tipo": "hecho reportado", "ids_fuente": ids[:1]}]
+    if any(a in low for a in ATRIBUCION):
+        claims.append({"texto": f"Existe una declaración atribuida en el titular: “{title}”",
+                       "tipo": "declaración (atribuida)", "ids_fuente": ids})
+    if len(ids) > 1:
+        claims.append({"texto": f"El tema circula en {len(ids)} medios", "tipo": "inferencia",
+                       "ids_fuente": ids})
+    return claims
+
+
+def build(ficha: dict) -> dict:
+    title = ficha.get("title", "").strip()
+    sources = ficha.get("sources", []) or []
+    v = ficha.get("verification", {}) or {}
+    ev = ficha.get("evidence_state", "Insuficiente")
+    tema = ficha.get("tema", "general")
+    fuente_txt = ", ".join(s.get("name", "") for s in sources) or "sin fuente identificable"
+    enfoque = TEMA_FOCO.get(tema, TEMA_FOCO["general"])
+
+    # Qué falta comprobar
+    pendientes: list[str] = []
+    if not v.get("official"):
+        pendientes.append("un documento o dato oficial que respalde la afirmación")
+    if v.get("independent", 0) < 2:
+        pendientes.append("una segunda fuente independiente (no una copia/eco)")
+    if not pendientes:
+        pendientes.append("confirmar detalles y alcance antes de publicar")
+
+    abstain = ficha.get("state") == "Sin verificar" or ev == "Insuficiente"
+    accion = ("investigar antes de producir" if abstain
+              else ("enviar a revisión editorial" if ev == "Parcial" else "listo para borrador con revisión humana"))
+
+    ev_frase = {
+        "Suficiente para el borrador": "Hay evidencia suficiente para un borrador.",
+        "Parcial": "La evidencia es parcial: hay una fuente, falta corroboración.",
+        "Insuficiente": "No hay evidencia suficiente para sostener la afirmación.",
+    }.get(ev, "Evidencia por determinar.")
+
+    # Brief (≤250 palabras)
+    brief = (
+        f"QUÉ SE REPORTA: {title}. "
+        f"QUIÉN LO REPORTA: {fuente_txt}. "
+        f"QUÉ ESTÁ RESPALDADO: {ev_frase} "
+        f"QUÉ FALTA COMPROBAR: {', '.join(pendientes)}. "
+        f"ENFOQUE DE INTERÉS PÚBLICO: {enfoque}. "
+        f"ACCIÓN RECOMENDADA: {accion}. "
+        f"ADVERTENCIA: {DISCLAIMER}"
+    )
+    brief = _fit(brief, 250)
+
+    # 3 preguntas de investigación
+    preguntas = [
+        f"¿Cuál es la fuente primaria u oficial de “{_fit(title, 12)}”?",
+        f"¿Qué actores y datos concretos sustentan la afirmación?",
+        f"¿Existe una segunda fuente independiente que la corrobore o la contradiga?",
+    ]
+
+    # Guion 45–60 s (~90–130 palabras)
+    guion = (
+        f"Al aire. {title}. "
+        f"Lo reporta {fuente_txt}. {ev_frase} "
+        f"Antes de afirmarlo, verificaremos {pendientes[0]}"
+        + (f" y {pendientes[1]}." if len(pendientes) > 1 else ".")
+        + f" Seguimos el tema por su {enfoque}. {DISCLAIMER}"
+    )
+    guion = _fit(guion, 130)
+
+    # Copy digital (≤80 palabras)
+    copy = f"{title} — {fuente_txt}. {ev_frase} {DISCLAIMER}"
+    copy = _fit(copy, 80)
+
+    return {
+        "titulo_propuesto": _fit(title, 16),
+        "enfoque_interes_publico": enfoque,
+        "afirmaciones": _claims(title, sources),
+        "brief": brief,
+        "preguntas": preguntas,
+        "guion_45_60s": guion,
+        "copy_digital": copy,
+        "verificaciones_pendientes": pendientes,
+        "disclaimer": DISCLAIMER,
+        "abstain": abstain,
+        "accion_recomendada": accion,
+    }

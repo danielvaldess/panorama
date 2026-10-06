@@ -143,7 +143,7 @@
 
     function render() {
       $("nav").querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.section === section));
-      const n = drafts.length;
+      const n = (DATA?.fichas || []).filter(f => ["en revisión", "requiere evidencia", "aprobado como borrador"].includes(f.review_state)).length;
       const b = $("draftCount");
       b.style.display = n ? "inline" : "none"; b.textContent = n;
       if (!DATA) { $("content").innerHTML = `<div class="empty">Generando prioridades desde las fuentes… (unos segundos)</div>`; return; }
@@ -182,6 +182,20 @@
       const topics = (f.topics || []).length
         ? `<div class="block"><h3>Temas</h3><div class="meta">${f.topics.map(t => `<span class="chip rev">${esc(t)}</span>`).join(" ")}</div></div>`
         : "";
+      const d = f.draft || {};
+      const claims = (d.afirmaciones || []).map(a => `<li><b>${esc(a.tipo)}:</b> ${esc(a.texto)} <small style="color:var(--soft)">[${esc((a.ids_fuente || []).join(", "))}]</small></li>`).join("");
+      const editorial = d.brief ? `<div class="block"><h3>Paquete editorial</h3>
+        <div class="assist"><small>Título propuesto</small><b>${esc(d.titulo_propuesto || "")}</b></div>
+        <div style="margin-top:10px"><b>Brief (≤250 palabras)</b><div style="margin-top:4px">${esc(d.brief)}</div></div>
+        <div style="margin-top:10px"><b>Guion 45–60 s</b><div style="margin-top:4px">${esc(d.guion_45_60s || "")}</div></div>
+        <div style="margin-top:10px"><b>Copy digital (≤80 palabras)</b><div style="margin-top:4px">${esc(d.copy_digital || "")}</div></div>
+        <div style="margin-top:10px"><b>3 preguntas de investigación</b><ol style="margin:6px 0 0 18px">${(d.preguntas || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol></div>
+        <div style="margin-top:10px"><b>Afirmaciones y citas</b><ul class="sources" style="margin-top:4px">${claims || "<li>Sin afirmaciones</li>"}</ul></div>
+        <div style="margin-top:10px;color:var(--soft);font-size:12px">${esc(d.disclaimer || "")}${d.abstain ? " · <b>Abstención:</b> falta evidencia." : ""}</div>
+      </div>` : "";
+      const review = `<div class="block"><h3>Decisión humana</h3>
+        <div class="meta"><span class="chip m">${esc(f.review_state || "nuevo")}</span></div>
+        <div class="actions">${["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"].map(s => `<button class="btn btn-ghost" data-review="${esc(s)}" data-id="${esc(f.id || "")}">${esc(s)}</button>`).join("")}</div></div>`;
       const g = "";
       return `<div class="card detail">
         <div class="kicker" style="color:var(--blue)">Ficha del tema</div>
@@ -192,11 +206,10 @@
         ${topics}
         ${comp}
         ${evidence}
+        ${editorial}
         <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
-        <div class="actions">
-          <button class="btn btn-primary" data-act="review" data-i="${selected}">Enviar a revisión</button>
-          <button class="btn btn-ghost" data-act="discard" data-i="${selected}">Descartar</button>
-        </div></div>`;
+        ${review}
+        </div>`;
     }
 
     function renderPrioridades() {
@@ -217,7 +230,7 @@
         <p class="sub">Temas ordenados por relevancia editorial. La prioridad mide importancia; el estado mide evidencia. La decisión es tuya.</p>
         <div class="grid2"><div>${list}</div><div>${detailHTML(fs[selected])}</div></div>`;
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => { selected = +a.dataset.i; renderPrioridades(); });
-      bindActions(fs);
+      bindReview(fs);
     }
 
     function renderBandeja() {
@@ -256,21 +269,15 @@
     }
 
     function renderBorradores() {
-      const rows = drafts.length ? drafts.map((f, i) =>
-        `<tr><td>${esc(f.title)}</td><td>${(f.sources || []).length}</td>
-         <td><button class="refresh" data-approve="${i}">Aprobar</button>
-             <button class="refresh" data-return="${i}">Devolver</button></td></tr>`).join("")
-        : `<tr><td colspan="3" class="empty">No hay temas en revisión.</td></tr>`;
+      const states = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
+      const fs = fichas().filter(f => states.includes(f.review_state));
+      const rows = fs.length ? fs.map(f =>
+        `<tr><td>${esc(f.title)}</td><td><span class="chip m">${esc(f.review_state)}</span></td><td>${(f.sources || []).length}</td></tr>`).join("")
+        : `<tr><td colspan="3" class="empty">No hay temas con decisión registrada.</td></tr>`;
       $("content").innerHTML = `<h1>Borradores</h1>
-        <p class="sub">Temas enviados a revisión por el editor. Nada se publica sin aprobación.</p>
-        <div class="card"><table><thead><tr><th>Tema</th><th>Fuentes</th><th>Acciones</th></tr></thead>
+        <p class="sub">Temas con decisión humana registrada. Nada se publica sin aprobación.</p>
+        <div class="card"><table><thead><tr><th>Tema</th><th>Estado</th><th>Fuentes</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
-      $("content").querySelectorAll("[data-approve]").forEach(b => b.onclick = () => {
-        drafts.splice(+b.dataset.approve, 1); save(); toast("Tema aprobado."); render();
-      });
-      $("content").querySelectorAll("[data-return]").forEach(b => b.onclick = () => {
-        drafts.splice(+b.dataset.return, 1); save(); toast("Tema devuelto a prioridades."); render();
-      });
     }
 
     function renderReportes() {
@@ -302,17 +309,19 @@
         </tbody></table></div>${ai}`;
     }
 
-    function bindActions(fs) {
-      $("content").querySelectorAll("[data-act]").forEach(b => b.onclick = (e) => {
+    function bindReview(fs) {
+      $("content").querySelectorAll("[data-review]").forEach(b => b.onclick = async (e) => {
         e.stopPropagation();
-        const f = fs[+b.dataset.i];
-        if (!f) return;
-        if (b.dataset.act === "review") {
-          if (!drafts.some(d => d.title === f.title)) drafts.push(f);
-          discarded.push(f.title); save(); selected = 0; toast("Enviado a revisión."); render();
-        } else if (b.dataset.act === "discard") {
-          discarded.push(f.title); save(); selected = 0; toast("Tema descartado."); render();
-        }
+        try {
+          await fetch("/api/review", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: b.dataset.id, state: b.dataset.review, reviewer: "Editor" })
+          });
+          const f = fs[selected];
+          if (f && f.id === b.dataset.id) f.review_state = b.dataset.review;
+          toast("Estado: " + b.dataset.review);
+          render();
+        } catch (err) { toast("No se pudo guardar el estado."); }
       });
     }
 

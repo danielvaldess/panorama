@@ -19,10 +19,14 @@ import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
-from pipeline import process, sources, snapshot
+from pipeline import process, sources, snapshot, draft
 from pipeline import ai as ai_mod
 from eval import metrics
+
+REVIEW_STATES = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"]
+_review: dict[str, dict] = {}
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "900"))
@@ -50,6 +54,9 @@ def _build_fast() -> dict:
     raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
     groups = process.cluster(raw)  # agrupa TODO (incluye eco) para medir verificación
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
+    for f in fichas:  # paquete editorial + estado de revisión (control humano)
+        f["draft"] = draft.build(f)
+        f["review_state"] = _review.get(f.get("id"), {}).get("state", "nuevo")
     deduped = process.dedupe(raw)  # solo para el feed y métricas
     feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
             for x in deduped[:120]]
@@ -142,6 +149,27 @@ async def fichas():
 @app.post("/api/refresh")
 async def force_refresh():
     return JSONResponse(refresh())
+
+
+class ReviewIn(BaseModel):
+    id: str
+    state: str
+    note: str | None = None
+    reviewer: str | None = None
+
+
+@app.post("/api/review")
+async def set_review(body: ReviewIn):
+    """Registra la decisión humana sobre una ficha (nuevo → … → descartado)."""
+    if body.state not in REVIEW_STATES:
+        return JSONResponse({"ok": False, "error": "estado inválido", "valid": REVIEW_STATES}, status_code=400)
+    _review[body.id] = {"state": body.state, "note": body.note, "reviewer": body.reviewer,
+                        "ts": datetime.now(timezone.utc).isoformat()}
+    with _lock:
+        for f in _cache.get("fichas", []):
+            if f.get("id") == body.id:
+                f["review_state"] = body.state
+    return JSONResponse({"ok": True, "id": body.id, "state": body.state})
 
 
 @app.post("/api/analyze")
