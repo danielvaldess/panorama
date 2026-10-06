@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Panorama">
+  <circle cx="60" cy="60" r="40" fill="none" stroke="#005588" stroke-width="11"/>
+  <g stroke="#005588" stroke-width="11" stroke-linecap="round">
+    <path d="M60 6 v16"/><path d="M60 98 v16"/><path d="M6 60 h16"/><path d="M98 60 h16"/>
+  </g>
+</svg>

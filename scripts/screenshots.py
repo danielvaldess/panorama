@@ -14,7 +14,7 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 def main():
     os.makedirs(OUT, exist_ok=True)
 
-    def shot(page, name, full=True):
+    def shot(page, name, full=False):
         page.screenshot(path=os.path.join(OUT, name), full_page=full)
         print("guardado", name)
 

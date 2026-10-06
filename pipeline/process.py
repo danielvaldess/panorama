@@ -166,9 +166,12 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
         rel_i = rel[i] if i < len(rel) else 0.0
         comp, tema = score_mod.compute_components(g, rel_i, v)
         p = score_mod.final_score(comp)
+        pubs = [x.get("published") for x in g if x.get("published")]
+        published = max(pubs) if pubs else None
         fichas.append({
             "id": g[0].get("id", ""),
             "title": g[0]["title"],
+            "published": published,
             "score": p,
             "band": score_mod.band(p),
             "components": comp,

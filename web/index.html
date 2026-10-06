@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700;800&family=Oxygen:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
   <style>
     :root{
       --primary:#005588; --primary-dark:#00466f; --red:#e00710; --blue:#0077c8; --cyan:#06accb;
@@ -44,6 +46,10 @@
     .main .sub{color:var(--muted);margin:4px 0 18px}
     .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer;transition:border-color .15s, box-shadow .15s}
     .item:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(0,85,136,.08)}
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 16px}
+    .fchip{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:6px 14px;font-family:var(--f-title);font-weight:700;font-size:12.5px;cursor:pointer}
+    .fchip:hover{border-color:var(--blue);color:var(--primary)}
+    .fchip.on{background:var(--primary);border-color:var(--primary);color:#fff}
     .item .go{align-self:center;color:var(--soft);font-size:20px}
     .item:hover .go{color:var(--primary)}
     .rank{font-family:var(--f-title);font-weight:800;font-size:22px;color:var(--soft);text-align:center}
@@ -153,10 +159,20 @@
     const SECTIONS = { prioridades: "Mesa de Prioridades", bandeja: "Bandeja de entrada", fuentes: "Fuentes", verificacion: "Verificación", borradores: "Borradores", reportes: "Reportes" };
     const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
+    const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", general: "General" };
+    const sugerido = f => f.band === "alto" ? "Revisar hoy" : f.band === "medio" ? "Esta semana" : "Seguimiento";
+    function relDate(p) {
+      if (!p) return "";
+      const d = new Date(p), days = Math.floor((Date.now() - d.getTime()) / 86400000);
+      if (days <= 0) return "hoy";
+      if (days === 1) return "ayer";
+      if (days < 7) return "hace " + days + " días";
+      return d.toLocaleDateString("es-PA", { day: "numeric", month: "short" });
+    }
 
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
-    let DATA = null, section = "prioridades", selectedId = null, query = "";
+    let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos";
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
     const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
@@ -184,27 +200,36 @@
     function closeDetail() { selectedId = null; location.hash = ""; render(); }
 
     function renderPrioridades() {
-      const fs = fichas();
+      const base = fichas();
+      const temas = Array.from(new Set(base.map(f => f.tema || "general")));
+      const fs = temaFilter === "todos" ? base : base.filter(f => (f.tema || "general") === temaFilter);
+      const chips = [`<button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos · ${base.length}</button>`]
+        .concat(temas.map(t => {
+          const n = base.filter(f => (f.tema || "general") === t).length;
+          return `<button class="fchip ${temaFilter === t ? "on" : ""}" data-tema="${esc(t)}">${esc(TEMA_LABEL[t] || t)} · ${n}</button>`;
+        })).join("");
       const list = fs.length ? fs.map((f, i) => {
         const v = f.verification || {};
         return `<article class="item" data-id="${esc(f.id)}">
           <div class="rank">${i + 1}</div>
           <div>
-            <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
+            <div class="kicker">${esc(TEMA_LABEL[f.tema] || f.tema || "General")} · <b style="color:var(--text)">${esc(sugerido(f))}</b></div>
             <div class="title">${esc(f.title)}</div>
             <div class="meta">
               <span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
+              ${f.published ? `<span>· ${esc(relDate(f.published))}</span>` : ""}
               <span class="chip ${bandChip(f.band)}">${f.score || 0}/100</span>
               <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span>
-              <span class="chip ghost">Evidencia: ${esc((f.evidence_state || "").split(" ")[0])}</span>
             </div>
           </div>
           <div class="go">›</div>
         </article>`;
-      }).join("") : `<div class="empty">Sin temas para mostrar.</div>`;
+      }).join("") : `<div class="empty">Sin temas en esta categoría.</div>`;
       $("content").innerHTML = `<h1>Mesa de Prioridades</h1>
-        <p class="sub">Temas ordenados por importancia editorial. Abre cualquiera para ver su ficha completa. La decisión final es del editor.</p>
+        <p class="sub">Temas ordenados por importancia editorial. Filtra por categoría y abre cualquiera para ver su ficha completa.</p>
+        <div class="filters">${chips}</div>
         ${list}`;
+      $("content").querySelectorAll(".fchip").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; renderPrioridades(); });
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
     }
 
