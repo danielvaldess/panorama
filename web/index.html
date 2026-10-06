@@ -319,8 +319,8 @@
          <td>${esc(f.evidence_state || "")}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td><td>${v.echo || 0}</td></tr>`;
       }).join("") : `<tr><td colspan="6" class="empty">Todo con evidencia suficiente.</td></tr>`;
       $("content").innerHTML = `<h1>Verificación</h1>
-        <p class="sub">Temas que necesitan más evidencia: un solo origen, eco entre medios o versiones que se contradicen. Repetir un titular en más medios no lo verifica.</p>
-        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Indep.</th><th>Oficial</th><th>Eco</th></tr></thead>
+        <p class="sub">Temas que necesitan más evidencia: una sola fuente, repetición entre medios o versiones que se contradicen. Repetir un titular en más medios no lo verifica.</p>
+        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Por su cuenta</th><th>Oficial</th><th>Repeticiones</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
       $("content").querySelectorAll("[data-open]").forEach(a => a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.open); });
     }
@@ -348,7 +348,7 @@
           <div class="metric"><span>Bandas · alta / media / baja</span><b>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</b></div>
           <div class="metric"><span>Evidencia · suficiente / parcial / insuficiente</span><b>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</b></div>
           <div class="metric"><span>Temas con un solo origen</span><b>${m.single_source || 0}</b></div>
-          <div class="metric"><span>Copias detectadas (eco)</span><b>${m.echo_copies || 0}</b></div>
+          <div class="metric"><span>Repeticiones del mismo origen</span><b>${m.echo_copies || 0}</b></div>
           <div class="metric"><span>Sin verificar / contradichos</span><b>${m.abstain || 0}</b></div>
         </div>
         <div class="card" id="quality" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">Cargando…</div></div>`;
