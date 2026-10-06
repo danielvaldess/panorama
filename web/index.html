@@ -124,6 +124,7 @@
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const confChip = c => c === "Alto" ? "ok" : c === "Bajo" ? "rev" : "m";
     const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
+    const bandChip = b => b === "alto" ? "ok" : b === "bajo" ? "rev" : "m";
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
     let DATA = null, section = "prioridades", selected = 0, query = "";
@@ -157,8 +158,14 @@
     function detailHTML(f) {
       if (!f) return "";
       const v = f.verification || {};
-      const chips = `<span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
-        <span class="chip m">Prioridad ${Math.round((f.priority ?? f.score) * 100)}</span>`;
+      const c = f.components || {};
+      const chips = `<span class="chip ${bandChip(f.band)}">Prioridad ${f.score ?? 0}/100 · ${esc(f.band || "")}</span>
+        <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
+        <span class="chip m">Evidencia: ${esc(f.evidence_state || "")}</span>`;
+      const comp = `<div class="block"><h3>Puntaje explicado (reglas ${esc(f.rules_version || "")})</h3>
+        <div class="meta"><span class="chip">R ${c.R ?? 0}</span><span class="chip">I ${c.I ?? 0}</span>
+          <span class="chip">U ${c.U ?? 0}</span><span class="chip">N ${c.N ?? 0}</span><span class="chip">E ${c.E ?? 0}</span></div>
+        <div style="margin-top:6px;color:var(--soft);font-size:12.5px">P = 30R + 25I + 20U + 15N + 10E = <b>${f.score ?? 0}</b> / 100</div></div>`;
       const evidence = `<div class="block"><h3>Evidencia</h3>
         <div class="meta">
           ${v.official ? `<span class="chip ok">${v.official} fuente oficial</span>` : ""}
@@ -183,6 +190,7 @@
         ${summary}
         ${why}
         ${topics}
+        ${comp}
         ${evidence}
         <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
         <div class="actions">
@@ -200,9 +208,10 @@
           <div><div class="kicker">${esc(f.state || "Sin verificar")} · ${v.independent || 0} origen(es)${v.official ? " · ofic." : ""}</div>
             <div class="title">${esc(f.title)}</div>
             <div class="meta"><span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
+              <span class="chip ${bandChip(f.band)}">${esc(f.band || "")}</span>
               <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span></div></div>
-          <div class="score"><div class="bar"><span style="width:${Math.round((f.priority ?? f.score) * 100)}%"></span></div>
-            <span class="kicker">Prioridad ${Math.round((f.priority ?? f.score) * 100)}</span></div></article>`;
+          <div class="score"><div class="bar"><span style="width:${Math.min(100, f.score || 0)}%"></span></div>
+            <span class="kicker">${esc(f.band || "")} · ${f.score || 0}/100</span></div></article>`;
       }).join("") : `<div class="empty">Sin temas.</div>`;
       $("content").innerHTML = `<h1>Prioridades del día</h1>
         <p class="sub">Temas ordenados por relevancia editorial. La prioridad mide importancia; el estado mide evidencia. La decisión es tuya.</p>
@@ -236,13 +245,13 @@
       const rows = fs.length ? fs.map(f => {
         const v = f.verification || {};
         return `<tr><td><span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span></td>
-         <td>${esc(f.title)}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td>
+         <td>${esc(f.title)}</td><td>${esc(f.evidence_state || "")}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td>
          <td>${v.echo || 0}${v.wire ? " · agencia" : ""}</td>
          <td style="color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</td></tr>`;
-      }).join("") : `<tr><td colspan="6" class="empty">Todo con evidencia suficiente.</td></tr>`;
+      }).join("") : `<tr><td colspan="7" class="empty">Todo con evidencia suficiente.</td></tr>`;
       $("content").innerHTML = `<h1>Verificación</h1>
         <p class="sub">Temas sin prueba suficiente: un solo origen, eco entre medios o fuentes que se contradicen. Repetir un titular en más medios no lo verifica.</p>
-        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Indep.</th><th>Oficial</th><th>Eco</th><th>Motivo</th></tr></thead>
+        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Indep.</th><th>Oficial</th><th>Eco</th><th>Motivo</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
     }
 
@@ -280,15 +289,16 @@
       $("content").innerHTML = `<h1>Reportes</h1>
         <p class="sub">Actividad de la mesa y calidad de las fuentes.</p>
         <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
-          ${kpi("Con orígenes independientes", m.multi_source || 0)}${kpi("Con fuente oficial", m.official || 0)}</div>
-        <div class="card"><h3 style="font-family:var(--f-title)">Verificación y evidencia</h3>
+          ${kpi("P promedio (0–100)", m.avg_score ?? 0)}${kpi("Con fuente oficial", m.official || 0)}</div>
+        <div class="card"><h3 style="font-family:var(--f-title)">Prioridad, verificación y evidencia</h3>
         <table><tbody>
           <tr><td>Tras eliminar duplicados</td><td>${m.after_dedupe || 0}</td></tr>
           <tr><td>Ratio de duplicados</td><td>${m.dedupe_ratio ?? 0}</td></tr>
+          <tr><td>Bandas · alto / medio / bajo</td><td>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</td></tr>
+          <tr><td>Evidencia · suficiente / parcial / insuficiente</td><td>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</td></tr>
           <tr><td>Temas con un solo origen</td><td>${m.single_source || 0}</td></tr>
           <tr><td>Copias detectadas (eco)</td><td>${m.echo_copies || 0}</td></tr>
           <tr><td>Sin verificar / contradichos (abstención)</td><td>${m.abstain || 0}</td></tr>
-          <tr><td>Prioridad promedio</td><td>${m.avg_score ?? 0}</td></tr>
         </tbody></table></div>${ai}`;
     }
 

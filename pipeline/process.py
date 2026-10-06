@@ -8,6 +8,8 @@ import urllib.parse
 from rank_bm25 import BM25Okapi
 from rapidfuzz import fuzz
 
+from pipeline import score as score_mod
+
 # Confiabilidad por fuente (1-5).
 SOURCE_RELIABILITY = {
     "TVN Noticias": 5, "TVN": 5, "La Prensa": 5, "Telemetro": 4, "TVMax": 4,
@@ -148,39 +150,39 @@ def _verify(g: list[dict]) -> dict:
 
 
 def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
-    """Calcula prioridad (importancia) y verificación (evidencia) por separado.
+    """Prioridad explicable (P=30R+25I+20U+15N+10E, 0–100) + verificación/evidencia.
 
-    prioridad = 0.55·relevancia (BM25) + 0.30·frescura + 0.15·confiabilidad
+    El puntaje y el estado de evidencia son independientes. Orden: P desc,
+    empates por urgencia desc y luego ID.
     """
     reps = [g[0]["title"] for g in groups]
     rel = _norm(bm25(query, [tokens(r) for r in reps]))
     fichas = []
     for i, g in enumerate(groups):
-        uniq: dict[str, str] = {}
+        uniq: dict[str, dict] = {}
         for x in g:
-            uniq.setdefault(x["source"], x["url"])
-        sources = sorted(uniq)
+            uniq.setdefault(x["source"], x)
         v = _verify(g)
         rel_i = rel[i] if i < len(rel) else 0.0
-        fresh = 1.0 if any(x.get("published") for x in g) else 0.5
-        rels = [SOURCE_RELIABILITY.get(s, DEFAULT_RELIABILITY) for s in sources]
-        if v["official"]:
-            rels.append(5)  # una fuente oficial es lo más fiable
-        relia = (max(rels) if rels else DEFAULT_RELIABILITY) / 5
-        bonus = 0.10 if v["official"] else 0.0
-        score = round(min(1.0, 0.55 * rel_i + 0.30 * fresh + 0.15 * relia + bonus), 2)
+        comp, tema = score_mod.compute_components(g, rel_i, v)
+        p = score_mod.final_score(comp)
         fichas.append({
+            "id": g[0].get("id", ""),
             "title": g[0]["title"],
-            "score": score,
-            "priority": score,
+            "score": p,
+            "band": score_mod.band(p),
+            "components": comp,
+            "rules_version": score_mod.RULES_VERSION,
+            "evidence_state": score_mod.evidence_state(v),
             "confidence": v["confidence"],
             "state": v["state"],
             "status": v["state"],
+            "tema": tema,
             "verification": {
                 "state": v["state"], "reason": v["reason"], "official": v["official"],
                 "independent": v["independent"], "echo": v["echo"], "wire": v["wire"],
             },
-            "sources": [{"name": n, "url": u} for n, u in uniq.items()],
+            "sources": [{"name": n, "url": x["url"]} for n, x in uniq.items()],
             "relevance": round(rel_i, 2),
         })
-    return sorted(fichas, key=lambda f: -f["priority"])
+    return sorted(fichas, key=lambda f: (-f["score"], -f["components"]["U"], f.get("id", "")))
