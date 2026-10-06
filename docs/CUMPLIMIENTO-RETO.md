@@ -135,14 +135,15 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 
 ---
 
-## Brechas priorizadas
+## Brechas — estado (cerradas)
 
-1. **IA sustantiva semántica** (embeddings para agrupar/recuperar) + comparación con baseline. *(rúbrica: Uso efectivo de IA 15)*
-2. **Contextualizar**: enlazar noticia ↔ indicador del Banco Mundial / evento USGS en la ficha, con período/unidad. *(etapa 3, CU-02)*
-3. **Exportar `fichas.jsonl`** y crear `processed/`. *(contrato de datos)*
-4. **Benchmark dev/jurado** (marcar 40/20). *(contrato)*
-5. **Métricas de clasificación/agrupación** (macro-F1) y **P@5** (exploratoria). *(rúbrica: Calidad técnica 10)*
-6. **Notion oficial** (workspace de la organización) + **pitch** + página Presentación.
+1. ✅ **IA sustantiva semántica** — `pipeline/embed.py` (embeddings locales, costo 0) + `/api/search` híbrido; baseline BM25 comparado.
+2. ✅ **Contextualizar** — `pipeline/context.py` enlaza indicador del Banco Mundial / evento USGS en la ficha, con **período y unidad**.
+3. ✅ **`fichas.jsonl` + `processed/`** — `data/processed/fichas.jsonl` (+ `data/fuentes.json`).
+4. ✅ **Benchmark dev/jurado** — 40 dev / 20 reservadas (tipos preservados).
+5. ✅ **Métricas de calidad** — `eval/quality.py` (agrupación, macro-F1 clasificación, P@5 exploratoria).
+6. ✅ **Pitch** — página “Presentación al jurado” con guion de 10 min navegable.
+7. ⬜ **Notion oficial** — pendiente del workspace de la organización (se migra el contenido cuando se habilite).
 
 ---
 
