@@ -118,7 +118,8 @@ def _verify(g: list[dict]) -> dict:
     for x in g:
         uniq.setdefault(x["source"], x)
     items = list(uniq.values())  # un ítem por medio
-    official = [x for x in items if x.get("official") or is_official(x["url"])]
+    # oficial si CUALQUIER ítem del grupo es oficial (no solo el representante)
+    official = [x for x in g if x.get("official") or is_official(x["url"])]
     indep = _independent(items)
     wires = sum(1 for x in items if _is_wire(x))
     if wires and indep > 1:
