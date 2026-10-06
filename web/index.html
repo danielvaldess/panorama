@@ -214,7 +214,7 @@
       const v = f.verification || {}, c = f.components || {}, d = f.draft || {};
       const comp = COMP.map(([k, lbl]) => {
         const val = c[k] ?? 0;
-        return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${val.toFixed(2)}</div></div>`;
+        return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${Math.round(val * 100)}%</div></div>`;
       }).join("");
       const claims = (d.afirmaciones || []).map(a => `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div><div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}</div></div>`).join("") || "<div class='c'>Sin afirmaciones.</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
@@ -230,7 +230,7 @@
             <span class="chip ${bandChip(f.band)}">Prioridad ${f.score || 0}/100 · ${esc(f.band || "")}</span>
             <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
             <span class="chip ghost">Evidencia: ${esc(f.evidence_state || "")}</span>
-            <span class="chip ghost">Estado: ${esc(f.review_state || "nuevo")}</span>
+            <span class="chip ghost">Decisión: ${esc(f.review_state || "nuevo")}</span>
           </div>
         </div>
         <div class="detail-grid">
@@ -261,8 +261,8 @@
             <div class="card block">
               <h3>Evidencia</h3>
               <div class="metric"><span>Fuentes oficiales</span><b>${v.official || 0}</b></div>
-              <div class="metric"><span>Orígenes independientes</span><b>${v.independent || 0}</b></div>
-              <div class="metric"><span>Copias / eco</span><b>${v.echo || 0}</b></div>
+              <div class="metric"><span>Medios que lo reportan por su cuenta</span><b>${v.independent || 0}</b></div>
+              <div class="metric"><span>Repeticiones del mismo origen</span><b>${v.echo || 0}</b></div>
               <div class="metric"><span>Estado</span><b>${esc(f.evidence_state || "")}</b></div>
               <div class="c" style="margin-top:8px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div>
             </div>
@@ -343,7 +343,7 @@
       $("content").innerHTML = `<h1>Reportes</h1>
         <p class="sub">Actividad de la mesa y control de calidad.</p>
         <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
-          ${kpi("Con fuente oficial", m.official || 0)}${kpi("Prioridad promedio", m.avg_score ?? 0)}</div>
+          ${kpi("Con fuente oficial", m.official || 0)}${kpi("Prioridad promedio", Math.round(m.avg_score ?? 0))}</div>
         <div class="card"><h3 style="font-family:var(--f-title)">Calidad de la cobertura</h3>
           <div class="metric"><span>Bandas · alta / media / baja</span><b>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</b></div>
           <div class="metric"><span>Evidencia · suficiente / parcial / insuficiente</span><b>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</b></div>

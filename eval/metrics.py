@@ -24,7 +24,7 @@ def summarize(raw: list[dict], deduped: list[dict], fichas: list[dict]) -> dict:
         "echo_copies": echo,
         "abstain": unverified,
         "citation_coverage": round(multi / total, 2),
-        "avg_score": round(sum(f.get("score", 0) for f in fichas) / total, 1),
+        "avg_score": int(round(sum(f.get("score", 0) for f in fichas) / total)),
         "evidence_sufficient": sum(1 for x in ev if x.startswith("Suficiente")),
         "evidence_partial": sum(1 for x in ev if x == "Parcial"),
         "evidence_insufficient": sum(1 for x in ev if x == "Insuficiente"),

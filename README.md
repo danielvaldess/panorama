@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="docs/logo.png" width="104" height="104" alt="Panorama" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/hackIAthon-Panam%C3%A1%202026-005588" alt="hackIAthon" />
   <img src="https://img.shields.io/badge/Reto-TVN%20Media-e00710" alt="Reto TVN Media" />
   <img src="https://img.shields.io/badge/Python-3.12-3776AB" alt="Python" />
