@@ -13,6 +13,31 @@ cambiar de modelo sin tocar el código y trabajar con modelos `:free`.
   prioridad y la verificación son **deterministas**. Siempre hay *fallback* local
   si no hay key o falla la red.
 
+## Verificación: prioridad ≠ verificación
+
+Repetir un titular en más medios **no** verifica la noticia (eso es **eco**). Por
+eso separamos dos cosas:
+
+- **Prioridad** (determinista): `0.55·relevancia (BM25) + 0.30·frescura + 0.15·confiabilidad`.
+  Mide **importancia** para la mesa.
+- **Verificación** (determinista): mide **evidencia**, no popularidad.
+
+Estados y regla (en `pipeline/process.py`):
+
+| Estado | Cuándo | Confianza |
+|--------|--------|-----------|
+| **Confirmado** | Proviene de fuente **oficial/primaria** (`*.gob.pa`, Canal, etc.) | Alto |
+| **Corroborado** | ≥2 **orígenes independientes** (sin cable común) | Medio/Alto |
+| **Contradicho** | Una fuente confirma y otra desmiente | Bajo |
+| **Sin verificar** | Un solo origen, **eco** o solo agencia | Bajo (abstención) |
+
+Detección de **eco**: agrupamos por origen textual (similitud ≥ 0.70) y por
+**agencia** (EFE/AP/Reuters/AFP…); los medios que copian cuentan como **una** sola
+fuente. El resultado se muestra como *"N medios, M son eco"*.
+
+> La IA entra (bajo demanda) para **extraer claims**, **trazar origen** y
+> **verificar entailment** contra datos oficiales; no como "juez de verdad".
+
 ## Variables de entorno
 
 | Variable | Descripción |

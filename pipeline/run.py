@@ -100,10 +100,12 @@ def main() -> int:
         for f in fichas[: args.limit]:
             f["summary"] = ai_summary(f["title"], f["sources"])
 
-    print("\n--- Prioridades del día ---")
+    print("\n--- Prioridades del día (prioridad · verificación) ---")
     for f in fichas[: args.limit]:
         srcs = ", ".join(s["name"] for s in f["sources"])
-        print(f"  {f['score']:>4} {f['confidence']:6} [{len(f['sources'])} fuente(s)] {f['title'][:64]}")
+        v = f.get("verification") or {}
+        ev = f"indep={v.get('independent', 0)} ofic={v.get('official', 0)} eco={v.get('echo', 0)}"
+        print(f"  [{f['priority']:>4}] {f['state']:<13} ({ev}) {f['title'][:56]}")
         print(f"        {srcs}")
         if f.get("summary"):
             print(f"        -> {f['summary']}")

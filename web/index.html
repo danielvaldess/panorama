@@ -123,6 +123,7 @@
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const confChip = c => c === "Alto" ? "ok" : c === "Bajo" ? "rev" : "m";
+    const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
     let DATA = null, section = "prioridades", selected = 0, query = "";
@@ -155,8 +156,17 @@
 
     function detailHTML(f) {
       if (!f) return "";
-      const chips = `<span class="chip ${confChip(f.confidence)}">Confianza ${f.confidence}</span>
-        <span class="chip ${f.status === "Sin evidencia" ? "rev" : "ok"}">${f.status}</span>`;
+      const v = f.verification || {};
+      const chips = `<span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
+        <span class="chip m">Prioridad ${Math.round((f.priority ?? f.score) * 100)}</span>`;
+      const evidence = `<div class="block"><h3>Evidencia</h3>
+        <div class="meta">
+          ${v.official ? `<span class="chip ok">${v.official} fuente oficial</span>` : ""}
+          <span class="chip m">${v.independent || 0} origen(es) independiente(s)</span>
+          ${v.echo ? `<span class="chip rev">${v.echo} copia(s) / eco</span>` : ""}
+          ${v.wire ? `<span class="chip rev">agencia</span>` : ""}
+        </div>
+        <div style="margin-top:6px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div></div>`;
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("");
       const summary = f.summary
         ? `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Redactado a partir de las fuentes citadas</small>${esc(f.summary)}</div></div>`
@@ -173,6 +183,7 @@
         ${summary}
         ${why}
         ${topics}
+        ${evidence}
         <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
         <div class="actions">
           <button class="btn btn-primary" data-act="review" data-i="${selected}">Enviar a revisión</button>
@@ -183,18 +194,18 @@
     function renderPrioridades() {
       const fs = fichas();
       const list = fs.length ? fs.map((f, i) => {
-        const n = (f.sources || []).length;
+        const v = f.verification || {};
         return `<article class="item ${i === selected ? "selected" : ""}" data-i="${i}">
           <div class="rank">${i + 1}</div>
-          <div><div class="kicker">${f.status === "Sin evidencia" ? "Sin verificar" : "Prioridad"} · ${n} fuente(s)</div>
+          <div><div class="kicker">${esc(f.state || "Sin verificar")} · ${v.independent || 0} origen(es)${v.official ? " · ofic." : ""}</div>
             <div class="title">${esc(f.title)}</div>
             <div class="meta"><span>${esc((f.sources || []).map(s => s.name).join(", ") || "sin fuente")}</span>
-              <span class="chip ${confChip(f.confidence)}">${esc(f.confidence)}</span></div></div>
-          <div class="score"><div class="bar"><span style="width:${Math.round(f.score * 100)}%"></span></div>
-            <span class="chip ${f.status === "Sin evidencia" ? "rev" : "ok"}">${esc(f.status)}</span></div></article>`;
+              <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span></div></div>
+          <div class="score"><div class="bar"><span style="width:${Math.round((f.priority ?? f.score) * 100)}%"></span></div>
+            <span class="kicker">Prioridad ${Math.round((f.priority ?? f.score) * 100)}</span></div></article>`;
       }).join("") : `<div class="empty">Sin temas.</div>`;
       $("content").innerHTML = `<h1>Prioridades del día</h1>
-        <p class="sub">Temas ordenados por relevancia editorial, con sus fuentes. La decisión es tuya.</p>
+        <p class="sub">Temas ordenados por relevancia editorial. La prioridad mide importancia; el estado mide evidencia. La decisión es tuya.</p>
         <div class="grid2"><div>${list}</div><div>${detailHTML(fs[selected])}</div></div>`;
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => { selected = +a.dataset.i; renderPrioridades(); });
       bindActions(fs);
@@ -221,15 +232,17 @@
     }
 
     function renderVerificacion() {
-      const fs = fichas().filter(f => (f.sources || []).length < 2 || f.confidence !== "Alto" || f.status === "Sin evidencia");
-      const rows = fs.length ? fs.map(f =>
-        `<tr><td><span class="chip ${confChip(f.confidence)}">${esc(f.confidence)}</span></td>
-         <td>${esc(f.title)}</td><td>${(f.sources || []).length} fuente(s)</td>
-         <td>${f.status === "Sin evidencia" ? `<span class="chip rev">Sin evidencia</span>` : `<span class="chip m">Una sola fuente</span>`}</td></tr>`).join("")
-        : `<tr><td colspan="4" class="empty">Todo verificado.</td></tr>`;
+      const fs = fichas().filter(f => (f.verification?.independent || 0) < 2 || ["Sin verificar", "Contradicho"].includes(f.state));
+      const rows = fs.length ? fs.map(f => {
+        const v = f.verification || {};
+        return `<tr><td><span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span></td>
+         <td>${esc(f.title)}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td>
+         <td>${v.echo || 0}${v.wire ? " · agencia" : ""}</td>
+         <td style="color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</td></tr>`;
+      }).join("") : `<tr><td colspan="6" class="empty">Todo con evidencia suficiente.</td></tr>`;
       $("content").innerHTML = `<h1>Verificación</h1>
-        <p class="sub">Temas que requieren revisión: una sola fuente o sin evidencia suficiente.</p>
-        <div class="card"><table><thead><tr><th>Confianza</th><th>Tema</th><th>Fuentes</th><th>Estado</th></tr></thead>
+        <p class="sub">Temas sin prueba suficiente: un solo origen, eco entre medios o fuentes que se contradicen. Repetir un titular en más medios no lo verifica.</p>
+        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Indep.</th><th>Oficial</th><th>Eco</th><th>Motivo</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
     }
 
@@ -267,14 +280,15 @@
       $("content").innerHTML = `<h1>Reportes</h1>
         <p class="sub">Actividad de la mesa y calidad de las fuentes.</p>
         <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
-          ${kpi("Multi-fuente", m.multi_source || 0)}${kpi("Cobertura de citas", (m.citation_coverage ?? 0))}</div>
-        <div class="card"><h3 style="font-family:var(--f-title)">Detalle</h3>
+          ${kpi("Con orígenes independientes", m.multi_source || 0)}${kpi("Con fuente oficial", m.official || 0)}</div>
+        <div class="card"><h3 style="font-family:var(--f-title)">Verificación y evidencia</h3>
         <table><tbody>
           <tr><td>Tras eliminar duplicados</td><td>${m.after_dedupe || 0}</td></tr>
           <tr><td>Ratio de duplicados</td><td>${m.dedupe_ratio ?? 0}</td></tr>
-          <tr><td>Temas de una sola fuente</td><td>${m.single_source || 0}</td></tr>
-          <tr><td>Sin evidencia (abstención)</td><td>${m.abstain || 0}</td></tr>
-          <tr><td>Score promedio</td><td>${m.avg_score ?? 0}</td></tr>
+          <tr><td>Temas con un solo origen</td><td>${m.single_source || 0}</td></tr>
+          <tr><td>Copias detectadas (eco)</td><td>${m.echo_copies || 0}</td></tr>
+          <tr><td>Sin verificar / contradichos (abstención)</td><td>${m.abstain || 0}</td></tr>
+          <tr><td>Prioridad promedio</td><td>${m.avg_score ?? 0}</td></tr>
         </tbody></table></div>${ai}`;
     }
 

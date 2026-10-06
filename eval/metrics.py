@@ -3,9 +3,13 @@ from __future__ import annotations
 
 
 def summarize(raw: list[dict], deduped: list[dict], fichas: list[dict]) -> dict:
-    multi = sum(1 for f in fichas if len(f["sources"]) >= 2)
-    single = sum(1 for f in fichas if len(f["sources"]) == 1)
-    abstain = sum(1 for f in fichas if f["status"] == "Sin evidencia")
+    def v(f):
+        return f.get("verification") or {}
+    multi = sum(1 for f in fichas if v(f).get("independent", 0) >= 2)
+    single = sum(1 for f in fichas if v(f).get("independent", 0) <= 1)
+    official = sum(1 for f in fichas if v(f).get("official", 0) >= 1)
+    echo = sum(v(f).get("echo", 0) for f in fichas)
+    unverified = sum(1 for f in fichas if f.get("state") in ("Sin verificar", "Contradicho"))
     total = len(fichas) or 1
     return {
         "fetched": len(raw),
@@ -14,7 +18,9 @@ def summarize(raw: list[dict], deduped: list[dict], fichas: list[dict]) -> dict:
         "fichas": len(fichas),
         "multi_source": multi,
         "single_source": single,
-        "abstain": abstain,
+        "official": official,
+        "echo_copies": echo,
+        "abstain": unverified,
         "citation_coverage": round(multi / total, 2),
         "avg_score": round(sum(f["score"] for f in fichas) / total, 2),
     }

@@ -46,9 +46,9 @@ def _sources_catalog() -> list[dict]:
 def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
     raw = sources.fetch_all(gdelt_query="Panamá")
-    deduped = process.dedupe(raw)
-    groups = process.cluster(deduped)
+    groups = process.cluster(raw)  # agrupa TODO (incluye eco) para medir verificación
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
+    deduped = process.dedupe(raw)  # solo para el feed y métricas
     feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
             for x in deduped[:120]]
     return {
