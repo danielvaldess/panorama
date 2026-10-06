@@ -150,10 +150,20 @@ async def search(q: str = ""):
         return JSONResponse({"q": q, "method": "—", "ids": []})
     with _lock:
         fichas = list(_cache.get("fichas", []))
+    if not fichas:
+        return JSONResponse({"q": q, "method": "—", "ids": []})
+    titles = [f["title"] for f in fichas]
+    bm = process.bm25(process.tokens(q), [process.tokens(t) for t in titles])
+    mx = max(bm) or 1.0
+    sem = {}
     if embed.available():
-        ranked = embed.retrieve(q, [{"title": f["title"], "id": f["id"]} for f in fichas], 12)
-        return JSONResponse({"q": q, "method": "semántico", "ids": [x["id"] for x, _ in ranked]})
-    return JSONResponse({"q": q, "method": "léxico", "ids": []})
+        for item, s in embed.retrieve(q, [{"title": t} for t in titles], len(titles)):
+            sem[item["title"]] = s
+    def score(i):
+        return 0.5 * (bm[i] / mx) + 0.5 * sem.get(titles[i], 0.0)
+    order = sorted(range(len(fichas)), key=lambda i: -score(i))
+    return JSONResponse({"q": q, "method": "híbrido (semántico + léxico)",
+                         "ids": [fichas[i]["id"] for i in order][:12]})
 
 
 @app.get("/api/manifest")
