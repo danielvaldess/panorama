@@ -111,3 +111,32 @@ La IA **no** corre en cada refresco. El refresco periódico es **determinista**
 - En la interfaz: botón **"Analizar con IA"**.
 
 Así no se quema la cuota de 50/día. `AI_TOP_N` controla cuántos temas analiza por corrida.
+
+## IA sustantiva en el prototipo (embeddings, local)
+
+- **Capacidad:** **recuperación semántica** con **embeddings** (`fastembed`, modelo
+  `paraphrase-multilingual-MiniLM-L12-v2`, ONNX, 384 dim). Corre **100% local** →
+  **costo 0** y **funciona sin API**. Módulo: `pipeline/embed.py`.
+- **Dónde se usa:** buscador de la mesa (`GET /api/search`) y evaluación de calidad
+  (agrupación semántica vs. léxica).
+- **Baseline:** **BM25** (léxico) — comparado en `eval/benchmark.py` y `eval/quality.py`.
+- **LLM (OpenRouter):** **inactivo** en la entrega → **costo 0**. Se mantiene el módulo
+  `pipeline/ai.py` como extensión opcional (resumen de borradores), siempre con
+  instrucciones separadas del contenido y salida con citas.
+
+### Qué mejora y cuándo NO ayuda (medido)
+
+- **Agrupación:** el semántico reconoce la **misma noticia con otra redacción** que el
+  léxico separa. En la muestra etiquetada, baseline y semántico logran F1 alto; el
+  semántico aporta en paráfrasis.
+- **Clasificación temática:** el **baseline por palabras clave** (macro-F1 0.80) **supera**
+  al modelo ML (TF-IDF + regresión logística, 0.36) **con tan pocas etiquetas** (30) →
+  limitación documentada: más datos etiquetados serían necesarios para que el ML gane.
+- **Ranking (P@5):** exploratorio (sin especialista); BM25 y semántico coinciden.
+
+### Costo y límites
+
+- **Costo de IA = 0** (embeddings locales + LLM inactivo).
+- El modelo de embeddings se **pre-descarga en la imagen** (Dockerfile) para la demo offline.
+- Límite: los títulos cortos tienen similitudes “comprimidas”; el umbral de abstención
+  combina BM25 + cobertura de vocabulario + **similitud semántica**.

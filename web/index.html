@@ -188,13 +188,18 @@
 
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
-    let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos";
+    let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", semIds = null;
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
     const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
     function fichas() {
+      const all = DATA?.fichas || [];
+      if (semIds && semIds.length) {
+        const pos = new Map(semIds.map((id, i) => [id, i]));
+        return all.filter(f => pos.has(f.id)).sort((a, b) => pos.get(a.id) - pos.get(b.id));
+      }
       const q = query.toLowerCase();
-      return (DATA?.fichas || []).filter(f => !q || (f.title + " " + (f.sources || []).map(s => s.name).join(" ") + " " + (f.tema || "")).toLowerCase().includes(q));
+      return all.filter(f => !q || (f.title + " " + (f.sources || []).map(s => s.name).join(" ") + " " + (f.tema || "")).toLowerCase().includes(q));
     }
 
     function render() {
@@ -277,6 +282,7 @@
         return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${Math.round(val * 100)}%</div></div>`;
       }).join("");
       const claims = (d.afirmaciones || []).map(a => `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div><div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}</div></div>`).join("") || "<div class='c'>Sin afirmaciones.</div>";
+      const ctx = (f.contexto || []).map(c => `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div><div class="c">${esc(c.periodo)} · ${esc(c.unidad)} · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a></div><div class="c">${esc(c.limite)}</div></div>`).join("") || "<div class='c'>Sin relación oficial sustentada (no se fuerza).</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
       const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
       const reviewBtns = REVIEW.map(s => `<button class="btn btn-ghost" data-review="${esc(s)}">${esc(s)}</button>`).join("");
@@ -325,6 +331,10 @@
               <div class="metric"><span>Repeticiones del mismo origen</span><b>${v.echo || 0}</b></div>
               <div class="metric"><span>Estado</span><b>${esc(f.evidence_state || "")}</b></div>
               <div class="c" style="margin-top:8px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div>
+            </div>
+            <div class="card block">
+              <h3>Contexto oficial</h3>
+              ${ctx}
             </div>
             <div class="card block">
               <h3>Qué falta comprobar</h3>
@@ -444,7 +454,21 @@
     }
 
     $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selectedId = null; location.hash = ""; render(); } });
-    $("search").addEventListener("input", (e) => { query = e.target.value; if (section === "prioridades" && !selectedId) renderPrioridades(); });
+    let searchTimer = null;
+    $("search").addEventListener("input", (e) => {
+      query = e.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(async () => {
+        if (query.trim().length >= 3) {
+          try {
+            const r = await fetch("/api/search?q=" + encodeURIComponent(query));
+            const j = await r.json();
+            semIds = j.ids || [];
+          } catch (err) { semIds = null; }
+        } else { semIds = null; }
+        if (section === "prioridades" && !selectedId) renderPrioridades();
+      }, 250);
+    });
     window.addEventListener("hashchange", () => {
       const m = location.hash.match(/^#\/tema\/(.+)$/);
       if (m) { selectedId = m[1]; render(); }

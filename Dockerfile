@@ -9,6 +9,10 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-descarga el modelo de embeddings para que la demo funcione sin internet
+ENV FASTEMBED_CACHE=/app/.fastembed_cache
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', cache_dir='/app/.fastembed_cache')"
+
 COPY pipeline/ ./pipeline/
 COPY eval/ ./eval/
 COPY web/ ./web/

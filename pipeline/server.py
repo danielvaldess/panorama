@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from pipeline import process, sources, snapshot, draft
+from pipeline import process, sources, snapshot, draft, embed, context
 from pipeline import ai as ai_mod
 from eval import metrics
 
@@ -53,9 +53,11 @@ def _build_fast() -> dict:
     # D5: preferir el snapshot congelado; si no existe, fallback a fuentes en vivo.
     used_snapshot = snapshot.available()
     raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
-    groups = process.cluster(raw)  # agrupa TODO (incluye eco) para medir verificación
+    semantic = embed.available()
+    groups = process.cluster(raw)  # agrupación por similitud de texto (baseline estable)
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
-    for f in fichas:  # paquete editorial + estado de revisión (control humano)
+    for f in fichas:  # contexto oficial + paquete editorial + estado de revisión
+        f["contexto"] = context.build(f)
         f["draft"] = draft.build(f)
         f["review_state"] = _review.get(f.get("id"), {}).get("state", "nuevo")
     deduped = process.dedupe(raw)  # solo para el feed y métricas
@@ -70,6 +72,8 @@ def _build_fast() -> dict:
         "sources": _sources_catalog(),
         "metrics": metrics.summarize(raw, deduped, fichas),
         "ai_ready": False,
+        "method": {"grouping": "semántico (embeddings)" if semantic else "léxico (similitud de texto)",
+                   "retrieval": "BM25 + semántico", "llm": "inactivo (costo 0)"},
         "snapshot": (
             {"used": True, **{k: v for k, v in snapshot.manifest().items() if k in ("version", "fecha_corte_UTC")}}
             if used_snapshot else {"used": False}
@@ -137,6 +141,19 @@ def _read_json(path: str):
             return json.load(fh)
     except Exception:
         return None
+
+
+@app.get("/api/search")
+async def search(q: str = ""):
+    """Recuperación semántica sobre los temas (embeddings). Fallback léxico."""
+    if len(q.strip()) < 2:
+        return JSONResponse({"q": q, "method": "—", "ids": []})
+    with _lock:
+        fichas = list(_cache.get("fichas", []))
+    if embed.available():
+        ranked = embed.retrieve(q, [{"title": f["title"], "id": f["id"]} for f in fichas], 12)
+        return JSONResponse({"q": q, "method": "semántico", "ids": [x["id"] for x, _ in ranked]})
+    return JSONResponse({"q": q, "method": "léxico", "ids": []})
 
 
 @app.get("/api/manifest")

@@ -1,0 +1,52 @@
+{
+  "grouping": {
+    "n_pares": 14,
+    "positivos": 6,
+    "baseline": {
+      "umbral": 0.4,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "semantico": {
+      "umbral": 0.4,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "classification": {
+    "n_etiquetas": 30,
+    "clases": 6,
+    "metodo_etiquetado": "revisión humana (muestra pequeña)",
+    "baseline_palabras_clave_macro_f1": 0.8,
+    "ml_tfidf_logreg_macro_f1": 0.36,
+    "mejora": -0.44
+  },
+  "ranking": {
+    "tipo": "exploratoria (sin especialista)",
+    "consultas": 4,
+    "detalle": [
+      {
+        "consulta": "canal cupos tránsito buques",
+        "p@5_bm25": 0.4,
+        "p@5_semantico": 0.4
+      },
+      {
+        "consulta": "lluvias inundaciones Chiriquí",
+        "p@5_bm25": 0.4,
+        "p@5_semantico": 0.4
+      },
+      {
+        "consulta": "canasta básica precio",
+        "p@5_bm25": 0.4,
+        "p@5_semantico": 0.4
+      },
+      {
+        "consulta": "turismo cruceros Bocas",
+        "p@5_bm25": 0.4,
+        "p@5_semantico": 0.4
+      }
+    ]
+  }
+}
