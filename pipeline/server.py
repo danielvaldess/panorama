@@ -53,7 +53,8 @@ def _build_fast() -> dict:
             for x in deduped[:120]]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "fichas": len(fichas)},
+        "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "fichas": len(fichas),
+                   "official_items": sum(1 for x in raw if x.get("official"))},
         "fichas": fichas,
         "feed": feed,
         "sources": _sources_catalog(),
