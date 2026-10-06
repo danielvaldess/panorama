@@ -50,6 +50,22 @@
     .fchip{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:6px 14px;font-family:var(--f-title);font-weight:700;font-size:12.5px;cursor:pointer}
     .fchip:hover{border-color:var(--blue);color:var(--primary)}
     .fchip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+    .hero{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+    .hello{font-family:var(--f-title);font-weight:800;font-size:23px;color:var(--text)}
+    .hero-sub{color:var(--muted);font-size:13.5px;margin-top:2px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    .stat{background:#fff;border:1px solid var(--border);border-top:3px solid var(--primary);border-radius:var(--radius);padding:14px 16px}
+    .stat .v{font-family:var(--f-title);font-weight:800;font-size:26px;color:var(--primary)}
+    .stat .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+    .howpanel{display:none;margin-bottom:18px}
+    .howpanel img{width:100%;border:1px solid var(--border);border-radius:var(--radius);background:#fff}
+    .viz{display:flex;align-items:center;gap:12px;margin:11px 0}
+    .viz .lab{width:132px;color:var(--muted);font-size:13px}
+    .viz .track{flex:1;height:12px;background:var(--bg-soft);border-radius:8px;overflow:hidden}
+    .viz .track span{display:block;height:100%;border-radius:8px}
+    .viz .num{width:54px;text-align:right;font-family:var(--f-title);font-weight:700;font-size:13px}
+    .bar-alto,.bar-suf{background:var(--ok)}.bar-medio,.bar-par{background:var(--warn)}.bar-bajo{background:var(--soft)}.bar-ins{background:var(--red)}
+    .repgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .item .go{align-self:center;color:var(--soft);font-size:20px}
     .item:hover .go{color:var(--primary)}
     .rank{font-family:var(--f-title);font-weight:800;font-size:22px;color:var(--soft);text-align:center}
@@ -108,7 +124,7 @@
     .foot{padding:14px 26px;color:var(--soft);font-size:12px}
     .toast{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:13px 18px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(20px);transition:all .3s;z-index:60;font-size:13.5px}
     .toast.show{opacity:1;transform:none}
-    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.repgrid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -225,10 +241,29 @@
           <div class="go">›</div>
         </article>`;
       }).join("") : `<div class="empty">Sin temas en esta categoría.</div>`;
-      $("content").innerHTML = `<h1>Mesa de Prioridades</h1>
-        <p class="sub">Temas ordenados por importancia editorial. Filtra por categoría y abre cualquiera para ver su ficha completa.</p>
+      const alto = base.filter(f => f.band === "alto").length;
+      const suf = base.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
+      const ofi = base.filter(f => (f.verification?.official || 0) > 0).length;
+      const h = new Date().getHours();
+      const greet = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
+      $("content").innerHTML = `
+        <div class="hero">
+          <div>
+            <div class="hello">${greet}, Daniel</div>
+            <div class="hero-sub">Esta es tu mesa de hoy: ${base.length} temas leídos de las fuentes, ${alto} de prioridad alta.</div>
+          </div>
+          <button class="refresh" id="howBtn">¿Cómo funciona?</button>
+        </div>
+        <div class="howpanel" id="howPanel"><img src="/como-funciona.png" alt="Cómo funciona Panorama" /></div>
+        <div class="stats">
+          <div class="stat"><div class="v">${base.length}</div><div class="l">Temas del día</div></div>
+          <div class="stat"><div class="v">${alto}</div><div class="l">Prioridad alta</div></div>
+          <div class="stat"><div class="v">${suf}</div><div class="l">Evidencia suficiente</div></div>
+          <div class="stat"><div class="v">${ofi}</div><div class="l">Con fuente oficial</div></div>
+        </div>
         <div class="filters">${chips}</div>
         ${list}`;
+      $("howBtn").onclick = () => { const p = $("howPanel"); p.style.display = p.style.display === "block" ? "none" : "block"; };
       $("content").querySelectorAll(".fchip").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; renderPrioridades(); });
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
     }
@@ -364,17 +399,28 @@
 
     function renderReportes() {
       const m = DATA.metrics || {}, c = DATA.counts || {};
-      const kpi = (l, v) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+      const total = (m.band_alto || 0) + (m.band_medio || 0) + (m.band_bajo || 0) || 1;
+      const ev = (m.evidence_sufficient || 0) + (m.evidence_partial || 0) + (m.evidence_insufficient || 0) || 1;
+      const bar = (lab, val, tot, cls) => `<div class="viz"><div class="lab">${lab}</div><div class="track"><span class="${cls}" style="width:${Math.round((val / tot) * 100)}%"></span></div><div class="num">${val}</div></div>`;
       $("content").innerHTML = `<h1>Reportes</h1>
-        <p class="sub">Actividad de la mesa y control de calidad.</p>
-        <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
-          ${kpi("Con fuente oficial", m.official || 0)}${kpi("Prioridad promedio", Math.round(m.avg_score ?? 0))}</div>
-        <div class="card"><h3 style="font-family:var(--f-title)">Calidad de la cobertura</h3>
-          <div class="metric"><span>Bandas · alta / media / baja</span><b>${m.band_alto || 0} / ${m.band_medio || 0} / ${m.band_bajo || 0}</b></div>
-          <div class="metric"><span>Evidencia · suficiente / parcial / insuficiente</span><b>${m.evidence_sufficient || 0} / ${m.evidence_partial || 0} / ${m.evidence_insufficient || 0}</b></div>
-          <div class="metric"><span>Temas con un solo origen</span><b>${m.single_source || 0}</b></div>
-          <div class="metric"><span>Repeticiones del mismo origen</span><b>${m.echo_copies || 0}</b></div>
-          <div class="metric"><span>Sin verificar / contradichos</span><b>${m.abstain || 0}</b></div>
+        <p class="sub">Un vistazo rápido a la actividad de la mesa y a la calidad de la cobertura.</p>
+        <div class="stats">
+          <div class="stat"><div class="v">${c.fetched || 0}</div><div class="l">Publicaciones leídas</div></div>
+          <div class="stat"><div class="v">${c.fichas || 0}</div><div class="l">Temas priorizados</div></div>
+          <div class="stat"><div class="v">${m.official || 0}</div><div class="l">Con fuente oficial</div></div>
+          <div class="stat"><div class="v">${Math.round(m.avg_score || 0)}</div><div class="l">Prioridad promedio</div></div>
+        </div>
+        <div class="repgrid">
+          <div class="card"><h3 style="font-family:var(--f-title)">Prioridad de los temas</h3>
+            ${bar("Alta", m.band_alto || 0, total, "bar-alto")}
+            ${bar("Media", m.band_medio || 0, total, "bar-medio")}
+            ${bar("Baja", m.band_bajo || 0, total, "bar-bajo")}
+          </div>
+          <div class="card"><h3 style="font-family:var(--f-title)">Evidencia disponible</h3>
+            ${bar("Suficiente", m.evidence_sufficient || 0, ev, "bar-suf")}
+            ${bar("Parcial", m.evidence_partial || 0, ev, "bar-par")}
+            ${bar("Insuficiente", m.evidence_insufficient || 0, ev, "bar-ins")}
+          </div>
         </div>
         <div class="card" id="quality" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">Cargando…</div></div>`;
       loadQuality();
@@ -384,14 +430,16 @@
       try {
         const [a, b] = await Promise.all([fetch("/api/acceptance").then(r => r.json()), fetch("/api/benchmark").then(r => r.json())]);
         const mm = b.metrics || {};
-        const pass = (a || []).filter(x => x.pass).length, tot = (a || []).length;
+        const pass = (a || []).filter(x => x.pass).length, tot = (a || []).length || 1;
+        const pct = (v) => Math.round((v ?? 0) * 100);
+        const viz = (lab, p, cls) => `<div class="viz"><div class="lab">${lab}</div><div class="track"><span class="${cls}" style="width:${p}%"></span></div><div class="num">${p}%</div></div>`;
         const el = $("quality"); if (!el) return;
         el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3>
-          <div class="metric"><span>Controles superados</span><b>${pass}/${tot}</b></div>
-          <div class="metric"><span>Temas con cita verificable</span><b>${Math.round((mm.citation_coverage ?? 0) * 100)}%</b></div>
-          <div class="metric"><span>Consultas sin respuesta rechazadas</span><b>${Math.round((mm.abstencion_correcta ?? 0) * 100)}%</b></div>
-          <div class="metric"><span>Instrucciones maliciosas bloqueadas</span><b>${Math.round((mm.adversarial_seguro ?? 0) * 100)}%</b></div>
-          <div class="metric"><span>Tiempo de respuesta (mediana)</span><b>${mm.latencia_ms_mediana ?? 0} ms</b></div>`;
+          <div class="viz"><div class="lab">Controles superados</div><div class="track"><span class="bar-suf" style="width:${Math.round(pass / tot * 100)}%"></span></div><div class="num">${pass}/${tot}</div></div>
+          ${viz("Temas con cita", pct(mm.citation_coverage), "bar-suf")}
+          ${viz("Sin respuesta rechazada", pct(mm.abstencion_correcta), "bar-par")}
+          ${viz("Instrucciones bloqueadas", pct(mm.adversarial_seguro), "bar-suf")}
+          <div class="viz"><div class="lab">Respuesta (mediana)</div><div class="track"><span class="bar-suf" style="width:100%"></span></div><div class="num">${mm.latencia_ms_mediana ?? 0} ms</div></div>`;
       } catch (e) { const el = $("quality"); if (el) el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">No disponible.</div>`; }
     }
 
