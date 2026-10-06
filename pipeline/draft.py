@@ -71,15 +71,12 @@ def build(ficha: dict) -> dict:
         "Insuficiente": "No hay evidencia suficiente para sostener la afirmación.",
     }.get(ev, "Evidencia por determinar.")
 
-    # Brief (≤250 palabras)
+    # Brief (≤250 palabras), en prosa
     brief = (
-        f"QUÉ SE REPORTA: {title}. "
-        f"QUIÉN LO REPORTA: {fuente_txt}. "
-        f"QUÉ ESTÁ RESPALDADO: {ev_frase} "
-        f"QUÉ FALTA COMPROBAR: {', '.join(pendientes)}. "
-        f"ENFOQUE DE INTERÉS PÚBLICO: {enfoque}. "
-        f"ACCIÓN RECOMENDADA: {accion}. "
-        f"ADVERTENCIA: {DISCLAIMER}"
+        f"{title}. Lo reporta {fuente_txt}. {ev_frase} "
+        f"Antes de publicar falta comprobar {', '.join(pendientes)}. "
+        f"El enfoque de interés público es {enfoque}, por lo que la acción recomendada es {accion}. "
+        f"{DISCLAIMER}"
     )
     brief = _fit(brief, 250)
 
