@@ -76,3 +76,13 @@ fuentes), redacta un **resumen** con IA y **actualiza el registro** en Notion.
 - Los `:free` se **rate-limiten** a veces (HTTP 429) → por eso el agente prueba
   una **lista de modelos** y cae en una **plantilla local** si todos fallan.
 - Disponibilidad limitada: **50 requests/día** a `:free`. Cachear y dosificar.
+
+## Uso bajo demanda (consumo controlado)
+
+La IA **no** corre en cada refresco. El refresco periódico es **determinista**
+(BM25, dedupe, citas). El análisis con IA se dispara **solo a pedido**:
+
+- Endpoint: `POST /api/analyze`
+- En la interfaz: botón **"Analizar con IA"**.
+
+Así no se quema la cuota de 50/día. `AI_TOP_N` controla cuántos temas analiza por corrida.

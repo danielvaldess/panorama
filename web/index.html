@@ -100,6 +100,7 @@
     <span class="pill ok" id="status">Fuentes al día</span>
     <span id="updated"></span>
     <button class="refresh" id="refresh">Actualizar</button>
+    <button class="refresh" id="analyze" style="border-color:var(--primary);color:var(--primary)">Analizar con IA</button>
   </div>
 
   <div class="layout">
@@ -310,6 +311,17 @@
       } catch (e) { $("content").innerHTML = `<div class="empty">No se pudieron cargar los datos.</div>`; }
     }
     $("refresh").addEventListener("click", () => load(true));
+    $("analyze").addEventListener("click", async () => {
+      const b = $("analyze"); b.disabled = true; const t = b.textContent; b.textContent = "Analizando…";
+      toast("Ejecutando análisis con IA…");
+      try {
+        const r = await fetch("/api/analyze", { method: "POST" });
+        DATA = await r.json();
+        render();
+        toast("Análisis con IA listo.");
+      } catch (e) { toast("No se pudo ejecutar la IA."); }
+      finally { b.disabled = false; b.textContent = t; }
+    });
     load(false);
     setInterval(() => { if (section === "prioridades") load(false); }, 120000);
   </script>

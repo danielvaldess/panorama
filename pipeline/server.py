@@ -83,10 +83,10 @@ def _enrich_ai(fichas: list[dict]) -> None:
 
 
 def refresh() -> dict:
+    """Refresco determinista (sin IA). La IA se dispara solo a pedido (/api/analyze)."""
     data = _build_fast()
     with _lock:
         _cache.update(data)
-    threading.Thread(target=_enrich_ai, args=(data["fichas"],), daemon=True).start()
     return data
 
 
@@ -126,6 +126,21 @@ async def fichas():
 @app.post("/api/refresh")
 async def force_refresh():
     return JSONResponse(refresh())
+
+
+@app.post("/api/analyze")
+async def analyze_now():
+    """Ejecuta el análisis con IA bajo demanda (consume cuota de OpenRouter)."""
+    with _lock:
+        fichas = list(_cache.get("fichas", []))
+    if not fichas:
+        refresh()
+        with _lock:
+            fichas = list(_cache.get("fichas", []))
+    _enrich_ai(fichas)
+    with _lock:
+        data = dict(_cache)
+    return JSONResponse(data)
 
 
 # Interfaz (después de las rutas /api)
