@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from pipeline import process, sources
+from pipeline import ai as ai_mod
 from eval import metrics
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
@@ -30,31 +31,6 @@ AI_TOP_N = int(os.environ.get("AI_TOP_N", "6"))
 
 _lock = threading.Lock()
 _cache: dict = {"fichas": [], "generated_at": None}
-
-
-def _ai_summary(title: str, sources_list: list[dict]) -> str:
-    key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not key:
-        return ""
-    model = os.environ.get("OPENROUTER_MODEL", "inclusionai/ling-3.0-flash-sante:free")
-    srcs = "; ".join(s["name"] for s in sources_list) or "sin fuente"
-    prompt = ("Eres un asistente editorial. Responde SOLO con un resumen neutral de máximo 30 "
-              "palabras, verificable. No inventes datos.\n"
-              f"Titular: {title}\nFuentes: {srcs}")
-    try:
-        r = httpx.post("https://openrouter.ai/api/v1/chat/completions",
-                       headers={"Authorization": f"Bearer {key}"},
-                       json={"model": model, "messages": [{"role": "user", "content": prompt}],
-                             "max_tokens": 900}, timeout=60)
-        if r.status_code == 200:
-            c = r.json()["choices"][0]["message"].get("content") or ""
-            c = c.strip()
-            if "the user wants" in c.lower():
-                return ""
-            return c[:400]
-    except Exception:
-        pass
-    return ""
 
 
 def _sources_catalog() -> list[dict]:
@@ -84,15 +60,25 @@ def _build_fast() -> dict:
 
 
 def _enrich_ai(fichas: list[dict]) -> None:
-    """Resúmenes con IA en segundo plano (no bloquea la primera respuesta)."""
-    changed = False
+    """Análisis asistido por IA (resumen, por qué importa, temas, relevancia).
+    Mide baseline (BM25) vs asistido (IA) con concordancia de orden."""
+    bm25: list[float] = []
+    ai_rel: list[float] = []
     for f in fichas[:AI_TOP_N]:
-        s = _ai_summary(f["title"], f["sources"])
-        if s:
-            f["summary"] = s
-            changed = True
-    if changed:
+        a = ai_mod.analyze(f["title"], f["sources"])
+        f.update(summary=a["summary"], why=a["why"], topics=a["topics"],
+                 relevance_ai=a["relevance"], method=a["method"], grounding=a["grounding"])
+        bm25.append(f.get("relevance", 0))
+        ai_rel.append(a["relevance"])
+    n = len(bm25)
+    if n:
         with _lock:
+            _cache["ai"] = {
+                "analyzed": n,
+                "baseline_avg": round(sum(bm25) / n, 2),
+                "ai_avg": round(sum(ai_rel) / n, 2),
+                "concordance": metrics.rank_agreement(bm25, ai_rel),
+            }
             _cache["ai_ready"] = True
 
 

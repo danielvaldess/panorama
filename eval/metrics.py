@@ -35,3 +35,21 @@ def baseline_vs_model(queries: list[str], docs: list[list[str]], relevance: list
         "delta": round((sum(relevance) - sum(base)) / n, 3),
         "n": len(docs),
     }
+
+
+def rank_agreement(a: list[float], b: list[float]) -> float:
+    """Spearman (sin scipy): ¿coinciden el orden del baseline y el de la IA?"""
+    if len(a) != len(b) or len(a) < 2:
+        return 0.0
+
+    def ranks(x):
+        order = sorted(range(len(x)), key=lambda i: x[i])
+        r = [0] * len(x)
+        for rank, i in enumerate(order):
+            r[i] = rank
+        return r
+
+    ra, rb = ranks(a), ranks(b)
+    n = len(a)
+    d2 = sum((ra[i] - rb[i]) ** 2 for i in range(n))
+    return round(1 - (6 * d2) / (n * (n * n - 1)), 2)

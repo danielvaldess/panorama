@@ -160,11 +160,18 @@
       const summary = f.summary
         ? `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Redactado a partir de las fuentes citadas</small>${esc(f.summary)}</div></div>`
         : `<div class="block"><h3>Resumen asistido</h3><div class="assist"><small>Sin resumen</small>Disponible para los temas principales.</div></div>`;
+      const why = f.why ? `<div class="block"><h3>Por qué importa</h3><div>${esc(f.why)}</div></div>` : "";
+      const topics = (f.topics || []).length
+        ? `<div class="block"><h3>Temas</h3><div class="meta">${f.topics.map(t => `<span class="chip rev">${esc(t)}</span>`).join(" ")}</div></div>`
+        : "";
+      const g = "";
       return `<div class="card detail">
         <div class="kicker" style="color:var(--blue)">Ficha del tema</div>
         <h2>${esc(f.title)}</h2>
-        <div class="meta" style="margin-bottom:6px">${chips}</div>
+        <div class="meta" style="margin-bottom:6px">${chips}${g}</div>
         ${summary}
+        ${why}
+        ${topics}
         <div class="block"><h3>Fuentes citadas (${(f.sources || []).length})</h3><ul class="sources">${sources || "<li>Sin fuentes</li>"}</ul></div>
         <div class="actions">
           <button class="btn btn-primary" data-act="review" data-i="${selected}">Enviar a revisión</button>
@@ -244,8 +251,18 @@
     }
 
     function renderReportes() {
-      const m = DATA.metrics || {}, c = DATA.counts || {};
+      const m = DATA.metrics || {}, c = DATA.counts || {}, a = DATA.ai || {};
       const kpi = (l, v) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+      const ai = a.analyzed
+        ? `<div class="card" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Análisis asistido por IA · baseline vs. modelo</h3>
+           <table><tbody>
+             <tr><td>Temas analizados por IA</td><td>${a.analyzed}</td></tr>
+             <tr><td>Relevancia media · baseline (BM25)</td><td>${a.baseline_avg}</td></tr>
+             <tr><td>Relevancia media · asistida (IA)</td><td>${a.ai_avg}</td></tr>
+             <tr><td><b>Concordancia de orden (Spearman)</b></td><td><b>${a.concordance}</b></td></tr>
+             <tr><td colspan="2" style="color:var(--soft);font-size:12px">El baseline pondera por palabra clave; la IA por significado. La IA aporta extracción, síntesis y abstención que el baseline no puede.</td></tr>
+           </tbody></table></div>`
+        : `<div class="card" style="margin-top:16px"><div class="empty">Análisis con IA en proceso…</div></div>`;
       $("content").innerHTML = `<h1>Reportes</h1>
         <p class="sub">Actividad de la mesa y calidad de las fuentes.</p>
         <div class="kpis">${kpi("Publicaciones leídas", c.fetched || 0)}${kpi("Temas priorizados", c.fichas || 0)}
@@ -257,7 +274,7 @@
           <tr><td>Temas de una sola fuente</td><td>${m.single_source || 0}</td></tr>
           <tr><td>Sin evidencia (abstención)</td><td>${m.abstain || 0}</td></tr>
           <tr><td>Score promedio</td><td>${m.avg_score ?? 0}</td></tr>
-        </tbody></table></div>`;
+        </tbody></table></div>${ai}`;
     }
 
     function bindActions(fs) {
