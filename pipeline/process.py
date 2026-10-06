@@ -160,11 +160,15 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
         for x in g:
             uniq.setdefault(x["source"], x["url"])
         sources = sorted(uniq)
+        v = _verify(g)
         rel_i = rel[i] if i < len(rel) else 0.0
         fresh = 1.0 if any(x.get("published") for x in g) else 0.5
-        relia = max(SOURCE_RELIABILITY.get(s, DEFAULT_RELIABILITY) for s in sources) / 5
-        score = round(0.55 * rel_i + 0.30 * fresh + 0.15 * relia, 2)
-        v = _verify(g)
+        rels = [SOURCE_RELIABILITY.get(s, DEFAULT_RELIABILITY) for s in sources]
+        if v["official"]:
+            rels.append(5)  # una fuente oficial es lo más fiable
+        relia = (max(rels) if rels else DEFAULT_RELIABILITY) / 5
+        bonus = 0.10 if v["official"] else 0.0
+        score = round(min(1.0, 0.55 * rel_i + 0.30 * fresh + 0.15 * relia + bonus), 2)
         fichas.append({
             "title": g[0]["title"],
             "score": score,
