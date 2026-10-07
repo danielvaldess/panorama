@@ -1,0 +1,68 @@
+name: DevSecOps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Pruebas (T01-T10 + benchmark)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+      - name: Matriz de aceptacion T01-T10
+        run: python -m eval.acceptance
+      - name: Benchmark (40 desarrollo)
+        run: python -m eval.benchmark
+      - name: Smoke de la API y del pipeline
+        run: python -c "import pipeline.server, pipeline.ingest, pipeline.export"
+
+  security:
+    name: Seguridad (SAST / SCA / secretos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar escaneres
+        run: pip install bandit pip-audit detect-secrets
+      - name: SAST - Bandit (codigo)
+        run: bandit -r pipeline eval -ll
+        continue-on-error: true
+      - name: SCA - pip-audit (dependencias)
+        run: pip-audit -r requirements.txt
+        continue-on-error: true
+      - name: Escaneo de secretos - detect-secrets
+        run: detect-secrets scan . > detect-secrets-report.json
+        continue-on-error: true
+      - name: Subir reporte de secretos
+        uses: actions/upload-artifact@v4
+        with:
+          name: detect-secrets-report
+          path: detect-secrets-report.json
+          if-no-files-found: ignore
+
+  build:
+    name: Build de imagen (Docker)
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir imagen
+        run: docker build -t panorama:ci .
