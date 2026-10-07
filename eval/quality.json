@@ -48,5 +48,28 @@
         "p@5_semantico": 0.4
       }
     ]
+  },
+  "sustento": {
+    "descripcion": "Validez de sustento de afirmaciones (revisión humana, rúbrica estricta)",
+    "fuente_datos": "data/processed/sustento_labels.jsonl",
+    "numerador_validos": 0,
+    "denominador": 0,
+    "pct_validos": null,
+    "meta_pct": 0.9,
+    "cumple_meta": false,
+    "muestra": {
+      "min_afirmaciones": 30,
+      "min_fichas": 10,
+      "afirmaciones": 0,
+      "fichas": 0,
+      "suficiente": false,
+      "etiquetas_descartadas_cambiadas": 5
+    },
+    "rubrica": {
+      "válido": "la fuente citada respalda la afirmación tal cual se enuncia (con proposición factual real)",
+      "parcial": "la fuente respalda solo parte de la afirmación — NO cuenta para la meta",
+      "inválido": "la fuente no respalda, o la afirmación es vacía/genérica sin hecho verificable — NO cuenta"
+    },
+    "fallos": []
   }
 }

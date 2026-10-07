@@ -26,6 +26,13 @@ Noticias públicas: **TVN RSS + GDELT DOC 2.0**. Google News no se usa porque es
 
 La ventana reciente aplica a **noticias usadas en la demo editorial**. Banco Mundial (2010–2024) y USGS (sismos 2024) se conservan como **contexto oficial histórico** porque el propio reto los define así; no se filtran por la ventana reciente de titulares.
 
+> **Ventana de noticias (corrección de coordinación):** solo se conservan noticias
+> con fecha en `[2025-10-02, 2026-09-30]` (el PDF §7 traía `[2024-01-01, 2025-10-01)`,
+> desfasado un año). Se lee `fecha_publicacion` y, si está vacía, `fecha_deteccion`.
+> GDELT se consulta por ventanas mensuales. Las exclusiones quedan registradas en
+> `manifest.json → rango_fechas_noticias`. Reprocesar el CSV congelado sin red:
+> `python -m pipeline.ingest --filtrar-snapshot`.
+
 ## B · `data/raw/indicadores.csv`
 Banco Mundial **Indicators API v2** — 6 países (PAN, CRI, COL, DOM, MEX, GTM) × 6
 indicadores × 2010–2024 (cuadrícula de 540 combinaciones).

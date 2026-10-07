@@ -15,6 +15,11 @@ automáticamente.**
 - Reto: **confirmado** — modalidad **editorial TVN (100%)**; banca fuera de alcance.
 - Stack: **Python / FastAPI + SPA**, desplegado en Dokku (`panorama.sweetcode.studio`).
 - Datos: **snapshot congelado** en `data/raw/` (ver `data/diccionario.md`).
+  Filtrado a la ventana de coordinación `[2025-10-02, 2026-09-30]`: **250 noticias** (50 TVN + 200 GDELT).
+- Revisión humana y eval de sustento **integrados en `main`** (2026-10-07):
+  filtro de fechas ✅ · veredictos por afirmación + perfil del Administrador +
+  `eval/sustento.py` ✅ · **pendiente: etiquetar ≥30 afirmaciones (5/30 hoy) y
+  iterar `pipeline/draft.py::_claims` hasta ≥90%**. Detalle: `docs/HANDOFF.md`.
 
 ## Convenciones
 
@@ -24,8 +29,25 @@ automáticamente.**
 
 ## Datos y reproducibilidad
 
-- Regenerar el snapshot: `python -m pipeline.ingest`
+- Regenerar el snapshot: `python -m pipeline.ingest` (aborta si quedan menos de 50
+  noticias en la ventana de coordinación `[2025-10-02, 2026-09-30]`, para no
+  sobrescribir el snapshot congelado).
+- Aplicar solo el rango de fechas al CSV congelado (sin red):
+  `python -m pipeline.ingest --filtrar-snapshot` (documentado en `data/diccionario.md`).
 - Correr el prototipo: `uvicorn pipeline.server:app --reload` (usa el snapshot si existe; si no, *fallback* a fuentes en vivo).
+
+## Revisión humana (Administrador) y eval de sustento
+
+- **UI**: en la ficha, cada afirmación tiene botones *Válido / Parcial / Inválido*
+  (sección «Afirmaciones y citas») y la vista **«Perfil del Admin»** resume las
+  preferencias aprendidas de las decisiones del editor.
+- **API**: `POST /api/claims/verdict` · `GET /api/claims/verdicts` ·
+  `GET /api/admin/profile` · `POST /api/review` (persistente).
+- **Persistencia** (versionada, no se pierde al reiniciar): `pipeline/store.py` →
+  `data/processed/revisiones.jsonl` + `data/processed/sustento_labels.jsonl`.
+- **Métrica de sustento** (rúbrica estricta: solo «válido» cuenta; meta ≥90% sobre
+  ≥30 afirmaciones de ≥10 fichas): `python -m eval.sustento` (merge en
+  `eval/quality.json`) · `python -m eval.sustento --pendientes`.
 
 ## Notion
 

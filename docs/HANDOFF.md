@@ -18,28 +18,34 @@ de evidencia** y **borradores**, para **decisión humana**. **Nunca publica.**
 |---|---|
 | F1 Notion · F2 Patrimonio · F3 Datos · F4 Motor · F5 Producto · F6 Pruebas · F7 Pitch | ✅ |
 | Cierre de brechas (IA semántica, contexto oficial, contrato, métricas) | ✅ |
+| Rango §7 de fechas (tarea 2 del backlog) | ✅ integrado en `main` |
+| Infra revisión humana + eval sustento (tarea 1) | ✅ integrado en `main` |
+| Etiquetaje ≥30 afirmaciones → meta ≥90% | 🟡 **5/30 hechas** (continuar en la UI) |
 
 - **Motor:** `P = 30R+25I+20U+15N+10E` (0–100), reglas `p-1.0`, estado de evidencia independiente.
 - **IA:** embeddings **locales** (fastembed) para recuperación/agrupación semántica + baseline BM25; OpenRouter bajo demanda si hay key.
-- **Datos:** snapshot congelado (211 noticias · 540 indicadores · 82 sismos) + `manifest.json`. Fuentes: TVN RSS + GDELT + Banco Mundial + USGS.
-- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **90%** · abstención **86%** · contradicción **100%** · adversarial **100%** · latencia **~11 ms**.
+- **Datos:** snapshot congelado filtrado a la ventana de coordinación `[2025-10-02, 2026-09-30]` → **250 noticias** (50 TVN + 200 GDELT) · 540 indicadores · 82 sismos. Fuentes: TVN RSS + GDELT + Banco Mundial + USGS.
+- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **90%** · abstención **100%** · contradicción **100%** · adversarial **100%** · latencia **~9 ms**.
 
 ## Cómo correr (local)
 ```bash
 pip install -r requirements.txt
-python -m pipeline.ingest          # regenera el snapshot (necesita internet)
-python -m pipeline.export          # regenera fichas.jsonl + fuentes.json
+python -m pipeline.ingest --filtrar-snapshot   # aplica rango §7 al CSV congelado (sin red)
+python -m pipeline.ingest                      # regenera el snapshot (necesita internet)
+python -m pipeline.export                      # regenera fichas.jsonl + fuentes.json
 uvicorn pipeline.server:app --reload --port 8000   # http://localhost:8000
 python -m eval.acceptance          # T01–T10
 python -m eval.benchmark           # 40 dev / 20 jurado
-python -m eval.quality             # agrupación, macro-F1, P@5
+python -m eval.quality             # agrupación, macro-F1, P@5 (preserva 'sustento')
+python -m eval.sustento            # métrica de sustento (rúbrica estricta)
+python -m eval.sustento --pendientes  # qué afirmaciones faltan por veredicto
 ```
 
 ## Estructura
 ```
-pipeline/  ingest · snapshot · sources · process · score · draft · context · embed · guard · validate · export · server
-eval/      acceptance (T01–T10) · benchmark (60) · quality · metrics
-data/      raw/ (noticias, indicadores, eventos) · processed/fichas.jsonl · manifest.json · fuentes.json · benchmark.jsonl · diccionario.md
+pipeline/  ingest · snapshot · sources · process · score · draft · context · embed · guard · validate · export · server · store (persistencia JSONL)
+eval/      acceptance (T01–T10) · benchmark (60) · quality · metrics · sustento (≥90%)
+data/      raw/ (noticias, indicadores, eventos) · processed/fichas.jsonl · processed/revisiones.jsonl · processed/sustento_labels.jsonl · manifest.json · fuentes.json · benchmark.jsonl · diccionario.md
 web/       interfaz (SPA) · favicon · como-funciona.png
 docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servidor · capturas · diagramas
 .cursor/rules/panorama.mdc   reglas del proyecto (versionadas)
@@ -56,15 +62,29 @@ docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servid
 
 > Prioridad sugerida. Cada una es un buen PR.
 
-### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica)
-- **Qué:** revisar humanamente **≥30 afirmaciones** y medir el % con respaldo válido (meta ≥90%).
-- **Dónde:** nuevo `eval/sustento.py` + muestra etiquetada; salida en `eval/quality.json` y base “Pruebas y métricas” de Notion.
-- **Acepta:** script reproducible + resultado con numerador/denominador y fallos.
+### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica) 🟡 EN CURSO
+- **Hecho (rama `feat/sustento-eval`):**
+  - `pipeline/store.py` — persistencia JSONL de decisiones y veredictos
+    (`data/processed/revisiones.jsonl`, `sustento_labels.jsonl`; sobrevive reinicios,
+    versionable en git).
+  - API: `POST /api/claims/verdict` · `GET /api/claims/verdicts` ·
+    `GET /api/admin/profile` (preferencias del Administrador, sin re-ranking) ·
+    `POST /api/review` ahora persistente.
+  - UI: botones *Válido / Parcial / Inválido* por afirmación en la ficha +
+    contador de progreso + vista **«Perfil del Admin»**.
+  - `eval/sustento.py` — rúbrica estricta (solo «válido» cuenta), meta ≥90%,
+    ≥30 afirmaciones de ≥10 fichas, descarta etiquetas de afirmaciones que cambiaron,
+    merge en `eval/quality.json` (clave `sustento`; `eval/quality.py` la preserva),
+    modo `--pendientes`.
+- **Falta:** etiquetar **≥30 afirmaciones** en la UI (**5/30 hoy**, 4 fichas) →
+  correr `python -m eval.sustento` → si <90%, pulir `pipeline/draft.py::_claims`
+  (hoy emite títulos vacíos tipo *"REPÚBLICA DE PANAMA?"*) → `python -m pipeline.export`
+  → re-etiquetar lo nuevo → re-medir. Luego fila CSV en `docs/notion/csv/04-pruebas-metricas.csv`.
 
-### 2. `docs/date-policy` — Política de fechas del dataset
-- **Qué:** mantener documentada la aclaración de coordinación: noticias recientes para demo; Banco Mundial 2010–2024 y USGS 2024 como contexto oficial histórico.
-- **Dónde:** `data/diccionario.md`, `docs/CUMPLIMIENTO-RETO.md`, Notion.
-- **Acepta:** no mezclar la ventana de titulares recientes con las series/contextos históricos.
+### 2. `docs/date-policy` — Política de fechas del dataset ✅ HECHO
+- **Qué:** documentar la corrección de coordinación: las noticias se scrapean de **2025-10-02 a 2026-09-30** (el PDF §7 traía `[2024-01-01, 2025-10-01)`, desfasado un año); GDELT por ventanas mensuales.
+- **Dónde:** `pipeline/ingest.py` (`NEWS_WINDOW_*`, `_aplicar_rango`, `--filtrar-snapshot`), `data/diccionario.md`, `docs/CUMPLIMIENTO-RETO.md`.
+- **Acepta:** snapshot dentro de la ventana (**250 noticias**) y `manifest.json` con `rango_fechas_noticias`.
 
 ### 3. `feat/sbp-optional` — Extensión bancaria SBP (opcional)
 - **Qué:** 12 informes mensuales 2024 de la SBP → `data/raw/sbp.csv` (período/unidad/página).
