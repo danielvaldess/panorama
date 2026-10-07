@@ -97,7 +97,7 @@ def t09():
     d = draft.build(f[0])
     wb, wg, wc = len(d["brief"].split()), len(d["guion_45_60s"].split()), len(d["copy_digital"].split())
     tipos = {a["tipo"] for a in d["afirmaciones"]}
-    passed = wb <= 250 and wg <= 130 and wc <= 80 and all(a["ids_fuente"] for a in d["afirmaciones"]) and "hecho reportado" in tipos
+    passed = wb <= 250 and wg <= 130 and wc <= 80 and all(a["ids_fuente"] for a in d["afirmaciones"]) and all(a.get("campo") for a in d["afirmaciones"]) and "hecho reportado" in tipos
     return passed, f"brief={wb} guion={wg} copy={wc}; citas por afirmación; tipos={sorted(tipos)}"
 
 
