@@ -11,6 +11,7 @@ def summarize(raw: list[dict], deduped: list[dict], fichas: list[dict]) -> dict:
     echo = sum(v(f).get("echo", 0) for f in fichas)
     unverified = sum(1 for f in fichas if f.get("state") in ("Sin verificar", "Contradicho"))
     total = len(fichas) or 1
+    cited = sum(1 for f in fichas if f.get("sources"))
     ev = [f.get("evidence_state", "") for f in fichas]
     bands = [f.get("band", "") for f in fichas]
     return {
@@ -23,7 +24,7 @@ def summarize(raw: list[dict], deduped: list[dict], fichas: list[dict]) -> dict:
         "official": official,
         "echo_copies": echo,
         "abstain": unverified,
-        "citation_coverage": round(multi / total, 2),
+        "citation_coverage": round(cited / total, 2),
         "avg_score": int(round(sum(f.get("score", 0) for f in fichas) / total)),
         "evidence_sufficient": sum(1 for x in ev if x.startswith("Suficiente")),
         "evidence_partial": sum(1 for x in ev if x == "Parcial"),

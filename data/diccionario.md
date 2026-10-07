@@ -4,7 +4,7 @@ Snapshot público y congelado para el reto **TVN Media**. Se versiona junto al
 prototipo y se referencia en `manifest.json` (con SHA-256).
 
 ## A · `data/raw/noticias.csv`
-Noticias públicas: **TVN RSS + GDELT DOC 2.0** + prensa oficial (`gob.pa`).
+Noticias públicas: **TVN RSS + GDELT DOC 2.0**. Google News no se usa porque es agregador, no fuente primaria del reto.
 
 | Campo | Descripción |
 |---|---|
@@ -17,10 +17,14 @@ Noticias públicas: **TVN RSS + GDELT DOC 2.0** + prensa oficial (`gob.pa`).
 | `fecha_deteccion` | Cuándo lo detectó la fuente (GDELT `seendate`) — **distinta** de publicación |
 | `fecha_extraccion` | Cuándo se extrajo al snapshot |
 | `tema` | economía · logística · turismo · servicios · eventos_naturales · regulación · general |
-| `origen` | `RSS` · `GDELT` · `Oficial` |
+| `origen` | `RSS` · `GDELT` |
 | `alcance_texto` | `titular+metadatos` (no se asume lectura del cuerpo) |
 
-> Regla: guardar `fecha_publicacion` **distinta** de `fecha_deteccion`; conservar nulos.
+> Regla: guardar `fecha_publicacion` **distinta** de `fecha_deteccion`; conservar nulos. Las noticias vienen de TVN RSS y GDELT; los datos oficiales estructurados vienen de Banco Mundial y USGS.
+
+### Nota sobre fechas
+
+La ventana reciente aplica a **noticias usadas en la demo editorial**. Banco Mundial (2010–2024) y USGS (sismos 2024) se conservan como **contexto oficial histórico** porque el propio reto los define así; no se filtran por la ventana reciente de titulares.
 
 ## B · `data/raw/indicadores.csv`
 Banco Mundial **Indicators API v2** — 6 países (PAN, CRI, COL, DOM, MEX, GTM) × 6

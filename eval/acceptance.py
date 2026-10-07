@@ -82,7 +82,7 @@ def t07():
 
 
 def t08():
-    items = snapshot.load_news()
+    items = process.filter_editorial(snapshot.load_news())
     g = process.cluster(items)
     f = process.priority(g, ["Panamá", "economía", "Canal", "seguridad"])
     top = f[0]
@@ -92,7 +92,7 @@ def t08():
 
 
 def t09():
-    items = snapshot.load_news()
+    items = process.filter_editorial(snapshot.load_news())
     f = process.priority(process.cluster(items), ["Panamá", "economía"])
     d = draft.build(f[0])
     wb, wg, wc = len(d["brief"].split()), len(d["guion_45_60s"].split()), len(d["copy_digital"].split())

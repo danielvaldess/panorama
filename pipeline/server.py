@@ -16,8 +16,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -27,12 +26,32 @@ from pipeline import ai as ai_mod
 from eval import metrics
 
 REVIEW_STATES = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"]
-_review: dict[str, dict] = {}
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REVIEW_PATH = os.path.join(ROOT, "data", "processed", "reviews.json")
+
+
+def _load_reviews() -> dict[str, dict]:
+    try:
+        with open(REVIEW_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_reviews() -> None:
+    os.makedirs(os.path.dirname(REVIEW_PATH), exist_ok=True)
+    with open(REVIEW_PATH, "w", encoding="utf-8") as fh:
+        json.dump(_review, fh, ensure_ascii=False, indent=2)
+
+
+_review: dict[str, dict] = _load_reviews()
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "900"))
 MAX_FICHAS = int(os.environ.get("MAX_FICHAS", "40"))
 AI_TOP_N = int(os.environ.get("AI_TOP_N", "6"))
+ADMIN_TOKEN = os.environ.get("PANORAMA_ADMIN_TOKEN", "")
 
 _lock = threading.Lock()
 _cache: dict = {"fichas": [], "generated_at": None}
@@ -48,32 +67,47 @@ def _sources_catalog() -> list[dict]:
     return cat
 
 
+def _cluster(items: list[dict]) -> tuple[list[list[dict]], str]:
+    if embed.available():
+        try:
+            return embed.cluster(items, threshold=float(os.environ.get("SEMANTIC_CLUSTER_THRESHOLD", "0.72"))), "semántico (embeddings locales)"
+        except Exception:
+            pass
+    return process.cluster(items), "léxico (similitud de texto)"
+
+
+def _authorized(token: str | None) -> bool:
+    return not ADMIN_TOKEN or token == ADMIN_TOKEN
+
+
 def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
     # D5: preferir el snapshot congelado; si no existe, fallback a fuentes en vivo.
     used_snapshot = snapshot.available()
     raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
-    semantic = embed.available()
-    groups = process.cluster(raw)  # agrupación por similitud de texto (baseline estable)
+    editorial = process.filter_editorial(raw)
+    groups, grouping_method = _cluster(editorial)
     fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
     for f in fichas:  # contexto oficial + paquete editorial + estado de revisión
         f["contexto"] = context.build(f)
         f["draft"] = draft.build(f)
         f["review_state"] = _review.get(f.get("id"), {}).get("state", "nuevo")
-    deduped = process.dedupe(raw)  # solo para el feed y métricas
+    deduped = process.dedupe(raw)  # métrica de entrada completa
+    feed_items = process.dedupe(editorial)
     feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
-            for x in deduped[:120]]
+            for x in feed_items[:120]]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "fichas": len(fichas),
-                   "official_items": sum(1 for x in raw if x.get("official"))},
+        "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "editorial_signals": len(editorial),
+                   "fichas": len(fichas), "official_items": sum(1 for x in raw if x.get("official"))},
         "fichas": fichas,
         "feed": feed,
         "sources": _sources_catalog(),
         "metrics": metrics.summarize(raw, deduped, fichas),
-        "ai_ready": False,
-        "method": {"grouping": "semántico (embeddings)" if semantic else "léxico (similitud de texto)",
-                   "retrieval": "BM25 + semántico", "llm": "inactivo (costo 0)"},
+        "ai_ready": bool(_cache.get("ai_ready")),
+        "ai_configured": ai_mod.available(),
+        "method": {"grouping": grouping_method, "retrieval": "BM25 + semántico",
+                   "llm": "OpenRouter bajo demanda" if ai_mod.available() else "inactivo (sin OPENROUTER_API_KEY)"},
         "snapshot": (
             {"used": True, **{k: v for k, v in snapshot.manifest().items() if k in ("version", "fecha_corte_UTC")}}
             if used_snapshot else {"used": False}
@@ -195,7 +229,9 @@ async def fichas():
 
 
 @app.post("/api/refresh")
-async def force_refresh():
+async def force_refresh(x_panorama_token: str | None = Header(default=None)):
+    if not _authorized(x_panorama_token):
+        return JSONResponse({"ok": False, "error": "no autorizado"}, status_code=401)
     return JSONResponse(refresh())
 
 
@@ -207,12 +243,15 @@ class ReviewIn(BaseModel):
 
 
 @app.post("/api/review")
-async def set_review(body: ReviewIn):
+async def set_review(body: ReviewIn, x_panorama_token: str | None = Header(default=None)):
     """Registra la decisión humana sobre una ficha (nuevo → … → descartado)."""
+    if not _authorized(x_panorama_token):
+        return JSONResponse({"ok": False, "error": "no autorizado"}, status_code=401)
     if body.state not in REVIEW_STATES:
         return JSONResponse({"ok": False, "error": "estado inválido", "valid": REVIEW_STATES}, status_code=400)
     _review[body.id] = {"state": body.state, "note": body.note, "reviewer": body.reviewer,
                         "ts": datetime.now(timezone.utc).isoformat()}
+    _save_reviews()
     with _lock:
         for f in _cache.get("fichas", []):
             if f.get("id") == body.id:
@@ -221,8 +260,10 @@ async def set_review(body: ReviewIn):
 
 
 @app.post("/api/analyze")
-async def analyze_now():
+async def analyze_now(x_panorama_token: str | None = Header(default=None)):
     """Ejecuta el análisis con IA bajo demanda (consume cuota de OpenRouter)."""
+    if not _authorized(x_panorama_token):
+        return JSONResponse({"ok": False, "error": "no autorizado"}, status_code=401)
     with _lock:
         fichas = list(_cache.get("fichas", []))
     if not fichas:

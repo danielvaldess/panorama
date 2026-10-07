@@ -1,12 +1,11 @@
-# IA — OpenRouter
+# IA — embeddings locales + OpenRouter bajo demanda
 
-Usamos **OpenRouter** como **único gateway de IA** para el proyecto: permite
-cambiar de modelo sin tocar el código y trabajar con modelos `:free`.
+Panorama usa IA en dos niveles: **embeddings locales** para recuperación/agrupación semántica y **OpenRouter bajo demanda** para enriquecer algunos temas si hay `OPENROUTER_API_KEY`. El flujo principal no depende de un LLM.
 
 ## Decisiones
 
-- **Un solo proveedor:** OpenRouter (`https://openrouter.ai/api/v1`).
-- **Modelo por defecto:** `qwen/qwen3.8-27b:free` (configurable con `OPENROUTER_MODEL`).
+- **Proveedor LLM opcional:** OpenRouter (`https://openrouter.ai/api/v1`).
+- **Modelos:** lista configurable con `OPENROUTER_MODELS`; se prueba uno por uno y se cae a plantilla local.
 - **Costo:** la key actual es **free tier** (límite 100 · **50 requests/día** a
   modelos `:free`). Elegir modelos `:free` salvo que se justifique otro.
 - **Principio:** la IA **redacta y resume**; **no decide**. El puntaje de
@@ -18,8 +17,8 @@ cambiar de modelo sin tocar el código y trabajar con modelos `:free`.
 Repetir un titular en más medios **no** verifica la noticia (eso es **eco**). Por
 eso separamos dos cosas:
 
-- **Prioridad** (determinista): `0.55·relevancia (BM25) + 0.30·frescura + 0.15·confiabilidad`.
-  Mide **importancia** para la mesa.
+- **Prioridad** (determinista): `P = 30R + 25I + 20U + 15N + 10E`.
+  Mide **atención editorial**, no verdad ni autorización para publicar.
 - **Verificación** (determinista): mide **evidencia**, no popularidad.
 
 Estados y regla (en `pipeline/process.py`):
@@ -35,15 +34,15 @@ Detección de **eco**: agrupamos por origen textual (similitud ≥ 0.70) y por
 **agencia** (EFE/AP/Reuters/AFP…); los medios que copian cuentan como **una** sola
 fuente. El resultado se muestra como *"N medios, M son eco"*.
 
-> La IA entra (bajo demanda) para **extraer claims**, **trazar origen** y
-> **verificar entailment** contra datos oficiales; no como "juez de verdad".
+> La IA entra bajo demanda para generar un resumen auxiliar y etiquetas. Las afirmaciones mostradas en la ficha siguen limitadas al titular/metadatos y sus fuentes.
 
 ## Variables de entorno
 
 | Variable | Descripción |
 |----------|-------------|
 | `OPENROUTER_API_KEY` | Key de OpenRouter (**secreto**). |
-| `OPENROUTER_MODEL` | Modelo a usar (por defecto `qwen/qwen3.8-27b:free`). |
+| `OPENROUTER_MODELS` | Modelos a probar, separados por coma. |
+| `PANORAMA_ADMIN_TOKEN` | Token opcional para proteger rutas mutables. |
 
 ## Dónde vive la key
 
@@ -56,7 +55,7 @@ fuente. El resultado se muestra como *"N medios, M son eco"*.
 
 > ⚠️ Nunca commitear la key. Si se filtra, **rotarla** en OpenRouter.
 
-## Uso (cuando exista el código)
+## Uso directo
 
 ```python
 import os, httpx
@@ -68,8 +67,7 @@ r = httpx.post(
 )
 ```
 
-> En la interfaz, la IA es **invisible**: se muestra "resumen asistido" o
-> "sugerencia", nunca "modelo" ni "API conectada".
+> En la interfaz, la IA se ejecuta solo con el botón **Analizar con IA**. Si no hay key, se usa fallback local y se informa como tal.
 
 ## Agente respaldado por Notion
 
@@ -117,8 +115,7 @@ Así no se quema la cuota de 50/día. `AI_TOP_N` controla cuántos temas analiza
 - **Capacidad:** **recuperación semántica** con **embeddings** (`fastembed`, modelo
   `paraphrase-multilingual-MiniLM-L12-v2`, ONNX, 384 dim). Corre **100% local** →
   **costo 0** y **funciona sin API**. Módulo: `pipeline/embed.py`.
-- **Dónde se usa:** buscador de la mesa (`GET /api/search`) y evaluación de calidad
-  (agrupación semántica vs. léxica).
+- **Dónde se usa:** buscador de la mesa (`GET /api/search`), agrupación de `/api/fichas` cuando el modelo está disponible y evaluación de calidad.
 - **Baseline:** **BM25** (léxico) — comparado en `eval/benchmark.py` y `eval/quality.py`.
 - **LLM (OpenRouter):** **inactivo** en la entrega → **costo 0**. Se mantiene el módulo
   `pipeline/ai.py` como extensión opcional (resumen de borradores), siempre con

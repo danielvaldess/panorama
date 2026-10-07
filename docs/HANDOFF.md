@@ -20,9 +20,9 @@ de evidencia** y **borradores**, para **decisión humana**. **Nunca publica.**
 | Cierre de brechas (IA semántica, contexto oficial, contrato, métricas) | ✅ |
 
 - **Motor:** `P = 30R+25I+20U+15N+10E` (0–100), reglas `p-1.0`, estado de evidencia independiente.
-- **IA:** embeddings **locales** (fastembed) para recuperación semántica + baseline BM25; LLM inactivo (costo 0).
-- **Datos:** snapshot congelado (260 noticias · 540 indicadores · 82 sismos) + `manifest.json`.
-- **Métricas:** T01–T10 **10/10** · citas **100%** · abstención **100%** · adversarial **100%** · latencia **~15 ms**.
+- **IA:** embeddings **locales** (fastembed) para recuperación/agrupación semántica + baseline BM25; OpenRouter bajo demanda si hay key.
+- **Datos:** snapshot congelado (406 noticias · 540 indicadores · 82 sismos) + `manifest.json`.
+- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **85%** · abstención **86%** · contradicción **100%** · adversarial **100%** · latencia **~12 ms**.
 
 ## Cómo correr (local)
 ```bash
@@ -61,20 +61,20 @@ docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servid
 - **Dónde:** nuevo `eval/sustento.py` + muestra etiquetada; salida en `eval/quality.json` y base “Pruebas y métricas” de Notion.
 - **Acepta:** script reproducible + resultado con numerador/denominador y fallos.
 
-### 2. `feat/date-range-filter` — Rango de fechas del contrato (§7)
-- **Qué:** filtrar `noticias.csv` al intervalo **`[2024-01-01, 2025-10-01)`** (hoy no se aplica).
-- **Dónde:** `pipeline/ingest.py` (`collect_news`) + documentar en `data/diccionario.md`.
-- **Acepta:** noticias fuera del rango excluidas y registradas en el manifest.
+### 2. `docs/date-policy` — Política de fechas del dataset
+- **Qué:** mantener documentada la aclaración de coordinación: noticias recientes para demo; Banco Mundial 2010–2024 y USGS 2024 como contexto oficial histórico.
+- **Dónde:** `data/diccionario.md`, `docs/CUMPLIMIENTO-RETO.md`, Notion.
+- **Acepta:** no mezclar la ventana de titulares recientes con las series/contextos históricos.
 
 ### 3. `feat/sbp-optional` — Extensión bancaria SBP (opcional)
 - **Qué:** 12 informes mensuales 2024 de la SBP → `data/raw/sbp.csv` (período/unidad/página).
 - **Dónde:** nuevo fetcher en `pipeline/ingest.py` + catálogo.
 - **Acepta:** archivo + licencia/condiciones documentadas.
 
-### 4. `feat/embeddings-grouping` — Agrupación semántica calibrada
-- **Qué:** usar embeddings para **agrupar eventos** (distinta redacción) con umbral calibrado vs baseline.
-- **Dónde:** `pipeline/embed.py` (`cluster`) + integrar en `server._build_fast` con *fallback*.
-- **Acepta:** mejora medida en `eval/quality.py` (P/R de agrupación).
+### 4. `feat/embeddings-threshold` — Calibrar agrupación semántica
+- **Qué:** ajustar el umbral de embeddings (`SEMANTIC_CLUSTER_THRESHOLD`) con más pares reales etiquetados.
+- **Dónde:** `pipeline/embed.py`, `server._cluster`, `eval/quality.py`.
+- **Acepta:** precisión/recall de agrupación reportadas sobre muestra ampliada.
 
 ### 5. `feat/classification-labels` — Mejorar clasificación ML
 - **Qué:** ampliar etiquetas humanas para que el modelo ML **supere** al baseline por palabras clave (hoy 0.80 vs 0.36).

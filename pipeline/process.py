@@ -26,7 +26,52 @@ OFFICIAL_DOMAINS = {
     "meduca.gob.pa", "attt.gob.pa", "asamblea.gob.pa", "organojudicial.gob.pa",
     "tribunal-electoral.gob.pa", "panamacanal.com",
 }
+AGGREGATOR_DOMAINS = {"news.google.com"}
 WIRE_MARKERS = ("efe", "reuters", "afp", "ap news", "dpa", "bloomberg", "acan", "notimex")
+GENERIC_TITLE_PATTERNS = (
+    "noticias de actualidad",
+    "cultura y educación",
+    "república de panamá",
+    "ministerio de economía y finanzas de panamá",
+    "gaceta oficial digital",
+    "listado de cepadem",
+    "inicio - ministerio",
+    "author at ministerio",
+    "zimbra web client",
+    "cálculo de prestaciones",
+    "calculo de prestaciones",
+    "contenido exclusivo:",
+    "emotiva jornada recreativa",
+    "celebración carnavalera",
+    "celebracion carnavalera",
+    "liga de naciones",
+    "concacaf resultados",
+    "tras una rápida acción",
+    "tras una rapida accion",
+    "jay wheeler",
+    "gira 'la voz favorita'",
+    "josué vergara",
+    "josue vergara",
+    "gente tvn",
+    "lpf resultado",
+    "torneo apertura",
+)
+OFFICIAL_SOURCE_MARKERS = (
+    "ministerio", "policia nacional", "policía nacional", "autoridad", "gaceta oficial",
+    "meduca", "minsa", "contraloría", "contraloria", "ifaruh", "bomberos",
+)
+LOCAL_MARKERS = (
+    "panam", "canal", "chiriquí", "chiriqui", "veraguas", "colón", "colon", "darién", "darien",
+    "coclé", "cocle", "herrera", "los santos", "bocas del toro", "san miguelito", "arraiján",
+    "arraijan", "la chorrera", "tumba muerto", "coiba", "azuero", "metro", "asamblea",
+    "contraloría", "contraloria", "meduca", "minsa", "css", "santo tomás", "santo tomas",
+    "gobierno", "presupuesto", "policía nacional", "policia nacional", "bomberos", "samer",
+)
+SPANISH_STOPWORDS = {"el", "la", "los", "las", "de", "del", "en", "por", "para", "con", "que", "un", "una", "al"}
+ENGLISH_NOISE = {
+    "workers", "after", "with", "stand", "navigation", "death", "captain", "inland",
+    "first", "fountain", "generates", "drinking", "water", "humidity", "inaugurated",
+}
 # Similitud a partir de la cual dos titulares del mismo grupo se consideran ECO (misma historia reescrita).
 ECHO_SIM = 0.70
 DENY_MARKERS = ("desmiente", "desmintió", "niega", "negó", "falso", "no es cierto",
@@ -44,7 +89,48 @@ def _host(url: str) -> str:
 def is_official(url: str) -> bool:
     """¿Proviene de un dominio oficial/primario (gob.pa, Canal, etc.)?"""
     h = _host(url)
+    if h in AGGREGATOR_DOMAINS:
+        return False
     return any(h == d or h.endswith("." + d) for d in OFFICIAL_DOMAINS)
+
+
+def is_aggregator(url: str) -> bool:
+    return _host(url) in AGGREGATOR_DOMAINS
+
+
+def is_official_source_name(source: str) -> bool:
+    low = (source or "").lower()
+    return any(m in low for m in OFFICIAL_SOURCE_MARKERS)
+
+
+def is_editorial_signal(item: dict) -> bool:
+    """Descarta páginas/índices genéricos que no son temas investigables."""
+    title = (item.get("title") or "").strip()
+    url = (item.get("url") or "").strip()
+    source = (item.get("source") or "").strip()
+    low = title.lower()
+    blob = f"{title} {source}".lower()
+    local_blob = blob if is_official_source_name(source) else low
+    if is_aggregator(url):
+        return False
+    if len(tokens(title)) < 4:
+        return False
+    if any(p in low for p in GENERIC_TITLE_PATTERNS):
+        return False
+    if source and low == source.lower():
+        return False
+    if re.search(r"\bimg[-_ ]?\d+\b", low):
+        return False
+    if not any(m in local_blob for m in LOCAL_MARKERS):
+        return False
+    words = set(re.findall(r"[a-záéíóúñü]+", low))
+    if words & ENGLISH_NOISE and len(words & SPANISH_STOPWORDS) < 2:
+        return False
+    return True
+
+
+def filter_editorial(items: list[dict]) -> list[dict]:
+    return [x for x in items if is_editorial_signal(x)]
 
 
 def _is_wire(x: dict) -> bool:

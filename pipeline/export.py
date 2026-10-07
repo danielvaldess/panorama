@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 
-from pipeline import snapshot, process, draft, context, sources
+from pipeline import snapshot, process, draft, context, sources, embed
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROC = os.path.join(ROOT, "data", "processed")
@@ -18,8 +18,14 @@ TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", 
 
 
 def build_fichas(limit: int = 80) -> list[dict]:
-    raw = snapshot.load_news()
-    groups = process.cluster(raw)
+    raw = process.filter_editorial(snapshot.load_news())
+    if embed.available():
+        try:
+            groups = embed.cluster(raw, threshold=0.72)
+        except Exception:
+            groups = process.cluster(raw)
+    else:
+        groups = process.cluster(raw)
     fichas = process.priority(groups, TOPICS)[:limit]
     out = []
     for f in fichas:

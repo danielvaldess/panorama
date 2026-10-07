@@ -9,6 +9,8 @@ import csv
 import json
 import os
 
+from pipeline import process
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw")
 
@@ -21,16 +23,26 @@ def load_news(limit: int | None = None) -> list[dict]:
     items: list[dict] = []
     with open(os.path.join(RAW, "noticias.csv"), encoding="utf-8-sig", newline="") as fh:
         for r in csv.DictReader(fh):
-            items.append({
+            item = {
                 "title": (r.get("titulo") or "").strip(),
                 "url": (r.get("url") or "").strip(),
                 "source": (r.get("medio") or "").strip(),
+            }
+            items.append({
+                "title": item["title"],
+                "url": item["url"],
+                "source": item["source"],
                 "published": (r.get("fecha_publicacion") or r.get("fecha_deteccion") or "") or None,
                 "snippet": "",
                 "topic": (r.get("tema") or "").strip(),
                 "topics": [],
                 "id": (r.get("id_noticia") or "").strip(),
-                "official": (r.get("origen") == "Oficial"),
+                "origin": (r.get("origen") or "").strip(),
+                "official": process.is_official(item["url"]) or (
+                    (r.get("origen") == "Oficial")
+                    and process.is_official_source_name(item["source"])
+                    and process.is_editorial_signal(item)
+                ),
             })
     if limit:
         items = items[:limit]

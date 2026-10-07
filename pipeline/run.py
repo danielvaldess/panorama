@@ -105,7 +105,7 @@ def main() -> int:
         srcs = ", ".join(s["name"] for s in f["sources"])
         v = f.get("verification") or {}
         ev = f"indep={v.get('independent', 0)} ofic={v.get('official', 0)} eco={v.get('echo', 0)}"
-        print(f"  [{f['priority']:>4}] {f['state']:<13} ({ev}) {f['title'][:56]}")
+        print(f"  [{f['score']:>4}] {f['state']:<13} ({ev}) {f['title'][:56]}")
         print(f"        {srcs}")
         if f.get("summary"):
             print(f"        -> {f['summary']}")

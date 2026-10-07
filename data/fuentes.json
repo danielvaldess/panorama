@@ -28,34 +28,6 @@
     "licencia": "Metadatos/uso referencial"
   },
   {
-    "nombre": "Google News",
-    "url": "https://news.google.com/rss?hl=es-419&gl=PA&ceid=PA:es-419",
-    "tipo": "RSS",
-    "confiabilidad": 3,
-    "licencia": "Metadatos/uso referencial"
-  },
-  {
-    "nombre": "Google News",
-    "url": "https://news.google.com/rss/search?q=Panam%C3%A1+econom%C3%ADa&hl=es-419&gl=PA&ceid=PA:es-419",
-    "tipo": "RSS",
-    "confiabilidad": 3,
-    "licencia": "Metadatos/uso referencial"
-  },
-  {
-    "nombre": "Google News",
-    "url": "https://news.google.com/rss/search?q=Panam%C3%A1+seguridad&hl=es-419&gl=PA&ceid=PA:es-419",
-    "tipo": "RSS",
-    "confiabilidad": 3,
-    "licencia": "Metadatos/uso referencial"
-  },
-  {
-    "nombre": "Oficial (gob.pa)",
-    "url": "https://news.google.com/rss/search?q=site:gob.pa&hl=es-419&gl=PA&ceid=PA:es-419",
-    "tipo": "RSS",
-    "confiabilidad": 3,
-    "licencia": "Metadatos/uso referencial"
-  },
-  {
     "nombre": "GDELT DOC 2.0",
     "url": "https://api.gdeltproject.org/api/v2/doc/doc",
     "tipo": "API",

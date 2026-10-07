@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 import feedparser
 import httpx
 
+from pipeline import process
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw")
 UA = "Panorama/0.1 (hackIAthon Panama 2026)"
@@ -34,10 +36,8 @@ FEEDS = [
     ("Foco Panamá", "https://focopanama.com/feed/"),
     ("TVMax", "https://www.tvmax-9.com/rss/"),
 ]
-# Prensa oficial (primarias) vía agregador restringido a dominios de gobierno.
-OFFICIAL_FEEDS = [
-    ("Oficial gob.pa", "https://news.google.com/rss/search?q=site:gob.pa&hl=es-419&gl=PA&ceid=PA:es-419"),
-]
+# No usamos Google News como fuente: es agregador, no procedencia primaria.
+OFFICIAL_FEEDS: list[tuple[str, str]] = []
 GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_QUERIES = ["Panama", "Panama logistica", "Panama turismo", "Panama economia", "Panama terremoto"]
 
@@ -148,7 +148,9 @@ def collect_news() -> list[dict]:
             titulo, medio = _medio_google(raw)
             link = (e.get("link") or "").strip()
             pub = _iso(e.get("published_parsed") or e.get("updated_parsed"))
-            add(titulo, link, medio, pub, pub or EXTRACCION, "Oficial")
+            item = {"title": titulo, "url": link, "source": medio}
+            origen = "Oficial" if (process.is_official(link) or (process.is_official_source_name(medio) and process.is_editorial_signal(item))) else "Agregador"
+            add(titulo, link, medio, pub, pub or EXTRACCION, origen)
 
     for q in GDELT_QUERIES:
         time.sleep(5)  # GDELT: máx. 1 req / 5 s
@@ -273,6 +275,7 @@ def main() -> int:
         },
         "transformaciones": [
             "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
+            "Google News es agregador: no convierte una nota en oficial salvo que la URL final sea dominio primario/oficial",
             "Indicadores: valores nulos conservados (no se rellenan con 0)",
             "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)",
         ],

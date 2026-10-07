@@ -11,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 import feedparser
 import httpx
 
+from pipeline import process
+
 UA = "Panorama/0.1 (hackIAthon Panama 2026)"
 GDELT = "https://api.gdeltproject.org/api/v2/doc/doc"
 MAX_AGE_HOURS = int(os.environ.get("MAX_AGE_HOURS", "24"))
@@ -21,10 +23,6 @@ FEEDS = [
     ("La Prensa", "https://www.prensa.com/arc/outboundfeeds/rss/"),
     ("Foco Panamá", "https://focopanama.com/feed/"),
     ("TVMax", "https://www.tvmax-9.com/rss/"),
-    ("Google News", "https://news.google.com/rss?hl=es-419&gl=PA&ceid=PA:es-419"),
-    ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+econom%C3%ADa&hl=es-419&gl=PA&ceid=PA:es-419"),
-    ("Google News", "https://news.google.com/rss/search?q=Panam%C3%A1+seguridad&hl=es-419&gl=PA&ceid=PA:es-419"),
-    ("Oficial (gob.pa)", "https://news.google.com/rss/search?q=site:gob.pa&hl=es-419&gl=PA&ceid=PA:es-419"),
 ]
 
 
@@ -76,8 +74,7 @@ def fetch_feed(name: str, url: str) -> list[dict]:
             "snippet": _clean(e.get("summary") or e.get("description"))[:400],
             "topics": [], "id": _id(title, link),
         }
-        if official_feed:
-            item["official"] = True
+        item["official"] = process.is_official(link) or (official_feed and process.is_official_source_name(source) and process.is_editorial_signal(item))
         out.append(item)
     return out
 

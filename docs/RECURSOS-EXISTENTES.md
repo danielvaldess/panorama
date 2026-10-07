@@ -9,7 +9,6 @@ datos oficiales → priorizado con evidencia, decisión humana). Marcado: ✅ ve
 |---|---|---|
 | ✅ **GDELT Project** | Base global de noticias/eventos, **100+ idiomas**, actualiza cada 15 min; API + BigQuery + CSV | **Gratis y abierto.** Ideal para “mundo/última hora” y tono/entidades |
 | ✅ **RSSHub** | Genera RSS de **casi cualquier sitio** (5.000+ rutas) | Licencia **AGPL** → usarlo como **servicio**, no copiar código |
-| ✅ **Google News RSS** | Feed gratuito por tema/consulta | Sin API key |
 | **RSS de medios (Panamá)** | TVN, La Prensa, Telemetro, Panamá América, La Estrella | Ya en el catálogo |
 | **Datos Abiertos Panamá** | Portal oficial `datosabiertos.gob.pa` + INEC, Contraloría, ANTAI, Superintendencia de Bancos | Datos oficiales para “evidencia” |
 | **Media Cloud** | Análisis de cobertura mediática (open source, API) | Para tendencias/atención |

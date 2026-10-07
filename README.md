@@ -92,22 +92,22 @@ Rangos: **baja** [0,40) · **media** [40,70) · **alta** [70,100]. El **estado d
 
 ## Datos (snapshot público congelado)
 
-Paquete **"Panamá · Señales y Evidencias v1"**, reproducible y con `manifest.json` (SHA-256).
+Paquete **"Panamá · Señales y Evidencias v1"**, reproducible y con `manifest.json` (SHA-256). Está centrado en el set del reto: **noticias/metadatos** (`TVN RSS` + `GDELT DOC 2.0`) y **datos oficiales estructurados** (`Banco Mundial` + `USGS`).
 
 | Archivo | Fuente | Contenido |
 |---|---|---|
-| `data/raw/noticias.csv` | TVN RSS + GDELT + prensa oficial | 260 registros (150 TVN) |
+| `data/raw/noticias.csv` | TVN RSS + GDELT DOC 2.0 | 406 registros (152 TVN) |
 | `data/raw/indicadores.csv` | Banco Mundial Indicators v2 | 6 países × 6 indicadores × 2010–2024 (540) |
 | `data/raw/eventos.geojson` | USGS | Sismos 2024 (bbox Panamá, mag ≥3) |
 
-Reglas: UTF-8 · IDs estables · ISO 8601 UTC · **nulos conservados** (no se rellenan con 0). Ver [`data/diccionario.md`](data/diccionario.md).
+Reglas: UTF-8 · IDs estables · ISO 8601 UTC · **nulos conservados** (no se rellenan con 0). El snapshot usa fuentes alineadas al reto: TVN RSS, GDELT, Banco Mundial y USGS; Google News queda fuera por ser agregador. Ver [`data/diccionario.md`](data/diccionario.md).
 
 ## Stack
 
 | Capa | Tecnología |
 |------|------------|
 | API | FastAPI + Uvicorn |
-| Núcleo | Python — BM25, RapidFuzz (dedupe/agrupación) |
+| Núcleo | Python — BM25, RapidFuzz y embeddings locales (dedupe, agrupación, búsqueda) |
 | Datos | CSV / GeoJSON (snapshot congelado) |
 | Interfaz | HTML + CSS + JS (sin frameworks) |
 | Control humano | Estados de revisión + Notion |
@@ -120,6 +120,7 @@ Reglas: UTF-8 · IDs estables · ISO 8601 UTC · **nulos conservados** (no se re
 | `GET` | `/api/fichas` | Temas priorizados + fichas |
 | `POST` | `/api/refresh` | Recalcular la mesa |
 | `POST` | `/api/review` | Registrar la decisión del editor |
+| `POST` | `/api/analyze` | Análisis IA bajo demanda (OpenRouter si hay key; fallback local) |
 | `GET` | `/api/manifest` | Trazabilidad del snapshot |
 | `GET` | `/api/acceptance` | Matriz de pruebas T01–T10 |
 | `GET` | `/api/benchmark` | Métricas del benchmark |
@@ -143,9 +144,11 @@ curl -X POST https://panorama.sweetcode.studio/api/review \
 | Métrica | Valor | Meta |
 |---|---|---|
 | Cobertura de citas | **100%** | 100% |
-| Abstención (sin respuesta) | **80%** | ≥80% |
+| Abstención (sin respuesta) | **86%** | ≥80% |
+| Consultas sustentadas correctas | **85%** | reportar fallos |
+| Contradicción manejada | **100%** | no elegir arbitrariamente |
 | Instrucciones maliciosas bloqueadas | **100%** | 100% |
-| Latencia mediana | **~5 ms** | ≤15 s |
+| Latencia mediana | **~12 ms** | ≤15 s |
 
 ## Ejecución local
 

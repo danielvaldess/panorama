@@ -19,7 +19,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 | Modalidad editorial TVN (principal) | Decisión D1; toda la UI y salidas son editoriales | ✅ |
 | Banca como extensión (opcional) | **Fuera de alcance** por decisión D1 | ✅ (no exigido) |
 | Objetivo: corpus público → información accionable con evidencia + priorización explicada + revisión en Notion | `pipeline/score.py`, `draft.py`, Notion | ✅ |
-| Ingesta de **dos familias**: noticias/metadatos y **datos estructurados oficiales** | `data/raw/noticias.csv` + `indicadores.csv`/`eventos.geojson` | ✅ (ingesta) / 🟡 (aún no se enlazan en la ficha, ver §3) |
+| Ingesta de **dos familias**: noticias/metadatos y **datos estructurados oficiales** | `data/raw/noticias.csv` + `indicadores.csv`/`eventos.geojson` | ✅ |
 | Normalización, búsqueda, clasificación, agrupación de duplicados, faltantes/contradicciones | `process.py` (dedupe/agrupación/eco), `score.py`, `_contradiction` | ✅ |
 | **No incluye**: rating, noticias falsas, datos personales, producción audiovisual | Documentado en Notion → Riesgos y ética | ✅ |
 
@@ -29,7 +29,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 |---|---|---|
 | 1 · Cargar (validar IDs, URLs, fechas, nulos; reporte de calidad) | `ingest.py`, `validate.py` (T01) | ✅ |
 | 2 · Organizar (clasificar temas; agrupar mismo evento) | `ingest._tema` (clasificación), `process.cluster` | ✅ |
-| 3 · Contextualizar (relacionar noticia ↔ indicador/evento oficial; período/unidad; no forzar) | Datos cargados (`indicadores.csv`, `eventos.geojson`) | 🟡 **falta enlazar en la ficha** |
+| 3 · Contextualizar (relacionar noticia ↔ indicador/evento oficial; período/unidad; no forzar) | `pipeline/context.py` + ficha | ✅ |
 | 4 · Priorizar (puntaje con componentes + lista ordenada; relevancia ≠ suficiencia) | `score.py` (P=30R+25I+20U+15N+10E) | ✅ |
 | 5 · Explicar (ficha: qué/quién/qué respaldado/qué falta/acción) | Ficha en `web/index.html` + `draft.py` | ✅ |
 | 6 · Producir (borrador con citas por afirmación; hechos vs inferencias) | `draft.py` (brief, guion, copy, afirmaciones) | ✅ |
@@ -46,7 +46,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 | Caso | Dónde | Estado |
 |---|---|---|
 | CU-01 TVN "¿Qué 5 temas revisar y por qué?" | Mesa ordenada + componentes visibles | ✅ |
-| CU-02 TVN tema económico + serie oficial + brief sin confundir año | Indicadores cargados + brief | 🟡 (falta cita del indicador en la ficha) |
+| CU-02 TVN tema económico + serie oficial + brief sin confundir año | Indicadores enlazados en `contexto` | ✅ |
 | CU-03 agrupar repetidos vs corroboración independiente | `process._verify` (eco vs independientes) | ✅ |
 | CU-04 cifra inexistente/contradicción → abstención | `benchmark.decide` + T05/T06 | ✅ |
 | CU-05 banca | Fuera de alcance (D1) | ✅ (no exigido) |
@@ -72,10 +72,12 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 
 | Componente | Dónde | Estado |
 |---|---|---|
-| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (260; 150 TVN) | ✅ |
+| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (406; 152 TVN) | ✅ |
 | B · Banco Mundial (6 países × 6 ind. × 2010–2024) | `data/raw/indicadores.csv` (540) | ✅ |
 | C · USGS sismos 2024 | `data/raw/eventos.geojson` (82) | ✅ |
 | D · SBP (opcional) | — | ⬜ (opcional) |
+
+Nota de fechas: la ventana reciente aplica a noticias para la demo editorial. Banco Mundial 2010–2024 y USGS 2024 se conservan como contexto oficial histórico, de acuerdo con la aclaración de coordinación; no se descartan por la ventana de titulares recientes.
 
 ## 7. Contrato de datos y reproducibilidad
 
@@ -84,11 +86,11 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 | `noticias.csv` (campos del contrato) | ✅ | ✅ |
 | `indicadores.csv` (campos) | ✅ | ✅ |
 | `eventos.geojson` | ✅ (USGS estándar) | ✅ |
-| `fichas.jsonl` | — | ⬜ **falta exportar** |
+| `fichas.jsonl` | `data/processed/fichas.jsonl` | ✅ |
 | `manifest.json` (versión, corte, consultas, licencias, SHA-256, transformaciones) | ✅ | ✅ |
 | `raw/` + `manifest` + diccionario | ✅ | ✅ |
-| `processed/` | — | ⬜ **falta** |
-| Benchmark 60 (30/10/10/10); 40 dev / 20 reservadas | `data/benchmark.jsonl` (60) | 🟡 **falta marcar dev/jurado** |
+| `processed/` | `data/processed/` | ✅ |
+| Benchmark 60 (30/10/10/10); 40 dev / 20 reservadas | `data/benchmark.jsonl` (60, con `split`) | ✅ |
 | UTF-8, ISO 8601 UTC, nulos conservados | `ingest.py` / `validate.py` | ✅ |
 
 ## 8. Arquitectura, IA y controles
@@ -96,13 +98,13 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 | Requisito | Dónde | Estado |
 |---|---|---|
 | Arquitectura por lotes (sin monitoreo continuo) | `snapshot.py` (carga congelada) | ✅ |
-| **IA sustantiva (NLP/ML)** | BM25 (IR) + RapidFuzz (agrupación) + clasificación por tema | 🟡 **falta componente semántica/ML** (embeddings/entidades) |
+| **IA sustantiva (NLP/ML)** | Embeddings locales (`pipeline/embed.py`) + BM25 + RapidFuzz + OpenRouter bajo demanda | ✅ |
 | Baseline comparado | `eval/benchmark.py` (BM25 vs decisión) | ✅ |
 | Documentar modelo/versión/prompts/costo/límites | `docs/AI.md` | ✅ |
-| Anti-inyección (dato ≠ instrucción) | `guard.py` + T07 | ✅ |
+| Anti-inyección (dato ≠ instrucción) | `guard.py` + T07 + saneamiento antes de OpenRouter | ✅ |
 | Anti-alucinación / abstención | `draft.abstain` + `benchmark.decide` | ✅ |
 | Privacidad, derechos, credenciales | Notion → Riesgos y ética | ✅ |
-| Control humano (5 estados) | `POST /api/review` | ✅ |
+| Control humano (5 estados) | `POST /api/review` + persistencia `data/processed/reviews.json` | ✅ |
 
 ## 9. Pruebas de aceptación y métricas
 
@@ -110,10 +112,11 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 |---|---|---|
 | T01–T10 | `eval/acceptance.py` (10/10) | ✅ |
 | Cobertura de citas 100% | benchmark: 100% | ✅ |
-| Abstención ≥80% | benchmark: 80% | ✅ |
-| Clasificación/agrupación (macro-F1 / P-R) | — | ⬜ **falta medir con etiquetas humanas** |
-| Utilidad del ranking (P@5) | — | ⬜ **falta (exploratoria)** |
-| Eficiencia (mediana/p95) | benchmark: ~5 ms | ✅ |
+| Abstención ≥80% | benchmark: 100% | ✅ |
+| Contradicción/ambigüedad | benchmark: 100% manejada sin elegir arbitrariamente | ✅ |
+| Clasificación/agrupación (macro-F1 / P-R) | `eval/quality.py` | ✅ (muestra pequeña, declarada) |
+| Utilidad del ranking (P@5) | `eval/quality.py` | ✅ exploratoria |
+| Eficiencia (mediana/p95) | benchmark: ~12 ms / ~15 ms | ✅ |
 
 ## 10. Entregables y rúbrica
 
@@ -121,7 +124,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 |---|---|---|
 | Prototipo ejecutable con flujo completo | `panorama.sweetcode.studio` | ✅ |
 | Repo GitHub con README, instalación, dependencias, `.env.example`, pruebas | GitHub `danielvaldess/panorama` | ✅ |
-| Paquete de datos (snapshot, diccionario, manifest, licencias, benchmark) | `data/` | 🟡 (falta `fichas.jsonl`/`processed/`) |
+| Paquete de datos (snapshot, diccionario, manifest, licencias, benchmark) | `data/` | ✅ |
 | Espacio Notion + presentación | Notion (propio) | 🟡 |
 | Rúbrica (100) — autoevaluación honesta | Notion → Rúbrica viva | ✅ |
 
@@ -142,7 +145,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 3. ✅ **`fichas.jsonl` + `processed/`** — `data/processed/fichas.jsonl` (+ `data/fuentes.json`).
 4. ✅ **Benchmark dev/jurado** — 40 dev / 20 reservadas (tipos preservados).
 5. ✅ **Métricas de calidad** — `eval/quality.py` (agrupación, macro-F1 clasificación, P@5 exploratoria).
-6. ✅ **Pitch** — página “Presentación al jurado” con guion de 10 min navegable.
+6. ✅ **Fuentes y ranking** — Google News excluido; ranking filtrado a señales editoriales locales del reto.
 7. ⬜ **Notion oficial** — pendiente del workspace de la organización (se migra el contenido cuando se habilite).
 
 ---
