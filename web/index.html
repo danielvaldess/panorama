@@ -125,49 +125,115 @@
     .foot{padding:14px 26px;color:var(--soft);font-size:12px}
     .toast{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:13px 18px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(20px);transition:all .3s;z-index:60;font-size:13.5px}
     .toast.show{opacity:1;transform:none}
-    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.repgrid{grid-template-columns:1fr}}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.repgrid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}}
+
+    /* Accesibilidad (WCAG 2.1 AA) */
+    .skip{position:absolute;left:-999px;top:0;background:#fff;color:var(--primary);padding:10px 14px;z-index:100;border-radius:0 0 6px 0;font-family:var(--f-title);font-weight:700}
+    .skip:focus{left:0}
+    a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
+    /* Portada de acceso */
+    .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--primary),#00324f);padding:24px}
+    .gate .box{background:#fff;border-radius:10px;padding:32px;max-width:430px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.32)}
+    .gate .box .brand{color:var(--primary);margin-bottom:14px}
+    .gate h1{font-family:var(--f-title);font-size:24px;margin-bottom:4px}
+    .gate p{color:var(--muted);margin-bottom:20px;font-size:14px}
+    .field{margin-bottom:16px}
+    .field label{display:block;font-family:var(--f-title);font-weight:700;font-size:13px;margin-bottom:6px}
+    .field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:6px;font-family:var(--f-ui);font-size:15px;background:#fff;color:var(--text)}
+    .gate .btn-primary{width:100%;padding:13px}
+    .gate[hidden],.app[hidden]{display:none!important}
+    /* Menú de usuario */
+    .user{position:relative}
+    .usermenu-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 12px;border-radius:6px;font-family:var(--f-ui);font-size:13px;cursor:pointer}
+    .usermenu{position:absolute;right:0;top:44px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 34px rgba(0,0,0,.2);min-width:220px;overflow:hidden;z-index:50}
+    .usermenu button{display:block;width:100%;text-align:left;background:none;border:none;padding:12px 16px;font-family:var(--f-ui);font-size:14px;color:var(--text);cursor:pointer}
+    .usermenu button:hover{background:var(--bg-soft)}
+    /* Pestañas de estado */
+    .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin:2px 0 16px;flex-wrap:wrap}
+    .tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;margin-bottom:-2px;font-family:var(--f-title);font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer}
+    .tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+    .tab .n{color:var(--soft);font-weight:400}
+    /* Cómo funciona (pasos) */
+    .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}
+    .step{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+    .step .n{font-family:var(--f-title);font-weight:800;color:var(--red);font-size:12px;letter-spacing:.5px}
+    .step h3{font-family:var(--f-title);font-size:16px;margin:6px 0}
+    .step p{color:var(--muted);font-size:13.5px}
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
-      </svg>
-      PANORAMA <small>Mesa editorial · TVN Media</small>
+  <a class="skip" href="#content">Saltar al contenido</a>
+
+  <section class="gate" id="gate" aria-label="Acceso a la mesa">
+    <form class="box" id="gateForm" novalidate>
+      <div class="brand">PANORAMA</div>
+      <h1>Entrar a la mesa</h1>
+      <p>Identifícate para registrar tus decisiones. Cada decisión queda firmada con tu nombre.</p>
+      <div class="field">
+        <label for="gName">Nombre y apellido</label>
+        <input id="gName" name="name" autocomplete="name" required />
+      </div>
+      <div class="field">
+        <label for="gRole">Rol en la redacción</label>
+        <select id="gRole" name="role">
+          <option>Editor/a</option>
+          <option>Jefe/a de información</option>
+          <option>Productor/a digital</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="gToken">Clave de acceso <span style="font-weight:400;color:var(--muted)">(si tu área la usa)</span></label>
+        <input id="gToken" name="token" type="password" autocomplete="off" />
+      </div>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <div class="app" id="app" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
+        </svg>
+        PANORAMA <small>Mesa editorial · TVN Media</small>
+      </div>
+      <div class="spacer"></div>
+      <input class="search" id="search" placeholder="Buscar temas…" aria-label="Buscar temas" />
+      <div class="user">
+        <button class="usermenu-btn" id="userBtn" aria-haspopup="true" aria-expanded="false" type="button"><span id="userName">—</span> · <span id="userRole">—</span></button>
+        <div class="usermenu" id="userMenu" hidden>
+          <button type="button" data-menu="perfil">Perfil de decisiones</button>
+          <button type="button" data-menu="ayuda">Cómo funciona</button>
+          <button type="button" data-menu="salir">Cerrar sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="edition">
+      <b id="sectionTitle">Mesa de hoy</b>
+      <span>·</span>
+      <span id="date"></span>
+      <span class="grow"></span>
+      <span class="pill ok" id="status">Fuentes al día</span>
+      <span id="updated"></span>
+      <button class="refresh" id="refresh">Actualizar</button>
     </div>
-    <div class="spacer"></div>
-    <input class="search" id="search" placeholder="Buscar temas, medios o señales…" />
-    <div class="top-user">Daniel Valdés · Editor</div>
-  </header>
 
-  <div class="edition">
-    <b id="sectionTitle">Mesa de Prioridades</b>
-    <span>·</span>
-    <span id="date"></span>
-    <span class="grow"></span>
-    <span class="pill ok" id="status">Fuentes al día</span>
-    <span id="updated"></span>
-    <button class="refresh" id="aiAnalyze">Analizar con IA</button>
-    <button class="refresh" id="refresh">Actualizar</button>
+    <div class="layout">
+      <nav class="sidebar" id="nav" aria-label="Secciones">
+        <a data-section="prioridades" class="active"><span class="dot"></span> Mesa de hoy</a>
+        <a data-section="bandeja"><span class="dot"></span> Publicaciones</a>
+        <a data-section="fuentes"><span class="dot"></span> Fuentes</a>
+        <a data-section="reportes"><span class="dot"></span> Calidad</a>
+        <a data-section="ayuda"><span class="dot"></span> Cómo funciona</a>
+      </nav>
+
+      <main class="main" id="content" tabindex="-1"><div class="empty">Preparando la mesa…</div></main>
+    </div>
+
+    <footer class="foot">Panorama · Copiloto editorial para la redacción · TVN Media</footer>
+    <div class="toast" id="toast"></div>
   </div>
-
-  <div class="layout">
-    <nav class="sidebar" id="nav">
-      <a data-section="prioridades" class="active"><span class="dot"></span> Prioridades</a>
-      <a data-section="bandeja"><span class="dot"></span> Bandeja de entrada</a>
-      <a data-section="fuentes"><span class="dot"></span> Fuentes</a>
-      <a data-section="verificacion"><span class="dot"></span> Verificación</a>
-      <a data-section="borradores"><span class="dot"></span> Borradores <span class="badge" id="draftCount" style="display:none"></span></a>
-      <a data-section="reportes"><span class="dot"></span> Reportes</a>
-      <a data-section="perfil"><span class="dot"></span> Perfil del Admin</a>
-    </nav>
-
-    <main class="main" id="content"><div class="empty">Cargando la mesa…</div></main>
-  </div>
-
-  <footer class="foot">Panorama · Copiloto editorial para la redacción · TVN Media</footer>
-  <div class="toast" id="toast"></div>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -175,7 +241,7 @@
     const bandChip = b => b === "alto" ? "ok" : b === "bajo" ? "rev" : "m";
     const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
-    const SECTIONS = { prioridades: "Mesa de Prioridades", bandeja: "Bandeja de entrada", fuentes: "Fuentes", verificacion: "Verificación", borradores: "Borradores", reportes: "Reportes", perfil: "Perfil del Administrador" };
+    const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", reportes: "Calidad", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
     const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
     const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", general: "General" };
@@ -198,11 +264,13 @@
 
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: PANAMA_TZ });
 
-    let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", semIds = null;
+    let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", estadoFilter = "todos", semIds = null;
     const authHeaders = () => {
       const token = localStorage.getItem("panorama_token");
       return token ? { "X-Panorama-Token": token } : {};
     };
+    const user = () => { try { return JSON.parse(localStorage.getItem("panorama_user") || "null"); } catch (e) { return null; } };
+    const reviewerName = () => (user() && user().name) || "Editor/a";
     let CLAIM_VERDICTS = {};
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
@@ -219,17 +287,14 @@
 
     function render() {
       $("nav").querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.section === section && !selectedId));
-      const n = (DATA?.fichas || []).filter(f => ["en revisión", "requiere evidencia", "aprobado como borrador"].includes(f.review_state)).length;
-      const b = $("draftCount"); b.style.display = n ? "inline" : "none"; b.textContent = n;
-      $("sectionTitle").textContent = selectedId ? "Ficha del tema" : (SECTIONS[section] || "Mesa");
+      $("sectionTitle").textContent = selectedId ? "Ficha del tema" : (SECTIONS[section] || "Mesa de hoy");
       if (!DATA) { $("content").innerHTML = `<div class="empty">Preparando la mesa…</div>`; return; }
       if (selectedId) return renderDetail();
       if (section === "prioridades") return renderPrioridades();
       if (section === "bandeja") return renderBandeja();
       if (section === "fuentes") return renderFuentes();
-      if (section === "verificacion") return renderVerificacion();
-      if (section === "borradores") return renderBorradores();
       if (section === "reportes") return renderReportes();
+      if (section === "ayuda") return renderAyuda();
       if (section === "perfil") return renderPerfil();
     }
 
@@ -238,15 +303,24 @@
 
     function renderPrioridades() {
       const base = fichas();
-      const temas = Array.from(new Set(base.map(f => f.tema || "general")));
-      const fs = temaFilter === "todos" ? base : base.filter(f => (f.tema || "general") === temaFilter);
-      const chips = [`<button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos · ${base.length}</button>`]
+      const needsEvidence = f => ((f.verification?.independent || 0) < 2) || ["Sin verificar", "Contradicho"].includes(f.state);
+      const TABS = [["todos", "Todos"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"]];
+      const applyEstado = (arr) => {
+        if (estadoFilter === "evidencia") return arr.filter(needsEvidence);
+        if (estadoFilter === "revision") return arr.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
+        if (estadoFilter === "listos") return arr.filter(f => f.review_state === "aprobado como borrador");
+        return arr;
+      };
+      const baseEstado = applyEstado(base);
+      const temas = Array.from(new Set(baseEstado.map(f => f.tema || "general")));
+      const fs = temaFilter === "todos" ? baseEstado : baseEstado.filter(f => (f.tema || "general") === temaFilter);
+      const tabs = TABS.map(([k, lbl]) => `<button class="tab ${estadoFilter === k ? "on" : ""}" data-estado="${k}">${lbl} <span class="n">${applyEstado(base).length}</span></button>`).join("");
+      const chips = [`<button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos · ${baseEstado.length}</button>`]
         .concat(temas.map(t => {
-          const n = base.filter(f => (f.tema || "general") === t).length;
+          const n = baseEstado.filter(f => (f.tema || "general") === t).length;
           return `<button class="fchip ${temaFilter === t ? "on" : ""}" data-tema="${esc(t)}">${esc(TEMA_LABEL[t] || t)} · ${n}</button>`;
         })).join("");
       const list = fs.length ? fs.map((f, i) => {
-        const v = f.verification || {};
         return `<article class="item" data-id="${esc(f.id)}">
           <div class="rank">${i + 1}</div>
           <div>
@@ -261,30 +335,30 @@
           </div>
           <div class="go">›</div>
         </article>`;
-      }).join("") : `<div class="empty">Sin temas en esta categoría.</div>`;
+      }).join("") : `<div class="empty">No hay temas en esta vista.</div>`;
       const alto = base.filter(f => f.band === "alto").length;
       const suf = base.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
-      const ofi = base.filter(f => (f.verification?.official || 0) > 0).length;
+      const pend = base.filter(needsEvidence).length;
       const h = new Date().getHours();
       const greet = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
+      const first = (reviewerName().split(" ")[0] || "");
       $("content").innerHTML = `
         <div class="hero">
           <div>
-            <div class="hello">${greet}, Daniel</div>
-            <div class="hero-sub">Esta es tu mesa de hoy: ${base.length} temas leídos de las fuentes, ${alto} de prioridad alta.</div>
+            <div class="hello">${greet}${first ? ", " + esc(first) : ""}</div>
+            <div class="hero-sub">Tu mesa de hoy: ${base.length} temas leídos de las fuentes, ${alto} de prioridad alta y ${pend} por comprobar.</div>
           </div>
-          <button class="refresh" id="howBtn">¿Cómo funciona?</button>
         </div>
-        <div class="howpanel" id="howPanel"><img src="/como-funciona.png" alt="Cómo funciona Panorama" /></div>
         <div class="stats">
           <div class="stat"><div class="v">${base.length}</div><div class="l">Temas del día</div></div>
           <div class="stat"><div class="v">${alto}</div><div class="l">Prioridad alta</div></div>
           <div class="stat"><div class="v">${suf}</div><div class="l">Evidencia suficiente</div></div>
-          <div class="stat"><div class="v">${ofi}</div><div class="l">Con fuente oficial</div></div>
+          <div class="stat"><div class="v">${pend}</div><div class="l">Por comprobar</div></div>
         </div>
+        <div class="tabs">${tabs}</div>
         <div class="filters">${chips}</div>
         ${list}`;
-      $("howBtn").onclick = () => { const p = $("howPanel"); p.style.display = p.style.display === "block" ? "none" : "block"; };
+      $("content").querySelectorAll(".tab").forEach(b => b.onclick = () => { estadoFilter = b.dataset.estado; temaFilter = "todos"; renderPrioridades(); });
       $("content").querySelectorAll(".fchip").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; renderPrioridades(); });
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
     }
@@ -306,7 +380,7 @@
           <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${a.campo ? ` · campo: ${esc(a.campo)}` : ""}${a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : ""} ${chipV}</div>
           <div class="actions">${btns}</div></div>`;
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
-      const aiBox = f.summary ? `<div class="card block"><h3>Análisis IA bajo demanda</h3><div class="assist"><small>${esc(f.method || "ai")} · grounding ${Math.round((f.grounding || 0) * 100)}%</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}</div>` : "";
+      const aiBox = `<div class="card block"><h3>Resumen asistido</h3>${f.summary ? `<div class="assist"><small>${esc(f.method || "asistido")} · respaldo ${Math.round((f.grounding || 0) * 100)}%</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}` : `<div class="c">Aún no generado.</div>`}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
       const prog = sustentoProgreso();
       const ctx = (f.contexto || []).map(c => `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div><div class="c">${esc(c.periodo)} · ${esc(c.unidad)} · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a></div><div class="c">${esc(c.limite)}</div></div>`).join("") || "<div class='c'>Sin relación oficial sustentada (no se fuerza).</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
@@ -341,7 +415,7 @@
             </div>
             <div class="card block">
               <h3>Afirmaciones y citas</h3>
-              <div class="c" style="margin-bottom:8px">Sustento del Administrador: <b>${prog.validos}/${prog.total} válidos (${prog.pct}%)</b> · ${prog.fichas} fichas — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
+              <div class="draftfield"><b>Afirmaciones</b><div class="c" style="margin-bottom:8px">Validación del Administrador: <b>${prog.validos}/${prog.total} válidas (${prog.pct}%)</b> · ${prog.fichas} fichas — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
               ${claims}
             </div>
             ${aiBox}
@@ -356,8 +430,8 @@
             <div class="card block">
               <h3>Evidencia</h3>
               <div class="metric"><span>Fuentes oficiales</span><b>${v.official || 0}</b></div>
-              <div class="metric"><span>Medios que lo reportan por su cuenta</span><b>${v.independent || 0}</b></div>
-              <div class="metric"><span>Repeticiones del mismo origen</span><b>${v.echo || 0}</b></div>
+              <div class="metric"><span>Medios independientes</span><b>${v.independent || 0}</b></div>
+              <div class="metric"><span>Repeticiones entre medios</span><b>${v.echo || 0}</b></div>
               <div class="metric"><span>Estado</span><b>${esc(f.evidence_state || "")}</b></div>
               <div class="c" style="margin-top:8px;color:var(--soft);font-size:12.5px">${esc(v.reason || "")}</div>
             </div>
@@ -383,7 +457,7 @@
       $("back").onclick = closeDetail;
       $("content").querySelectorAll("[data-review]").forEach(b => b.onclick = async () => {
         try {
-          const r = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id: f.id, state: b.dataset.review, reviewer: "Editor" }) });
+          const r = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id: f.id, state: b.dataset.review, reviewer: reviewerName() }) });
           if (!r.ok) throw new Error("review failed");
           f.review_state = b.dataset.review; toast("Estado actualizado: " + b.dataset.review); render();
         } catch { toast("No se pudo guardar el estado."); }
@@ -391,7 +465,7 @@
       $("content").querySelectorAll("[data-claim]").forEach(b => b.onclick = async () => {
         const idx = parseInt(b.dataset.claim, 10), verdict = b.dataset.verdict;
         try {
-          const r = await fetch("/api/claims/verdict", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id_caso: f.id, indice: idx, veredicto: verdict, reviewer: "Administrador" }) });
+          const r = await fetch("/api/claims/verdict", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id_caso: f.id, indice: idx, veredicto: verdict, reviewer: reviewerName() }) });
           const j = await r.json();
           if (!r.ok || !j.ok) throw new Error(j.error || "error");
           CLAIM_VERDICTS[j.clave] = { veredicto: verdict, ts: new Date().toISOString() };
@@ -399,6 +473,16 @@
           renderDetail();
         } catch { toast("No se pudo guardar el veredicto."); }
       });
+      $("aiBtn").onclick = async () => {
+        try {
+          toast("Generando resumen…");
+          const r = await fetch("/api/analyze", { method: "POST", headers: authHeaders() });
+          if (!r.ok) throw new Error("analyze failed");
+          DATA = await r.json();
+          renderDetail();
+          toast("Resumen listo.");
+        } catch { toast("No se pudo generar el resumen."); }
+      };
     }
 
     function sustentoProgreso() {
@@ -412,8 +496,8 @@
     function renderBandeja() {
       const rows = (DATA.feed || []).slice(0, 120).map(x =>
         `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published))}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
-      $("content").innerHTML = `<h1>Bandeja de entrada</h1>
-        <p class="sub">Publicaciones leídas de las fuentes en las últimas horas (sin duplicados), con hora de Panamá.</p>
+      $("content").innerHTML = `        <h1>Publicaciones</h1>
+        <p class="sub">Lo que han publicado las fuentes, sin repetidos y con la hora de Panamá.</p>
         <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th>Publicado</th><th></th></tr></thead>
         <tbody>${rows || `<tr><td colspan="4" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
     }
@@ -429,31 +513,23 @@
         <tbody>${rows}</tbody></table></div>`;
     }
 
-    function renderVerificacion() {
-      const fs = fichas().filter(f => (f.verification?.independent || 0) < 2 || ["Sin verificar", "Contradicho"].includes(f.state));
-      const rows = fs.length ? fs.map(f => {
-        const v = f.verification || {};
-        return `<tr><td><span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span></td>
-         <td><a href="#/tema/${esc(f.id)}" data-open="${esc(f.id)}">${esc(f.title)}</a></td>
-         <td>${esc(f.evidence_state || "")}</td><td>${v.independent || 0}</td><td>${v.official || 0}</td><td>${v.echo || 0}</td></tr>`;
-      }).join("") : `<tr><td colspan="6" class="empty">Todo con evidencia suficiente.</td></tr>`;
-      $("content").innerHTML = `<h1>Verificación</h1>
-        <p class="sub">Temas que necesitan más evidencia: una sola fuente, repetición entre medios o versiones que se contradicen. Repetir un titular en más medios no lo verifica.</p>
-        <div class="card"><table><thead><tr><th>Estado</th><th>Tema</th><th>Evidencia</th><th>Por su cuenta</th><th>Oficial</th><th>Repeticiones</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`;
-      $("content").querySelectorAll("[data-open]").forEach(a => a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.open); });
-    }
-
-    function renderBorradores() {
-      const fs = fichas().filter(f => REVIEW.includes(f.review_state));
-      const rows = fs.length ? fs.map(f =>
-        `<tr><td><a href="#/tema/${esc(f.id)}" data-open="${esc(f.id)}">${esc(f.title)}</a></td><td><span class="chip m">${esc(f.review_state)}</span></td><td>${(f.sources || []).length}</td></tr>`).join("")
-        : `<tr><td colspan="3" class="empty">Aún no hay temas con decisión registrada.</td></tr>`;
-      $("content").innerHTML = `<h1>Borradores</h1>
-        <p class="sub">Temas con decisión del editor. Nada se publica sin aprobación humana.</p>
-        <div class="card"><table><thead><tr><th>Tema</th><th>Estado</th><th>Fuentes</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`;
-      $("content").querySelectorAll("[data-open]").forEach(a => a.onclick = (e) => { e.preventDefault(); openDetail(a.dataset.open); });
+    function renderAyuda() {
+      $("content").innerHTML = `
+        <h1>Cómo funciona</h1>
+        <p class="sub">Panorama reúne las noticias del día, las ordena y te dice qué falta comprobar. La decisión final es tuya.</p>
+        <div class="steps">
+          <div class="step"><div class="n">PASO 1</div><h3>Reunión de fuentes</h3><p>Leemos los titulares y los datos oficiales del día y quitamos repetidos: si cinco medios copian la misma agencia, cuenta como <b>una</b> procedencia.</p></div>
+          <div class="step"><div class="n">PASO 2</div><h3>Mesa de hoy</h3><p>Cada tema recibe una prioridad de 0 a 100 según relevancia, impacto, urgencia, novedad y evidencia. Ordena el trabajo; no mide verdad.</p></div>
+          <div class="step"><div class="n">PASO 3</div><h3>Ficha con evidencia</h3><p>Abres un tema y ves qué se reporta, quién lo reporta, qué está respaldado, qué falta comprobar y un borrador con sus fuentes.</p></div>
+          <div class="step"><div class="n">PASO 4</div><h3>Decisión humana</h3><p>Marcas el tema (por revisar, requiere evidencia, listo o descartado). <b>Nada se publica</b> sin tu aprobación.</p></div>
+        </div>
+        <div class="card"><h3 style="font-family:var(--f-title)">Tres reglas que no cambiamos</h3>
+          <ul class="sources">
+            <li><b>No inventamos.</b> Si solo hay titular, lo decimos; si falta evidencia, nos abstenemos.</li>
+            <li><b>Repetir no es confirmar.</b> Varios medios con la misma fuente cuentan como uno.</li>
+            <li><b>La decisión es tuya.</b> El sistema propone; la redacción aprueba.</li>
+          </ul>
+        </div>`;
     }
 
     function renderReportes() {
@@ -461,9 +537,8 @@
       const total = (m.band_alto || 0) + (m.band_medio || 0) + (m.band_bajo || 0) || 1;
       const ev = (m.evidence_sufficient || 0) + (m.evidence_partial || 0) + (m.evidence_insufficient || 0) || 1;
       const bar = (lab, val, tot, cls) => `<div class="viz"><div class="lab">${lab}</div><div class="track"><span class="${cls}" style="width:${Math.round((val / tot) * 100)}%"></span></div><div class="num">${val}</div></div>`;
-      $("content").innerHTML = `<h1>Reportes</h1>
-        <p class="sub">Un vistazo rápido a la actividad de la mesa y a la calidad de la cobertura.</p>
-        <p class="sub">Métodos: agrupación ${esc(DATA.method?.grouping || "—")} · recuperación ${esc(DATA.method?.retrieval || "—")} · IA de lenguaje ${esc(DATA.method?.llm || "—")}.</p>
+      $("content").innerHTML = `<h1>Calidad</h1>
+        <p class="sub">Un vistazo a la actividad de la mesa y al control de calidad del sistema.</p>
         <div class="stats">
           <div class="stat"><div class="v">${c.fetched || 0}</div><div class="l">Publicaciones leídas</div></div>
           <div class="stat"><div class="v">${c.fichas || 0}</div><div class="l">Temas priorizados</div></div>
@@ -504,7 +579,7 @@
     }
 
     async function renderPerfil() {
-      $("content").innerHTML = `<h1>Perfil del Administrador</h1><p class="sub">Cargando tus preferencias…</p>`;
+      $("content").innerHTML = `<h1>Perfil de decisiones</h1><p class="sub">Cargando tus preferencias…</p>`;
       let p;
       try { p = await (await fetch("/api/admin/profile")).json(); }
       catch { $("content").innerHTML = `<div class="empty">No se pudo cargar el perfil.</div>`; return; }
@@ -523,7 +598,7 @@
           <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">Los veredictos se registran en la ficha, sección «Afirmaciones y citas». Rúbrica: solo «válido» cuenta.</div>
         </div>`;
       if (suf) {
-        $("content").innerHTML = `<h1>Perfil del Administrador</h1>
+        $("content").innerHTML = `<h1>Perfil de decisiones</h1>
           <p class="sub">Aprendo de tus decisiones sobre las fichas. Cuantas más registres, más preciso.</p>
           <div class="empty">${esc(p.mensaje || "Aún no hay decisiones suficientes.")}</div>
           ${sustCard}`;
@@ -542,7 +617,7 @@
       }).join("");
       const fuentes = p.fuentes_frecuentes || {};
       const fuList = (t, obj) => `<div class="draftfield"><b>${t}</b>${Object.entries(obj || {}).slice(0, 6).map(([n, c]) => `<span class="chip ghost" style="margin:4px 4px 0 0">${esc(n)} · ${c}</span>`).join("") || "<div class='c'>—</div>"}</div>`;
-      $("content").innerHTML = `<h1>Perfil del Administrador</h1>
+      $("content").innerHTML = `<h1>Perfil de decisiones</h1>
         <p class="sub">${esc(p.nota || "")}</p>
         <div class="stats">
           <div class="stat"><div class="v">${d.total ?? 0}</div><div class="l">Decisiones</div></div>
@@ -567,7 +642,17 @@
         <div style="margin-top:16px">${sustCard}</div>`;
     }
 
-    $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selectedId = null; location.hash = ""; render(); } });
+    const closeUserMenu = () => { const m = $("userMenu"); if (m) m.hidden = true; const b = $("userBtn"); if (b) b.setAttribute("aria-expanded", "false"); };
+    $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selectedId = null; location.hash = ""; closeUserMenu(); render(); } });
+    $("userBtn").addEventListener("click", (e) => { e.stopPropagation(); const m = $("userMenu"); m.hidden = !m.hidden; $("userBtn").setAttribute("aria-expanded", String(!m.hidden)); });
+    document.addEventListener("click", closeUserMenu);
+    $("userMenu").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-menu]"); if (!b) return;
+      const action = b.dataset.menu; closeUserMenu();
+      if (action === "salir") { localStorage.removeItem("panorama_user"); location.reload(); return; }
+      section = action === "perfil" ? "perfil" : "ayuda"; selectedId = null; location.hash = ""; render();
+    });
+
     let searchTimer = null;
     $("search").addEventListener("input", (e) => {
       query = e.target.value;
@@ -607,20 +692,35 @@
     }
 
     $("refresh").addEventListener("click", () => load(true));
-    $("aiAnalyze").addEventListener("click", async () => {
-      try {
-        toast("Analizando temas con IA bajo demanda…");
-        const r = await fetch("/api/analyze", { method: "POST", headers: authHeaders() });
-        if (!r.ok) throw new Error("analyze failed");
-        DATA = await r.json();
-        toast(DATA.ai_configured === false ? "IA no configurada; se usó plantilla local." : "Análisis IA actualizado.");
-        render();
-      } catch { toast("No se pudo ejecutar el análisis IA."); }
-    });
     fetch("/api/claims/verdicts").then(r => r.json()).then(j => { CLAIM_VERDICTS = j || {}; }).catch(() => {});
-    const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
-    load(false);
-    setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 180000);
+
+    function showUser() {
+      const u = user(); if (!u) return false;
+      $("userName").textContent = u.name || "Editor/a";
+      $("userRole").textContent = u.role || "Editor/a";
+      $("gate").hidden = true; $("app").hidden = false;
+      return true;
+    }
+    $("gateForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = ($("gName").value || "").trim();
+      if (!name) { $("gName").focus(); toast("Escribe tu nombre para entrar."); return; }
+      const role = $("gRole").value;
+      const token = ($("gToken").value || "").trim();
+      localStorage.setItem("panorama_user", JSON.stringify({ name, role }));
+      if (token) localStorage.setItem("panorama_token", token); else localStorage.removeItem("panorama_token");
+      $("gate").hidden = true; $("app").hidden = false;
+      start();
+    });
+
+    let started = false;
+    function start() {
+      if (started) return; started = true;
+      const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
+      load(false);
+      setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 180000);
+    }
+    if (showUser()) start();
   </script>
 </body>
 </html>
