@@ -186,8 +186,15 @@
       if (days < 7) return "hace " + days + " días";
       return d.toLocaleDateString("es-PA", { day: "numeric", month: "short" });
     }
+    const PANAMA_TZ = "America/Panama";
+    function panamaTime(p) {
+      if (!p) return "";
+      try {
+        return new Date(p).toLocaleString("es-PA", { timeZone: PANAMA_TZ, day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " (hora de Panamá)";
+      } catch (e) { return ""; }
+    }
 
-    $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long" });
+    $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: PANAMA_TZ });
 
     let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", semIds = null;
     const authHeaders = () => {
@@ -303,6 +310,7 @@
             <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
             <span class="chip ghost">Evidencia: ${esc(f.evidence_state || "")}</span>
             <span class="chip ghost">Decisión: ${esc(f.review_state || "nuevo")}</span>
+            ${f.published ? `<span class="chip ghost">${esc(panamaTime(f.published))}</span>` : ""}
           </div>
         </div>
         <div class="detail-grid">
@@ -370,11 +378,11 @@
 
     function renderBandeja() {
       const rows = (DATA.feed || []).slice(0, 120).map(x =>
-        `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
+        `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published))}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
       $("content").innerHTML = `<h1>Bandeja de entrada</h1>
-        <p class="sub">Publicaciones leídas de las fuentes en las últimas horas (sin duplicados).</p>
-        <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th></th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="3" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
+        <p class="sub">Publicaciones leídas de las fuentes en las últimas horas (sin duplicados), con hora de Panamá.</p>
+        <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th>Publicado</th><th></th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="4" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
     }
 
     function renderFuentes() {
