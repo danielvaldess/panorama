@@ -152,6 +152,18 @@ curl -X POST https://panorama.sweetcode.studio/api/review \
 | Instrucciones maliciosas bloqueadas | **100%** | 100% |
 | Latencia mediana | **~11 ms** | ≤15 s |
 
+## Flujo DevSecOps
+
+Trabajo por ramas (`feat/*`, `fix/*`, `docs/*`, `chore/*`), **Pull Request** a `main`
+y **CI obligatorio** antes de mergear. Detalle en [`docs/DEVSECOPS.md`](docs/DEVSECOPS.md).
+
+```
+feature branch → commit → PR → CI (pruebas · seguridad · build) → squash merge → main → deploy Dokku
+```
+
+`main` está protegida: exige los 3 checks (`Pruebas (T01-T10 + benchmark)`,
+`Seguridad (SAST / SCA / secretos)`, `Build de imagen (Docker)`) y estar al día con `main`.
+
 ## Ejecución local
 
 ```bash
