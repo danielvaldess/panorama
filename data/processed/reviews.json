@@ -1,7 +1,7 @@
 {
-  "4f0e7377defc": {
+  "5a41d689ab83": {
     "state": "requiere evidencia",
-    "note": "Titular operativo basado en metadatos; requiere fuente institucional y detalle de cobertura antes de producir.",
+    "note": "Titular institucional (MRE) basado en metadatos; requiere documento oficial y confirmación de alcance antes de producir.",
     "reviewer": "Editor",
     "ts": "2026-10-07T00:00:00+00:00"
   }

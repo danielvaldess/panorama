@@ -1,18 +1,22 @@
 {
   "version": "Panamá · Señales y Evidencias v1",
-  "fecha_corte_UTC": "2026-10-07T20:33:03.171154+00:00",
+  "fecha_corte_UTC": "2026-10-07T21:20:04.836015+00:00",
   "consultas": {
     "noticias": {
       "feeds": [
         "TVN Noticias"
       ],
-      "gdelt": [
-        "Panama",
-        "Panama logistica",
-        "Panama turismo",
-        "Panama economia",
-        "Panama terremoto"
-      ]
+      "gdelt": {
+        "consulta_base": "Panama",
+        "temas": [
+          "Panama logistica",
+          "Panama turismo",
+          "Panama economia",
+          "Panama terremoto"
+        ]
+      },
+      "ventana": "2025-10-02/2026-09-30",
+      "fraccionamiento": "mensual (GDELT startdatetime/enddatetime)"
     },
     "indicadores": {
       "paises": [
@@ -48,7 +52,7 @@
     }
   },
   "cantidad_por_archivo": {
-    "noticias.csv": 211,
+    "noticias.csv": 250,
     "indicadores.csv": 540,
     "eventos.geojson": 82
   },
@@ -59,13 +63,14 @@
     "USGS": "Datos públicos (USGS)"
   },
   "sha256": {
-    "noticias.csv": "61d37d0db538a2b81198fbeadd4aaed73d8164e39e704de7469b8653c5c0f8b8",
-    "indicadores.csv": "cbf6ff839c5f005d6e2b33b08fa1a5c2c41e8366abe2848ea4920638f1cbbb25",
-    "eventos.geojson": "e1bf160d58c320a74a759637fe0a63c0911fe6a04739cdcb397569f7267221ee"
+    "noticias.csv": "e42bf485d45dbe39b1ebd892582565a23de4025407d248eb7999fdb2de890776",
+    "indicadores.csv": "1cb80d0599773702fa99368f1ce3524bce13bb2c6d189c611d8c7783bbf703c3",
+    "eventos.geojson": "391936f063814f0d2cf667c2fe1bb1ebc930609069a42fb2dcaf9ce61a95ced2"
   },
   "transformaciones": [
-    "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
-    "Google News es agregador: no convierte una nota en oficial salvo que la URL final sea dominio primario/oficial",
+    "Noticias: filtradas a la ventana del reto y dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
+    "Noticias: GDELT dividido por ventanas mensuales y filtrado a salidas panameñas",
+    "Google News excluido (agregador, no fuente primaria)",
     "Indicadores: valores nulos conservados (no se rellenan con 0)",
     "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)"
   ]

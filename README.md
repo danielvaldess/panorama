@@ -96,11 +96,13 @@ Paquete **"Panamá · Señales y Evidencias v1"**, reproducible y con `manifest.
 
 | Archivo | Fuente | Contenido |
 |---|---|---|
-| `data/raw/noticias.csv` | TVN RSS + GDELT DOC 2.0 | 211 registros (151 TVN) |
+| `data/raw/noticias.csv` | TVN RSS + GDELT DOC 2.0 | 250 registros (50 TVN) · ventana **2025-10-02 → 2026-09-30** |
 | `data/raw/indicadores.csv` | Banco Mundial Indicators v2 | 6 países × 6 indicadores × 2010–2024 (540) |
 | `data/raw/eventos.geojson` | USGS | Sismos 2024 (bbox Panamá, mag ≥3) |
 
 Reglas: UTF-8 · IDs estables · ISO 8601 UTC · **nulos conservados** (no se rellenan con 0). El snapshot usa **solo las fuentes declaradas por el reto**: TVN RSS, GDELT, Banco Mundial y USGS. Google News queda fuera por ser agregador, y GDELT se filtra a salidas panameñas (`.pa` y medios nacionales) para evitar ruido tipo “Panama City, Florida”. La extensión bancaria **SBP es opcional** y no se usa (modalidad editorial). Ver [`data/diccionario.md`](data/diccionario.md).
+
+> **Ventana de noticias:** la coordinación corrigió el rango del PDF (§7 traía `[2024-01-01, 2025-10-01)`, desfasado un año): las noticias se scrapean desde **2025-10-02 hasta el último mes completo (2026-09-30)**. GDELT se consulta **dividido por fechas** (ventanas mensuales) para superar el límite de 250 por consulta.
 
 ## Stack
 

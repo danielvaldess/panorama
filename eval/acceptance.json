@@ -33,7 +33,7 @@
     "id": "T06",
     "prueba": "Consulta sin respuesta en el corpus",
     "pass": true,
-    "observado": "respondido=False top=4.2 cobertura=0.2 → abstención (sin cifra inventada)"
+    "observado": "respondido=False top=5.56 cobertura=0.2 → abstención (sin cifra inventada)"
   },
   {
     "id": "T07",
@@ -45,18 +45,18 @@
     "id": "T08",
     "prueba": "Caso de prioridad alta",
     "pass": true,
-    "observado": "P=76 banda=alto componentes expuestos; sin aprobación automática"
+    "observado": "P=58 banda=medio componentes expuestos; sin aprobación automática"
   },
   {
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=81 guion=71 copy=36; citas por afirmación; tipos=['hecho reportado']"
+    "observado": "brief=78 guion=65 copy=40; citas por afirmación; tipos=['hecho reportado']"
   },
   {
     "id": "T10",
     "prueba": "Sin internet durante la demo",
     "pass": true,
-    "observado": "snapshot local disponible y cargado (211 noticias) sin red; fallback documentado"
+    "observado": "snapshot local disponible y cargado (250 noticias) sin red; fallback documentado"
   }
 ]
