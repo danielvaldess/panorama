@@ -32,14 +32,18 @@ def _fit(s: str, limit: int) -> str:
 
 def _claims(title: str, sources: list[dict]) -> list[dict]:
     ids = [s.get("name") for s in sources] or ["sin fuente"]
+    urls = [s.get("url") for s in sources if s.get("url")]
+    cita = urls[0] if urls else ""
     low = title.lower()
-    claims = [{"texto": title, "tipo": "hecho reportado", "ids_fuente": ids[:1]}]
+    claims = [{"texto": title, "tipo": "hecho reportado", "ids_fuente": ids[:1],
+               "campo": "titular", "cita": cita}]
     if any(a in low for a in ATRIBUCION):
         claims.append({"texto": f"Existe una declaración atribuida en el titular: “{title}”",
-                       "tipo": "declaración (atribuida)", "ids_fuente": ids})
+                       "tipo": "declaración (atribuida)", "ids_fuente": ids,
+                       "campo": "titular", "cita": cita})
     if len(ids) > 1:
         claims.append({"texto": f"El tema circula en {len(ids)} medios", "tipo": "inferencia",
-                       "ids_fuente": ids})
+                       "ids_fuente": ids, "campo": "conteo de fuentes", "cita": cita})
     return claims
 
 
