@@ -32,4 +32,5 @@ logs/
 *.log
 tmp/
 data/panorama.json
+data/raw/_gdelt_cache/
 .fastembed_cache/

@@ -38,6 +38,12 @@ OFFICIAL_FEEDS: list[tuple[str, str]] = []
 GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_QUERIES = ["Panama", "Panama logistica", "Panama turismo", "Panama economia", "Panama terremoto"]
 
+# Ventana de noticias del reto (coordinación): desde 2025-10-02 hasta el último mes completo (2026-09-30).
+# El PDF (§7) trae [2024-01-01, 2025-10-01) — desfasado un año; se corrige aquí.
+NEWS_WINDOW_START = os.environ.get("NEWS_WINDOW_START", "2025-10-02")
+NEWS_WINDOW_END = os.environ.get("NEWS_WINDOW_END", "2026-09-30")
+NEWS_TARGET = int(os.environ.get("NEWS_TARGET", "240"))
+
 WB_COUNTRIES = ["PAN", "CRI", "COL", "DOM", "MEX", "GTM"]
 WB_INDICATORS = {
     "NY.GDP.MKTP.KD.ZG": ("Crecimiento del PIB", "% anual"),
@@ -99,21 +105,63 @@ def _medio_google(title: str) -> tuple[str, str]:
     return title, "Google News"
 
 
-def _gdelt_query(query: str, tries: int = 4) -> list[dict]:
-    """Consulta GDELT respetando el límite de 1 req/5 s y reintentando ante 429."""
-    for i in range(tries):
-        time.sleep(6 if i else 5)
+def _gdelt_query(query: str, tries: int = 3, startdatetime: str | None = None, enddatetime: str | None = None) -> list[dict]:
+    """Consulta GDELT (1 req/5 s) con caché en disco y reintentos ante 429/timeout."""
+    cpath = os.path.join(RAW, "_gdelt_cache", f"{query.replace(' ', '_')}_{startdatetime or ''}_{enddatetime or ''}.json")
+    if os.path.exists(cpath):
         try:
-            r = httpx.get(GDELT_URL, params={
+            with open(cpath, encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            pass
+    for i in range(tries):
+        time.sleep(5 if i == 0 else 6)
+        try:
+            params = {
                 "query": query, "mode": "artlist", "maxrecords": 250,
                 "format": "json", "sort": "datedesc",
-            }, headers={"User-Agent": UA}, timeout=45, follow_redirects=True)
-            if r.status_code == 429:
+            }
+            if startdatetime:
+                params["startdatetime"] = startdatetime
+            if enddatetime:
+                params["enddatetime"] = enddatetime
+            r = httpx.get(GDELT_URL, params=params, headers={"User-Agent": UA}, timeout=90, follow_redirects=True)
+            if r.status_code != 200:
                 continue
-            return (r.json() or {}).get("articles", []) or []
+            arts = (r.json() or {}).get("articles", []) or []
+            os.makedirs(os.path.dirname(cpath), exist_ok=True)
+            with open(cpath, "w", encoding="utf-8") as fh:
+                json.dump(arts, fh, ensure_ascii=False)
+            return arts
         except Exception:
             continue
     return []
+
+
+def _month_windows() -> list[tuple[str, str]]:
+    """Divide [NEWS_WINDOW_START, NEWS_WINDOW_END] en ventanas mensuales (GDELT por fechas)."""
+    from calendar import monthrange
+    start = datetime.strptime(NEWS_WINDOW_START, "%Y-%m-%d")
+    end = datetime.strptime(NEWS_WINDOW_END, "%Y-%m-%d")
+    out: list[tuple[str, str]] = []
+    y, m = start.year, start.month
+    while (y, m) <= (end.year, end.month):
+        w_start = max(start, datetime(y, m, 1))
+        w_end = min(end, datetime(y, m, monthrange(y, m)[1]))
+        if w_start <= w_end:
+            out.append((w_start.strftime("%Y%m%d000000"), w_end.strftime("%Y%m%d235959")))
+        m += 1
+        if m > 12:
+            m, y = 1, y + 1
+    return out
+
+
+def _in_window(*dates: str | None) -> bool:
+    """Ventana de noticias del reto (corrección de coordinación): 2025-10-02 → 2026-09-30."""
+    for d in dates:
+        if d and NEWS_WINDOW_START <= d[:10] <= NEWS_WINDOW_END:
+            return True
+    return False
 
 
 def collect_news() -> list[dict]:
@@ -123,6 +171,8 @@ def collect_news() -> list[dict]:
     def add(titulo, url, medio, publicacion, deteccion, origen):
         if not titulo or not url:
             return
+        if not _in_window(publicacion or deteccion):
+            return  # fuera de la ventana de noticias del reto
         key = url.split("?")[0]
         if key in seen:
             return
@@ -166,21 +216,25 @@ def collect_news() -> list[dict]:
             origen = "Oficial" if (process.is_official(link) or (process.is_official_source_name(medio) and process.is_editorial_signal(item))) else "Agregador"
             add(titulo, link, medio, pub, pub or EXTRACCION, origen)
 
-    for q in GDELT_QUERIES:
-        arts = _gdelt_query(q)
+    # GDELT dividido por fechas (ventanas mensuales) dentro de la ventana del reto.
+    # Se recorre de lo más reciente a lo más antiguo y se detiene al alcanzar la meta.
+    for sd, ed in reversed(_month_windows()):
+        arts = _gdelt_query("Panama", startdatetime=sd, enddatetime=ed)
         for a in arts:
             titulo = _clean(a.get("title"))
             link = a.get("url", "")
             if not process.is_panamanian_outlet(link):
                 continue  # solo salidas panameñas (evita "Panama City, Florida", ruido global)
-            sd = a.get("seendate")  # 20250920T123000Z -> deteccion
+            sdet = a.get("seendate")  # 20250920T123000Z -> deteccion
             det = None
-            if sd and len(sd) >= 15:
+            if sdet and len(sdet) >= 15:
                 try:
-                    det = datetime.strptime(sd, "%Y%m%dT%H%M%SZ").strftime("%Y-%m-%dT%H:%M:%SZ")
+                    det = datetime.strptime(sdet, "%Y%m%dT%H%M%SZ").strftime("%Y-%m-%dT%H:%M:%SZ")
                 except Exception:
                     det = None
             add(titulo, link, a.get("domain") or "GDELT", None, det, "GDELT")
+        if len(rows) >= NEWS_TARGET:
+            break
 
     return rows
 
@@ -264,7 +318,12 @@ def main() -> int:
         "version": "Panamá · Señales y Evidencias v1",
         "fecha_corte_UTC": CORTE,
         "consultas": {
-            "noticias": {"feeds": [f[0] for f in FEEDS], "gdelt": GDELT_QUERIES},
+            "noticias": {
+                "feeds": [f[0] for f in FEEDS],
+                "gdelt": {"consulta_base": "Panama", "temas": GDELT_QUERIES[1:]},
+                "ventana": f"{NEWS_WINDOW_START}/{NEWS_WINDOW_END}",
+                "fraccionamiento": "mensual (GDELT startdatetime/enddatetime)",
+            },
             "indicadores": {"paises": WB_COUNTRIES, "indicadores": list(WB_INDICATORS), "anios": WB_YEARS},
             "eventos": {"fuente": "USGS", "rango": "2024-01-01/2024-12-31",
                         "bbox_lat": [5, 12], "bbox_lon": [-86, -76], "magnitud_min": 3},
@@ -282,8 +341,9 @@ def main() -> int:
             "eventos.geojson": _sha256(q_path),
         },
         "transformaciones": [
-            "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
-            "Google News es agregador: no convierte una nota en oficial salvo que la URL final sea dominio primario/oficial",
+            "Noticias: filtradas a la ventana del reto y dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
+            "Noticias: GDELT dividido por ventanas mensuales y filtrado a salidas panameñas",
+            "Google News excluido (agregador, no fuente primaria)",
             "Indicadores: valores nulos conservados (no se rellenan con 0)",
             "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)",
         ],
