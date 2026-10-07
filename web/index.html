@@ -112,6 +112,7 @@
     .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
     .btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border)}
     .btn-ghost:hover{color:var(--primary);border-color:var(--primary)}
+    .btn-ghost.on{background:var(--primary);border-color:var(--primary);color:#fff}
     .metric{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bg-soft)}
     .metric:last-child{border-bottom:none}
     .metric b{font-family:var(--f-title)}
@@ -159,6 +160,7 @@
       <a data-section="verificacion"><span class="dot"></span> Verificación</a>
       <a data-section="borradores"><span class="dot"></span> Borradores <span class="badge" id="draftCount" style="display:none"></span></a>
       <a data-section="reportes"><span class="dot"></span> Reportes</a>
+      <a data-section="perfil"><span class="dot"></span> Perfil del Admin</a>
     </nav>
 
     <main class="main" id="content"><div class="empty">Cargando la mesa…</div></main>
@@ -173,7 +175,7 @@
     const bandChip = b => b === "alto" ? "ok" : b === "bajo" ? "rev" : "m";
     const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
-    const SECTIONS = { prioridades: "Mesa de Prioridades", bandeja: "Bandeja de entrada", fuentes: "Fuentes", verificacion: "Verificación", borradores: "Borradores", reportes: "Reportes" };
+    const SECTIONS = { prioridades: "Mesa de Prioridades", bandeja: "Bandeja de entrada", fuentes: "Fuentes", verificacion: "Verificación", borradores: "Borradores", reportes: "Reportes", perfil: "Perfil del Administrador" };
     const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
     const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", general: "General" };
@@ -201,6 +203,7 @@
       const token = localStorage.getItem("panorama_token");
       return token ? { "X-Panorama-Token": token } : {};
     };
+    let CLAIM_VERDICTS = {};
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
     const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
@@ -227,6 +230,7 @@
       if (section === "verificacion") return renderVerificacion();
       if (section === "borradores") return renderBorradores();
       if (section === "reportes") return renderReportes();
+      if (section === "perfil") return renderPerfil();
     }
 
     function openDetail(id) { selectedId = id; location.hash = "#/tema/" + id; window.scrollTo(0, 0); render(); }
@@ -293,8 +297,17 @@
         const val = c[k] ?? 0;
         return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${Math.round(val * 100)}%</div></div>`;
       }).join("");
-      const claims = (d.afirmaciones || []).map(a => `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div><div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${a.campo ? ` · campo: ${esc(a.campo)}` : ""}${a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : ""}</div></div>`).join("") || "<div class='c'>Sin afirmaciones.</div>";
+      const claims = (d.afirmaciones || []).map((a, i) => {
+        const v = CLAIM_VERDICTS[f.id + "#" + i];
+        const chipV = v ? `<span class="chip ${v.veredicto === "válido" ? "ok" : v.veredicto === "parcial" ? "m" : "a"}">${esc(v.veredicto)}</span>` : "";
+        const btns = ["válido", "parcial", "inválido"].map(x =>
+          `<button class="btn btn-ghost${v && v.veredicto === x ? " on" : ""}" data-claim="${i}" data-verdict="${esc(x)}">${esc(x)}</button>`).join("");
+        return `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div>
+          <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${a.campo ? ` · campo: ${esc(a.campo)}` : ""}${a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : ""} ${chipV}</div>
+          <div class="actions">${btns}</div></div>`;
+      }).join("") || "<div class='c'>Sin afirmaciones.</div>";
       const aiBox = f.summary ? `<div class="card block"><h3>Análisis IA bajo demanda</h3><div class="assist"><small>${esc(f.method || "ai")} · grounding ${Math.round((f.grounding || 0) * 100)}%</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}</div>` : "";
+      const prog = sustentoProgreso();
       const ctx = (f.contexto || []).map(c => `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div><div class="c">${esc(c.periodo)} · ${esc(c.unidad)} · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a></div><div class="c">${esc(c.limite)}</div></div>`).join("") || "<div class='c'>Sin relación oficial sustentada (no se fuerza).</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
       const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
@@ -328,6 +341,7 @@
             </div>
             <div class="card block">
               <h3>Afirmaciones y citas</h3>
+              <div class="c" style="margin-bottom:8px">Sustento del Administrador: <b>${prog.validos}/${prog.total} válidos (${prog.pct}%)</b> · ${prog.fichas} fichas — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
               ${claims}
             </div>
             ${aiBox}
@@ -374,6 +388,25 @@
           f.review_state = b.dataset.review; toast("Estado actualizado: " + b.dataset.review); render();
         } catch { toast("No se pudo guardar el estado."); }
       });
+      $("content").querySelectorAll("[data-claim]").forEach(b => b.onclick = async () => {
+        const idx = parseInt(b.dataset.claim, 10), verdict = b.dataset.verdict;
+        try {
+          const r = await fetch("/api/claims/verdict", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id_caso: f.id, indice: idx, veredicto: verdict, reviewer: "Administrador" }) });
+          const j = await r.json();
+          if (!r.ok || !j.ok) throw new Error(j.error || "error");
+          CLAIM_VERDICTS[j.clave] = { veredicto: verdict, ts: new Date().toISOString() };
+          toast("Veredicto guardado: " + verdict + (j.persisted ? "" : " (solo en memoria)"));
+          renderDetail();
+        } catch { toast("No se pudo guardar el veredicto."); }
+      });
+    }
+
+    function sustentoProgreso() {
+      const keys = Object.keys(CLAIM_VERDICTS);
+      const total = keys.length;
+      const validos = keys.filter(k => CLAIM_VERDICTS[k].veredicto === "válido").length;
+      const fichas = new Set(keys.map(k => k.split("#")[0])).size;
+      return { total, validos, fichas, pct: total ? Math.round(validos / total * 100) : 0 };
     }
 
     function renderBandeja() {
@@ -470,6 +503,70 @@
       } catch (e) { const el = $("quality"); if (el) el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">No disponible.</div>`; }
     }
 
+    async function renderPerfil() {
+      $("content").innerHTML = `<h1>Perfil del Administrador</h1><p class="sub">Cargando tus preferencias…</p>`;
+      let p;
+      try { p = await (await fetch("/api/admin/profile")).json(); }
+      catch { $("content").innerHTML = `<div class="empty">No se pudo cargar el perfil.</div>`; return; }
+      const s = p.sustento || {}, d = p.decisiones || {};
+      const pctV = s.pct_validos != null ? Math.round(s.pct_validos * 100) : 0;
+      const suf = p.estado === "insuficiente";
+      const m = s.muestra || {};
+      const sustCard = `
+        <div class="card">
+          <h3 style="font-family:var(--f-title)">Validez de sustento (meta ≥90%)</h3>
+          <div class="viz"><div class="lab">Afirmaciones válidas</div><div class="track"><span class="${s.cumple_meta ? "bar-suf" : "bar-par"}" style="width:${pctV}%"></span></div><div class="num">${pctV}%</div></div>
+          <div class="metric"><span>Válidos / etiquetados</span><b>${s.numerador_validos ?? 0} / ${s.denominador ?? 0}</b></div>
+          <div class="metric"><span>Muestra (afirmaciones)</span><b>${m.afirmaciones ?? 0} / ${m.min_afirmaciones ?? 30} mín.</b></div>
+          <div class="metric"><span>Fichas revisadas</span><b>${m.fichas ?? 0} / ${m.min_fichas ?? 10} mín.</b></div>
+          <div class="metric"><span>Estado</span><b>${s.cumple_meta ? "Cumple la meta" : "Pendiente"}</b></div>
+          <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">Los veredictos se registran en la ficha, sección «Afirmaciones y citas». Rúbrica: solo «válido» cuenta.</div>
+        </div>`;
+      if (suf) {
+        $("content").innerHTML = `<h1>Perfil del Administrador</h1>
+          <p class="sub">Aprendo de tus decisiones sobre las fichas. Cuantas más registres, más preciso.</p>
+          <div class="empty">${esc(p.mensaje || "Aún no hay decisiones suficientes.")}</div>
+          ${sustCard}`;
+        return;
+      }
+      const barras = (obj) => Object.entries(obj || {}).map(([k, v]) => {
+        const tot = v.aprobados + v.descartados + v.en_proceso;
+        const pct = tot ? Math.round(v.aprobados / tot * 100) : 0;
+        return `<div class="viz"><div class="lab">${esc(TEMA_LABEL[k] || k)}</div><div class="track"><span class="bar-alto" style="width:${pct}%"></span></div><div class="num">${v.aprobados}/${tot}</div></div>`;
+      }).join("") || `<div class="empty">Sin datos.</div>`;
+      const comps = p.componentes_promedio || {};
+      const compRows = ["R", "I", "U", "N", "E"].map((k, i) => {
+        const lab = COMP[i][1];
+        const a = comps.aprobados?.[k], dd = comps.descartados?.[k];
+        return `<div class="metric"><span>${esc(lab)}</span><b>${a ?? "—"} vs ${dd ?? "—"}</b></div>`;
+      }).join("");
+      const fuentes = p.fuentes_frecuentes || {};
+      const fuList = (t, obj) => `<div class="draftfield"><b>${t}</b>${Object.entries(obj || {}).slice(0, 6).map(([n, c]) => `<span class="chip ghost" style="margin:4px 4px 0 0">${esc(n)} · ${c}</span>`).join("") || "<div class='c'>—</div>"}</div>`;
+      $("content").innerHTML = `<h1>Perfil del Administrador</h1>
+        <p class="sub">${esc(p.nota || "")}</p>
+        <div class="stats">
+          <div class="stat"><div class="v">${d.total ?? 0}</div><div class="l">Decisiones</div></div>
+          <div class="stat"><div class="v">${d.aprobados ?? 0}</div><div class="l">Aprobados</div></div>
+          <div class="stat"><div class="v">${d.descartados ?? 0}</div><div class="l">Descartados</div></div>
+          <div class="stat"><div class="v">${Math.round((d.tasa_aprobacion ?? 0) * 100)}%</div><div class="l">Tasa de aprobación</div></div>
+        </div>
+        <div class="repgrid">
+          <div class="card"><h3 style="font-family:var(--f-title)">Aprobación por tema</h3>${barras(p.por_tema)}</div>
+          <div class="card"><h3 style="font-family:var(--f-title)">Aprobación por estado de evidencia</h3>${barras(p.por_evidencia)}</div>
+        </div>
+        <div class="repgrid" style="margin-top:16px">
+          <div class="card"><h3 style="font-family:var(--f-title)">Puntaje y componentes (aprobados vs descartados)</h3>
+            <div class="metric"><span>Puntaje promedio</span><b>${p.puntaje_promedio?.aprobados ?? "—"} vs ${p.puntaje_promedio?.descartados ?? "—"}</b></div>
+            ${compRows}
+          </div>
+          <div class="card"><h3 style="font-family:var(--f-title)">Fuentes frecuentes</h3>
+            ${fuList("En aprobados", fuentes.aprobados)}${fuList("En descartados", fuentes.descartados)}
+          </div>
+        </div>
+        ${p.insights?.length ? `<div class="card" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Lo que he aprendido de ti</h3><ul class="sources">${p.insights.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+        <div style="margin-top:16px">${sustCard}</div>`;
+    }
+
     $("nav").addEventListener("click", (e) => { const a = e.target.closest("a[data-section]"); if (a) { section = a.dataset.section; selectedId = null; location.hash = ""; render(); } });
     let searchTimer = null;
     $("search").addEventListener("input", (e) => {
@@ -520,6 +617,7 @@
         render();
       } catch { toast("No se pudo ejecutar el análisis IA."); }
     });
+    fetch("/api/claims/verdicts").then(r => r.json()).then(j => { CLAIM_VERDICTS = j || {}; }).catch(() => {});
     const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
     load(false);
     setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 180000);
