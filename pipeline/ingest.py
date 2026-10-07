@@ -6,7 +6,9 @@ Paquete: "Panamá · Señales y Evidencias v1"
 - C · USGS sismos 2024                             -> data/raw/eventos.geojson
 - manifest + diccionario                            -> data/manifest.json, data/diccionario.md
 
-Uso:  python -m pipeline.ingest
+Uso:  python -m pipeline.ingest                      # snapshot completo (fuentes en vivo)
+      python -m pipeline.ingest --filtrar-snapshot   # solo aplica el rango del contrato §7
+                                                     # al CSV congelado (sin red)
 """
 from __future__ import annotations
 
@@ -15,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timezone
 
@@ -27,6 +30,11 @@ UA = "Panorama/0.1 (hackIAthon Panama 2026)"
 NOW = datetime.now(timezone.utc)
 CORTE = NOW.isoformat()
 EXTRACCION = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+# Contrato de datos §7: solo noticias con fecha en [RANGO_INICIO, RANGO_FIN)
+RANGO_INICIO = "2024-01-01"       # inclusivo
+RANGO_FIN = "2025-10-01"          # exclusivo
+MIN_NOTICIAS_RANGO = 50           # guardia: no sobrescribir el snapshot si quedan menos
 
 FEEDS = [
     ("TVN Noticias", "https://www.tvn-2.com/rss/"),
@@ -102,7 +110,34 @@ def _medio_google(title: str) -> tuple[str, str]:
     return title, "Google News"
 
 
-def collect_news() -> list[dict]:
+CAMPOS_NOTICIAS = ["id_noticia", "titulo", "url", "medio", "idioma",
+                   "fecha_publicacion", "fecha_deteccion", "fecha_extraccion",
+                   "tema", "origen", "alcance_texto"]
+
+
+def _aplicar_rango(rows: list[dict]) -> tuple[list[dict], dict]:
+    """Conserva solo noticias con fecha en [RANGO_INICIO, RANGO_FIN).
+
+    Usa `fecha_publicacion` y, si está vacía, `fecha_deteccion` (mismo criterio
+    que `snapshot.load_news`). Devuelve (filas_en_rango, estadísticas).
+    """
+    dentro: list[dict] = []
+    excluidas_rango = 0
+    sin_fecha = 0
+    for r in rows:
+        fecha = (r.get("fecha_publicacion") or "").strip() or (r.get("fecha_deteccion") or "").strip()
+        if not re.match(r"^\d{4}-\d{2}-\d{2}", fecha):
+            sin_fecha += 1
+        elif RANGO_INICIO <= fecha[:10] < RANGO_FIN:
+            dentro.append(r)
+        else:
+            excluidas_rango += 1
+    stats = {"total_original": len(rows), "incluidas": len(dentro),
+             "excluidas_por_rango": excluidas_rango, "excluidas_sin_fecha": sin_fecha}
+    return dentro, stats
+
+
+def collect_news() -> tuple[list[dict], dict]:
     rows: list[dict] = []
     seen: set[str] = set()
 
@@ -172,7 +207,7 @@ def collect_news() -> list[dict]:
                     det = None
             add(titulo, link, a.get("domain") or "GDELT", None, det, "GDELT")
 
-    return rows
+    return _aplicar_rango(rows)
 
 
 def collect_indicators() -> list[dict]:
@@ -224,16 +259,57 @@ def _sha256(path: str) -> str:
     return h.hexdigest()
 
 
+def filtrar_snapshot() -> int:
+    """Aplica el rango del contrato §7 al snapshot congelado (sin red) y actualiza el manifest."""
+    n_path = os.path.join(RAW, "noticias.csv")
+    if not os.path.exists(n_path):
+        print("No existe data/raw/noticias.csv; corre `python -m pipeline.ingest` primero.", flush=True)
+        return 1
+    with open(n_path, encoding="utf-8-sig", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    dentro, stats = _aplicar_rango(rows)
+    _write_csv(n_path, dentro, CAMPOS_NOTICIAS)
+
+    m_path = os.path.join(ROOT, "data", "manifest.json")
+    manifest: dict = {}
+    if os.path.exists(m_path):
+        with open(m_path, encoding="utf-8") as fh:
+            manifest = json.load(fh)
+    manifest.setdefault("cantidad_por_archivo", {})["noticias.csv"] = len(dentro)
+    manifest.setdefault("sha256", {})["noticias.csv"] = _sha256(n_path)
+    manifest["rango_fechas_noticias"] = {"inicio_inclusivo": RANGO_INICIO, "fin_exclusivo": RANGO_FIN, **stats}
+    nota = (f"Noticias: filtro del contrato §7 [{RANGO_INICIO}, {RANGO_FIN}) — "
+            f"{stats['incluidas']} de {stats['total_original']} (excluidas "
+            f"{stats['excluidas_por_rango']} por rango, {stats['excluidas_sin_fecha']} sin fecha)")
+    trans = manifest.setdefault("transformaciones", [])
+    trans[:] = [t for t in trans if not t.startswith("Noticias: filtro del contrato §7")] + [nota]
+    with open(m_path, "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, ensure_ascii=False, indent=2)
+
+    print(f"Snapshot filtrado: {stats['incluidas']} de {stats['total_original']} noticias "
+          f"en [{RANGO_INICIO}, {RANGO_FIN})", flush=True)
+    print(f"   excluidas: {stats['excluidas_por_rango']} por rango, "
+          f"{stats['excluidas_sin_fecha']} sin fecha", flush=True)
+    print("manifest ->", m_path, flush=True)
+    return 0
+
+
 def main() -> int:
+    if "--filtrar-snapshot" in sys.argv:
+        return filtrar_snapshot()
     os.makedirs(RAW, exist_ok=True)
     print("A) noticias (TVN RSS + GDELT)...", flush=True)
-    news = collect_news()
+    news, filtro = collect_news()
+    if len(news) < MIN_NOTICIAS_RANGO:
+        print(f"   ABORTADO: solo {len(news)} noticias en el rango [{RANGO_INICIO}, {RANGO_FIN}) "
+              f"(mínimo {MIN_NOTICIAS_RANGO}); no se sobrescribe el snapshot congelado.", flush=True)
+        return 1
     n_path = os.path.join(RAW, "noticias.csv")
-    _write_csv(n_path, news, ["id_noticia", "titulo", "url", "medio", "idioma",
-                              "fecha_publicacion", "fecha_deteccion", "fecha_extraccion",
-                              "tema", "origen", "alcance_texto"])
+    _write_csv(n_path, news, CAMPOS_NOTICIAS)
     tvn = sum(1 for x in news if x["origen"] == "RSS" and x["medio"] == "TVN Noticias")
-    print(f"   {len(news)} noticias (TVN: {tvn})", flush=True)
+    print(f"   {len(news)} noticias en rango (TVN: {tvn}; excluidas: "
+          f"{filtro['excluidas_por_rango']} por rango, {filtro['excluidas_sin_fecha']} sin fecha)",
+          flush=True)
 
     print("B) indicadores (Banco Mundial)...", flush=True)
     inds = collect_indicators()
@@ -260,6 +336,7 @@ def main() -> int:
                         "bbox_lat": [5, 12], "bbox_lon": [-86, -76], "magnitud_min": 3},
         },
         "cantidad_por_archivo": {"noticias.csv": len(news), "indicadores.csv": len(inds), "eventos.geojson": nq},
+        "rango_fechas_noticias": {"inicio_inclusivo": RANGO_INICIO, "fin_exclusivo": RANGO_FIN, **filtro},
         "licencia_condiciones": {
             "TVN RSS": "Metadatos/uso referencial; no republicar artículos",
             "GDELT": "Uso vía API; no transfiere derechos de los medios enlazados",
@@ -273,6 +350,9 @@ def main() -> int:
         },
         "transformaciones": [
             "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
+            f"Noticias: filtro del contrato §7 [{RANGO_INICIO}, {RANGO_FIN}) — "
+            f"{filtro['incluidas']} de {filtro['total_original']} (excluidas "
+            f"{filtro['excluidas_por_rango']} por rango, {filtro['excluidas_sin_fecha']} sin fecha)",
             "Indicadores: valores nulos conservados (no se rellenan con 0)",
             "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)",
         ],

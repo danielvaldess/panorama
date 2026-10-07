@@ -22,6 +22,12 @@ Noticias públicas: **TVN RSS + GDELT DOC 2.0** + prensa oficial (`gob.pa`).
 
 > Regla: guardar `fecha_publicacion` **distinta** de `fecha_deteccion`; conservar nulos.
 
+> **Rango del contrato §7:** solo se conservan noticias con fecha en
+> `[2024-01-01, 2025-10-01)` (inicio inclusivo, fin exclusivo). Se lee
+> `fecha_publicacion` y, si está vacía, `fecha_deteccion`. Las exclusiones quedan
+> registradas en `manifest.json → rango_fechas_noticias`. Reprocesar el CSV
+> congelado sin red: `python -m pipeline.ingest --filtrar-snapshot`.
+
 ## B · `data/raw/indicadores.csv`
 Banco Mundial **Indicators API v2** — 6 países (PAN, CRI, COL, DOM, MEX, GTM) × 6
 indicadores × 2010–2024 (cuadrícula de 540 combinaciones).

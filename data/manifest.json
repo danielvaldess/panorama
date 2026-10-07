@@ -51,7 +51,7 @@
     }
   },
   "cantidad_por_archivo": {
-    "noticias.csv": 260,
+    "noticias.csv": 82,
     "indicadores.csv": 540,
     "eventos.geojson": 82
   },
@@ -62,13 +62,22 @@
     "USGS": "Datos públicos (USGS)"
   },
   "sha256": {
-    "noticias.csv": "b8f3bd816d0a1b6dfaa0f33b0e2a27e25aa2b7f2def175f9457123568f0d9a99",
+    "noticias.csv": "6d7976649485fd8231cb817088154f139cc1e76625956a411827c95e0bdd3117",
     "indicadores.csv": "d875c95489de649ca6bbe5fe0bb7e7dc107628a8c8d2cb853295898dce2c3826",
     "eventos.geojson": "6d436f8e42097e9954bfea6a62674a9f9b85a62116916df17b7edc9b086bf472"
   },
   "transformaciones": [
     "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
     "Indicadores: valores nulos conservados (no se rellenan con 0)",
-    "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)"
-  ]
+    "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)",
+    "Noticias: filtro del contrato §7 [2024-01-01, 2025-10-01) — 82 de 260 (excluidas 178 por rango, 0 sin fecha)"
+  ],
+  "rango_fechas_noticias": {
+    "inicio_inclusivo": "2024-01-01",
+    "fin_exclusivo": "2025-10-01",
+    "total_original": 260,
+    "incluidas": 82,
+    "excluidas_por_rango": 178,
+    "excluidas_sin_fecha": 0
+  }
 }

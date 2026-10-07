@@ -15,7 +15,7 @@
     "id": "T03",
     "prueba": "Noticia antigua recirculada",
     "pass": true,
-    "observado": "U=0.0 (baja); fecha original conservada=2026-08-07"
+    "observado": "U=0.0 (baja); fecha original conservada=2026-08-08"
   },
   {
     "id": "T04",
@@ -33,7 +33,7 @@
     "id": "T06",
     "prueba": "Consulta sin respuesta en el corpus",
     "pass": true,
-    "observado": "respondido=False top=3.98 cobertura=0.2 → abstención (sin cifra inventada)"
+    "observado": "respondido=False top=2.68 cobertura=0.2 → abstención (sin cifra inventada)"
   },
   {
     "id": "T07",
@@ -45,18 +45,18 @@
     "id": "T08",
     "prueba": "Caso de prioridad alta",
     "pass": true,
-    "observado": "P=88 banda=alto componentes expuestos; sin aprobación automática"
+    "observado": "P=57 banda=medio componentes expuestos; sin aprobación automática"
   },
   {
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=66 guion=53 copy=28; citas por afirmación; tipos=['hecho reportado', 'inferencia']"
+    "observado": "brief=65 guion=52 copy=27; citas por afirmación; tipos=['hecho reportado', 'inferencia']"
   },
   {
     "id": "T10",
     "prueba": "Sin internet durante la demo",
     "pass": true,
-    "observado": "snapshot local disponible y cargado (260 noticias) sin red; fallback documentado"
+    "observado": "snapshot local disponible y cargado (82 noticias) sin red; fallback documentado"
   }
 ]
