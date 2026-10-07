@@ -1,13 +1,10 @@
 {
   "version": "Panamá · Señales y Evidencias v1",
-  "fecha_corte_UTC": "2026-10-07T20:00:13.280185+00:00",
+  "fecha_corte_UTC": "2026-10-07T20:33:03.171154+00:00",
   "consultas": {
     "noticias": {
       "feeds": [
-        "TVN Noticias",
-        "La Prensa",
-        "Foco Panamá",
-        "TVMax"
+        "TVN Noticias"
       ],
       "gdelt": [
         "Panama",
@@ -51,7 +48,7 @@
     }
   },
   "cantidad_por_archivo": {
-    "noticias.csv": 406,
+    "noticias.csv": 211,
     "indicadores.csv": 540,
     "eventos.geojson": 82
   },
@@ -62,13 +59,13 @@
     "USGS": "Datos públicos (USGS)"
   },
   "sha256": {
-    "noticias.csv": "3a534bb026bb92dae94715efbccddc2095efbdb43ca852fd3981d7ce390cee9e",
-    "indicadores.csv": "39a2f6b8fdc58fc4ec3cd12046ac215c6292429f6f99b0b0dfa6c602f6dc7765",
-    "eventos.geojson": "9297e0883f7682a2b2597a8eb2b47e7117a1a5e7a1575b4525dc94a4692f3481"
+    "noticias.csv": "61d37d0db538a2b81198fbeadd4aaed73d8164e39e704de7469b8653c5c0f8b8",
+    "indicadores.csv": "cbf6ff839c5f005d6e2b33b08fa1a5c2c41e8366abe2848ea4920638f1cbbb25",
+    "eventos.geojson": "e1bf160d58c320a74a759637fe0a63c0911fe6a04739cdcb397569f7267221ee"
   },
   "transformaciones": [
     "Noticias: dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
-    "Google News excluido: el snapshot usa TVN RSS + GDELT para noticias y Banco Mundial/USGS para datos oficiales",
+    "Google News es agregador: no convierte una nota en oficial salvo que la URL final sea dominio primario/oficial",
     "Indicadores: valores nulos conservados (no se rellenan con 0)",
     "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)"
   ]

@@ -32,9 +32,6 @@ EXTRACCION = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 FEEDS = [
     ("TVN Noticias", "https://www.tvn-2.com/rss/"),
-    ("La Prensa", "https://www.prensa.com/arc/outboundfeeds/rss/"),
-    ("Foco Panamá", "https://focopanama.com/feed/"),
-    ("TVMax", "https://www.tvmax-9.com/rss/"),
 ]
 # No usamos Google News como fuente: es agregador, no procedencia primaria.
 OFFICIAL_FEEDS: list[tuple[str, str]] = []
@@ -102,6 +99,23 @@ def _medio_google(title: str) -> tuple[str, str]:
     return title, "Google News"
 
 
+def _gdelt_query(query: str, tries: int = 4) -> list[dict]:
+    """Consulta GDELT respetando el límite de 1 req/5 s y reintentando ante 429."""
+    for i in range(tries):
+        time.sleep(6 if i else 5)
+        try:
+            r = httpx.get(GDELT_URL, params={
+                "query": query, "mode": "artlist", "maxrecords": 250,
+                "format": "json", "sort": "datedesc",
+            }, headers={"User-Agent": UA}, timeout=45, follow_redirects=True)
+            if r.status_code == 429:
+                continue
+            return (r.json() or {}).get("articles", []) or []
+        except Exception:
+            continue
+    return []
+
+
 def collect_news() -> list[dict]:
     rows: list[dict] = []
     seen: set[str] = set()
@@ -153,18 +167,12 @@ def collect_news() -> list[dict]:
             add(titulo, link, medio, pub, pub or EXTRACCION, origen)
 
     for q in GDELT_QUERIES:
-        time.sleep(5)  # GDELT: máx. 1 req / 5 s
-        try:
-            r = httpx.get(GDELT_URL, params={
-                "query": q, "mode": "artlist", "maxrecords": 250,
-                "format": "json", "sort": "datedesc",
-            }, headers={"User-Agent": UA}, timeout=45, follow_redirects=True)
-            arts = r.json().get("articles", [])
-        except Exception:
-            arts = []
+        arts = _gdelt_query(q)
         for a in arts:
             titulo = _clean(a.get("title"))
             link = a.get("url", "")
+            if not process.is_panamanian_outlet(link):
+                continue  # solo salidas panameñas (evita "Panama City, Florida", ruido global)
             sd = a.get("seendate")  # 20250920T123000Z -> deteccion
             det = None
             if sd and len(sd) >= 15:

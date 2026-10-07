@@ -17,12 +17,23 @@ UA = "Panorama/0.1 (hackIAthon Panama 2026)"
 GDELT = "https://api.gdeltproject.org/api/v2/doc/doc"
 MAX_AGE_HOURS = int(os.environ.get("MAX_AGE_HOURS", "24"))
 
-# Medios (RSS). Los que fallen se ignoran.
+# Medios (RSS). El reto define noticias públicas como "TVN RSS + GDELT DOC 2.0".
 FEEDS = [
     ("TVN Noticias", "https://www.tvn-2.com/rss/"),
-    ("La Prensa", "https://www.prensa.com/arc/outboundfeeds/rss/"),
-    ("Foco Panamá", "https://focopanama.com/feed/"),
-    ("TVMax", "https://www.tvmax-9.com/rss/"),
+]
+
+# Fuentes declaradas por el reto (última página del documento).
+CHALLENGE_SOURCES = [
+    {"nombre": "TVN Noticias · RSS", "url": "https://www.tvn-2.com/rss/",
+     "tipo": "RSS", "confiabilidad": 5,
+     "licencia": "Metadatos/uso referencial; no republicar artículos"},
+    {"nombre": "GDELT · DOC 2.0 (ArtList)", "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+     "tipo": "API", "confiabilidad": 4,
+     "licencia": "Uso vía API; no transfiere derechos de los medios enlazados"},
+    {"nombre": "Banco Mundial · Indicators v2", "url": "https://api.worldbank.org/v2/",
+     "tipo": "API", "confiabilidad": 5, "licencia": "CC BY 4.0 (revisar excepciones)"},
+    {"nombre": "USGS · Catálogo sísmico", "url": "https://earthquake.usgs.gov/fdsnws/event/1/",
+     "tipo": "API", "confiabilidad": 5, "licencia": "Datos públicos (USGS)"},
 ]
 
 
@@ -97,6 +108,8 @@ def fetch_gdelt(query: str, maxrecords: int = 50) -> list[dict]:
         url = a.get("url", "")
         if not title or not url:
             continue
+        if not process.is_panamanian_outlet(url):
+            continue  # solo salidas panameñas (evita "Panama City, Florida", ruido global)
         published = None
         sd = a.get("seendate")  # p. ej. 20250920T123000Z
         if sd and len(sd) >= 15:

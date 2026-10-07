@@ -53,18 +53,9 @@ def build_fichas(limit: int = 80) -> list[dict]:
 
 
 def fuentes_catalogo() -> list[dict]:
-    rel = process.SOURCE_RELIABILITY
-    out = []
-    for name, url in sources.FEEDS:
-        out.append({"nombre": name, "url": url, "tipo": "RSS", "confiabilidad": rel.get(name, 3),
-                    "licencia": "Metadatos/uso referencial"})
-    out.append({"nombre": "GDELT DOC 2.0", "url": "https://api.gdeltproject.org/api/v2/doc/doc",
-                "tipo": "API", "confiabilidad": 4, "licencia": "Uso vía API"})
-    out.append({"nombre": "Banco Mundial Indicators v2", "url": "https://api.worldbank.org/v2/",
-                "tipo": "API", "confiabilidad": 5, "licencia": "CC BY 4.0"})
-    out.append({"nombre": "USGS", "url": "https://earthquake.usgs.gov/", "tipo": "API",
-                "confiabilidad": 5, "licencia": "Datos públicos"})
-    return out
+    return [{"nombre": s["nombre"], "url": s["url"], "tipo": s["tipo"],
+             "confiabilidad": s["confiabilidad"], "licencia": s["licencia"]}
+            for s in sources.CHALLENGE_SOURCES]
 
 
 def main() -> int:

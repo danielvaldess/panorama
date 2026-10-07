@@ -72,7 +72,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 
 | Componente | Dónde | Estado |
 |---|---|---|
-| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (406; 152 TVN) | ✅ |
+| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (211; 151 TVN) | ✅ |
 | B · Banco Mundial (6 países × 6 ind. × 2010–2024) | `data/raw/indicadores.csv` (540) | ✅ |
 | C · USGS sismos 2024 | `data/raw/eventos.geojson` (82) | ✅ |
 | D · SBP (opcional) | — | ⬜ (opcional) |
@@ -112,11 +112,11 @@ Nota de fechas: la ventana reciente aplica a noticias para la demo editorial. Ba
 |---|---|---|
 | T01–T10 | `eval/acceptance.py` (10/10) | ✅ |
 | Cobertura de citas 100% | benchmark: 100% | ✅ |
-| Abstención ≥80% | benchmark: 100% | ✅ |
+| Abstención ≥80% | benchmark: 86% | ✅ |
 | Contradicción/ambigüedad | benchmark: 100% manejada sin elegir arbitrariamente | ✅ |
 | Clasificación/agrupación (macro-F1 / P-R) | `eval/quality.py` | ✅ (muestra pequeña, declarada) |
 | Utilidad del ranking (P@5) | `eval/quality.py` | ✅ exploratoria |
-| Eficiencia (mediana/p95) | benchmark: ~12 ms / ~15 ms | ✅ |
+| Eficiencia (mediana/p95) | benchmark: ~11 ms / ~14 ms | ✅ |
 
 ## 10. Entregables y rúbrica
 
@@ -145,7 +145,7 @@ Nota de fechas: la ventana reciente aplica a noticias para la demo editorial. Ba
 3. ✅ **`fichas.jsonl` + `processed/`** — `data/processed/fichas.jsonl` (+ `data/fuentes.json`).
 4. ✅ **Benchmark dev/jurado** — 40 dev / 20 reservadas (tipos preservados).
 5. ✅ **Métricas de calidad** — `eval/quality.py` (agrupación, macro-F1 clasificación, P@5 exploratoria).
-6. ✅ **Fuentes y ranking** — Google News excluido; ranking filtrado a señales editoriales locales del reto.
+6. ✅ **Fuentes y ranking** — solo fuentes del reto (TVN RSS + GDELT + Banco Mundial + USGS); Google News excluido y GDELT filtrado a salidas panameñas.
 7. ⬜ **Notion oficial** — pendiente del workspace de la organización (se migra el contenido cuando se habilite).
 
 ---

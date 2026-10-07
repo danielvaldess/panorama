@@ -14,10 +14,20 @@ from pipeline import score as score_mod
 SOURCE_RELIABILITY = {
     "TVN Noticias": 5, "TVN": 5, "La Prensa": 5, "Telemetro": 4, "TVMax": 4,
     "Panamá América": 4, "La Estrella": 4, "Crítica": 3, "El Siglo": 3,
-    "Mi Diario": 3, "Foco Panamá": 3, "Google News": 3,
+    "Mi Diario": 3, "Foco Panamá": 3,
     "tvn-2.com": 5, "prensa.com": 5, "telemetro.com": 4, "laestrella.com.pa": 4,
+    "panamaamerica.com.pa": 4, "midiario.com": 3, "critica.com.pa": 3,
+    "diaadia.com.pa": 3, "newsroompanama.com": 3, "focopanama.com": 3,
 }
 DEFAULT_RELIABILITY = 3
+
+# Salidas panameñas permitidas para GDELT (evita ruido tipo "Panama City, Florida").
+PA_TLD = ".pa"
+PA_OUTLETS = frozenset({
+    "tvn-2.com", "telemetro.com", "tvmax-9.com", "focopanama.com", "newsroompanama.com",
+    "midiario.com", "prensa.com", "panamaon.com", "elsiglo.com", "laestrella.com.pa",
+    "panamaamerica.com.pa", "critica.com.pa", "diaadia.com.pa", "panamacanal.com",
+})
 
 # Verificación: fuentes primarias/oficiales, agencias (cable) y señales de contradicción.
 OFFICIAL_DOMAINS = {
@@ -96,6 +106,16 @@ def is_official(url: str) -> bool:
 
 def is_aggregator(url: str) -> bool:
     return _host(url) in AGGREGATOR_DOMAINS
+
+
+def is_panamanian_outlet(url: str) -> bool:
+    """¿El medio enlazado es panameño? Filtra ruido de GDELT (p. ej. Panama City, Florida)."""
+    h = _host(url)
+    if not h:
+        return False
+    if h.endswith(PA_TLD):
+        return True
+    return h in PA_OUTLETS or any(h.endswith("." + d) for d in PA_OUTLETS)
 
 
 def is_official_source_name(source: str) -> bool:

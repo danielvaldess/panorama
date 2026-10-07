@@ -21,8 +21,8 @@ de evidencia** y **borradores**, para **decisión humana**. **Nunca publica.**
 
 - **Motor:** `P = 30R+25I+20U+15N+10E` (0–100), reglas `p-1.0`, estado de evidencia independiente.
 - **IA:** embeddings **locales** (fastembed) para recuperación/agrupación semántica + baseline BM25; OpenRouter bajo demanda si hay key.
-- **Datos:** snapshot congelado (406 noticias · 540 indicadores · 82 sismos) + `manifest.json`.
-- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **85%** · abstención **86%** · contradicción **100%** · adversarial **100%** · latencia **~12 ms**.
+- **Datos:** snapshot congelado (211 noticias · 540 indicadores · 82 sismos) + `manifest.json`. Fuentes: TVN RSS + GDELT + Banco Mundial + USGS.
+- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **90%** · abstención **86%** · contradicción **100%** · adversarial **100%** · latencia **~11 ms**.
 
 ## Cómo correr (local)
 ```bash

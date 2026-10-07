@@ -58,13 +58,9 @@ _cache: dict = {"fichas": [], "generated_at": None}
 
 
 def _sources_catalog() -> list[dict]:
-    rel = process.SOURCE_RELIABILITY
-    seen: dict[str, str] = {}
-    for n, u in sources.FEEDS:
-        seen[n] = u
-    cat = [{"name": n, "url": u, "reliability": rel.get(n, 3), "status": "al día"} for n, u in seen.items()]
-    cat.append({"name": "GDELT", "url": "https://www.gdeltproject.org/", "reliability": 4, "status": "al día"})
-    return cat
+    """Catálogo alineado a las fuentes declaradas por el reto (última página del PDF)."""
+    return [{"name": s["nombre"], "url": s["url"], "reliability": s["confiabilidad"],
+             "licencia": s["licencia"], "status": "al día"} for s in sources.CHALLENGE_SOURCES]
 
 
 def _cluster(items: list[dict]) -> tuple[list[list[dict]], str]:

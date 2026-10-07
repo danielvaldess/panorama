@@ -33,7 +33,7 @@
     "id": "T06",
     "prueba": "Consulta sin respuesta en el corpus",
     "pass": true,
-    "observado": "respondido=False top=4.76 cobertura=0.2 → abstención (sin cifra inventada)"
+    "observado": "respondido=False top=4.2 cobertura=0.2 → abstención (sin cifra inventada)"
   },
   {
     "id": "T07",
@@ -57,6 +57,6 @@
     "id": "T10",
     "prueba": "Sin internet durante la demo",
     "pass": true,
-    "observado": "snapshot local disponible y cargado (406 noticias) sin red; fallback documentado"
+    "observado": "snapshot local disponible y cargado (211 noticias) sin red; fallback documentado"
   }
 ]

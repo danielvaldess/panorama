@@ -1,7 +1,6 @@
+{"query": "Guardianes Medias Blancas (1⬆️)", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Festival Navideño 'City Stars", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
-{"query": "Guardianes Medias Blancas Playoffs", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Panamá mantiene vigilancia epidemiológica", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
-{"query": "Guardianes Medias Blancas Playoffs", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Gianmatteo Rousseau Piloto panameño", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Municipio Arraiján: Stefany Peñalba", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Relanzamientos relaciones Panamá Vietnam:", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
@@ -18,7 +17,7 @@
 {"query": "Media avanza Merco Talento", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Media Teatro Nacional sellan", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Media impulsar innovación futuro", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
-{"query": "Media firma alianza promover", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
+{"query": "Media firma alianza promover", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev"}
 {"query": "Media renuevan alianza impulsar", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
 {"query": "Media conmemora Buenas Acciones", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
 {"query": "encendió fiesta animó público", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
@@ -28,6 +27,7 @@
 {"query": "Documental Panamá Reseñas Nuestra", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
 {"query": "Media DIRCOM Panamá fortalecer", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
 {"query": "Media consolida primer lugar", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
+{"query": "Media Senacyt firman alianza", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury"}
 {"query": "¿El proyecto minero cierra o continúa?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev"}
 {"query": "¿Se confirmó o desmintió el cierre?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev"}
 {"query": "Versiones sobre el contrato: ¿firmado o suspendido?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev"}
