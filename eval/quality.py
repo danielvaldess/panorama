@@ -165,7 +165,16 @@ def ranking_eval() -> dict:
 
 def run() -> dict:
     out = {"grouping": grouping_eval(), "classification": classification_eval(), "ranking": ranking_eval()}
-    with open(os.path.join(ROOT, "eval", "quality.json"), "w", encoding="utf-8") as fh:
+    # preserva la evaluación de sustento (etiquetas humanas; la escribe eval/sustento.py)
+    path = os.path.join(ROOT, "eval", "quality.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            prev = json.load(fh)
+        if isinstance(prev, dict) and "sustento" in prev:
+            out["sustento"] = prev["sustento"]
+    except (OSError, json.JSONDecodeError):
+        pass
+    with open(path, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)
     return out
 

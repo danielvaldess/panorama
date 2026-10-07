@@ -22,12 +22,15 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from pipeline import process, sources, snapshot, draft, embed, context
+from pipeline import process, sources, snapshot, draft, embed, context, store
 from pipeline import ai as ai_mod
-from eval import metrics
+from eval import metrics, sustento
 
 REVIEW_STATES = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"]
+VEREDICTOS = ["válido", "parcial", "inválido"]
+MIN_DECISIONES_PERFIL = 5
 _review: dict[str, dict] = {}
+_claim_verdicts: dict[str, dict] = {}
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "900"))
@@ -123,6 +126,12 @@ def _refresher():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _review.update(store.cargar_revisiones())
+    for r in store.cargar_veredictos():
+        clave = f"{r.get('id_caso')}#{r.get('indice')}"
+        if r.get("id_caso") is not None and r.get("indice") is not None:
+            _claim_verdicts[clave] = {"veredicto": r.get("veredicto"),
+                                      "comentario": r.get("comentario"), "ts": r.get("ts")}
     threading.Thread(target=_refresher, daemon=True).start()
     yield
 
@@ -211,13 +220,166 @@ async def set_review(body: ReviewIn):
     """Registra la decisión humana sobre una ficha (nuevo → … → descartado)."""
     if body.state not in REVIEW_STATES:
         return JSONResponse({"ok": False, "error": "estado inválido", "valid": REVIEW_STATES}, status_code=400)
-    _review[body.id] = {"state": body.state, "note": body.note, "reviewer": body.reviewer,
-                        "ts": datetime.now(timezone.utc).isoformat()}
+    registro = {"id": body.id, "state": body.state, "note": body.note, "reviewer": body.reviewer,
+                "ts": store.ahora()}
+    persisted = store.guardar_revision(registro)
+    _review[body.id] = registro
     with _lock:
         for f in _cache.get("fichas", []):
             if f.get("id") == body.id:
                 f["review_state"] = body.state
-    return JSONResponse({"ok": True, "id": body.id, "state": body.state})
+    return JSONResponse({"ok": True, "id": body.id, "state": body.state, "persisted": persisted})
+
+
+class ClaimVerdictIn(BaseModel):
+    id_caso: str
+    indice: int
+    veredicto: str
+    comentario: str | None = None
+    reviewer: str | None = None
+
+
+@app.post("/api/claims/verdict")
+async def set_claim_verdict(body: ClaimVerdictIn):
+    """Veredicto del Administrador sobre una afirmación (válido / parcial / inválido)."""
+    if body.veredicto not in VEREDICTOS:
+        return JSONResponse({"ok": False, "error": "veredicto inválido", "valid": VEREDICTOS},
+                            status_code=400)
+    with _lock:
+        fichas = list(_cache.get("fichas", []))
+    if not fichas:
+        refresh()
+        with _lock:
+            fichas = list(_cache.get("fichas", []))
+    f = next((x for x in fichas if x.get("id") == body.id_caso), None)
+    if f is None:
+        return JSONResponse({"ok": False, "error": "ficha no encontrada"}, status_code=404)
+    claims = (f.get("draft") or {}).get("afirmaciones") or []
+    if not 0 <= body.indice < len(claims):
+        return JSONResponse({"ok": False, "error": "índice de afirmación fuera de rango"}, status_code=400)
+    claim = claims[body.indice]
+    registro = {
+        "id_caso": body.id_caso,
+        "indice": body.indice,
+        "veredicto": body.veredicto,
+        "comentario": body.comentario,
+        "reviewer": body.reviewer,
+        "ts": store.ahora(),
+        "texto": claim.get("texto"),
+        "tipo": claim.get("tipo"),
+        "ids_fuente": claim.get("ids_fuente"),
+        "titulo_ficha": f.get("title"),
+        "tema": f.get("tema"),
+        "estado_evidencia": f.get("evidence_state"),
+        "puntaje": f.get("score"),
+        "citas": [s.get("url") for s in (f.get("sources") or [])],
+    }
+    persisted = store.guardar_veredicto(registro)
+    clave = f"{body.id_caso}#{body.indice}"
+    _claim_verdicts[clave] = {"veredicto": body.veredicto, "comentario": body.comentario,
+                              "ts": registro["ts"]}
+    return JSONResponse({"ok": True, "clave": clave, "veredicto": body.veredicto,
+                         "persisted": persisted})
+
+
+@app.get("/api/claims/verdicts")
+async def claim_verdicts():
+    """Veredictos de afirmaciones ya registrados (para repintar la ficha)."""
+    return JSONResponse(_claim_verdicts)
+
+
+def _clase_estado(state: str) -> str:
+    if state == "aprobado como borrador":
+        return "aprobados"
+    if state == "descartado":
+        return "descartados"
+    return "en_proceso"
+
+
+def _agrupar(regs: list[tuple[dict, dict]], clave) -> dict:
+    """Agrupa decisiones por una clave de la ficha: {clave: {aprobados, descartados, en_proceso}}."""
+    out: dict[str, dict] = {}
+    for reg, f in regs:
+        k = clave(f) or "sin dato"
+        bucket = out.setdefault(k, {"aprobados": 0, "descartados": 0, "en_proceso": 0})
+        bucket[_clase_estado(reg.get("state", ""))] += 1
+    return dict(sorted(out.items(), key=lambda kv: -(kv[1]["aprobados"] + kv[1]["descartados"])))
+
+
+def _promedio(regs: list[tuple[dict, dict]], getter) -> float | None:
+    vals = [getter(f) for _, f in regs]
+    vals = [v for v in vals if isinstance(v, (int, float))]
+    return round(sum(vals) / len(vals), 1) if vals else None
+
+
+@app.get("/api/admin/profile")
+async def admin_profile():
+    """Preferencias detectadas del Administrador a partir de sus decisiones.
+
+    Lectura descriptiva para alimentar la revisión humana; **no** re-ordena la mesa.
+    """
+    with _lock:
+        fichas = list(_cache.get("fichas", []))
+    by_id = {f.get("id"): f for f in fichas}
+    pares = [(r, by_id[rid]) for rid, r in _review.items() if rid in by_id]
+    sust = sustento.calcular()
+    n = len(pares)
+    if n < MIN_DECISIONES_PERFIL:
+        return JSONResponse({
+            "estado": "insuficiente",
+            "decisiones": n,
+            "minimo": MIN_DECISIONES_PERFIL,
+            "mensaje": (f"Se necesitan al menos {MIN_DECISIONES_PERFIL} decisiones registradas "
+                        f"sobre fichas para perfilar preferencias ({n}/{MIN_DECISIONES_PERFIL})."),
+            "sustento": sust,
+            "nota": "Lectura descriptiva de tus decisiones; el orden de la mesa no cambia.",
+        })
+
+    aprob = [(r, f) for r, f in pares if _clase_estado(r.get("state", "")) == "aprobados"]
+    desc = [(r, f) for r, f in pares if _clase_estado(r.get("state", "")) == "descartados"]
+    counts = {"total": n,
+              "aprobados": len(aprob), "descartados": len(desc),
+              "en_proceso": n - len(aprob) - len(desc),
+              "tasa_aprobacion": round(len(aprob) / max(1, len(aprob) + len(desc)), 2)}
+
+    def fuentes(regs: list[tuple[dict, dict]], top: int = 8) -> dict:
+        c: dict[str, int] = {}
+        for _, f in regs:
+            for s in (f.get("sources") or []):
+                c[s.get("name") or "?"] = c.get(s.get("name") or "?", 0) + 1
+        return dict(sorted(c.items(), key=lambda kv: -kv[1])[:top])
+
+    insights: list[str] = []
+    temas = _agrupar(pares, lambda f: f.get("tema"))
+    mejor = [(t, v) for t, v in temas.items() if (v["aprobados"] + v["descartados"]) >= 2]
+    if mejor:
+        mejor.sort(key=lambda kv: (-kv[1]["aprobados"], kv[0]))
+        insights.append(f"Más aprobaciones en el tema «{mejor[0][0]}» "
+                        f"({mejor[0][1]['aprobados']} de {mejor[0][1]['aprobados'] + mejor[0][1]['descartados']}).")
+    evid_aprob = _agrupar(aprob, lambda f: f.get("evidence_state"))
+    if evid_aprob:
+        top_ev = next(iter(evid_aprob))
+        insights.append(f"Tus aprobaciones suelen tener evidencia «{top_ev}».")
+    pa, pd = _promedio(aprob, lambda f: f.get("score")), _promedio(desc, lambda f: f.get("score"))
+    if pa is not None and pd is not None:
+        insights.append(f"Puntaje promedio: aprobados {pa} vs descartados {pd}.")
+
+    return JSONResponse({
+        "estado": "ok",
+        "decisiones": counts,
+        "por_tema": temas,
+        "por_banda": _agrupar(pares, lambda f: f.get("band")),
+        "por_evidencia": _agrupar(pares, lambda f: f.get("evidence_state")),
+        "fuentes_frecuentes": {"aprobados": fuentes(aprob), "descartados": fuentes(desc)},
+        "puntaje_promedio": {"aprobados": pa, "descartados": pd},
+        "componentes_promedio": {
+            "aprobados": {k: _promedio(aprob, lambda f, k=k: (f.get("components") or {}).get(k)) for k in ("R", "I", "U", "N", "E")},
+            "descartados": {k: _promedio(desc, lambda f, k=k: (f.get("components") or {}).get(k)) for k in ("R", "I", "U", "N", "E")},
+        },
+        "sustento": sust,
+        "insights": insights,
+        "nota": "Lectura descriptiva de tus decisiones; el orden de la mesa no cambia.",
+    })
 
 
 @app.post("/api/analyze")

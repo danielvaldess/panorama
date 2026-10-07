@@ -48,5 +48,74 @@
         "p@5_semantico": 0.4
       }
     ]
+  },
+  "sustento": {
+    "descripcion": "Validez de sustento de afirmaciones (revisión humana, rúbrica estricta)",
+    "fuente_datos": "data/processed/sustento_labels.jsonl",
+    "numerador_validos": 0,
+    "denominador": 5,
+    "pct_validos": 0.0,
+    "meta_pct": 0.9,
+    "cumple_meta": false,
+    "muestra": {
+      "min_afirmaciones": 30,
+      "min_fichas": 10,
+      "afirmaciones": 5,
+      "fichas": 4,
+      "suficiente": false,
+      "etiquetas_descartadas_cambiadas": 0
+    },
+    "rubrica": {
+      "válido": "la fuente citada respalda la afirmación tal cual se enuncia (con proposición factual real)",
+      "parcial": "la fuente respalda solo parte de la afirmación — NO cuenta para la meta",
+      "inválido": "la fuente no respalda, o la afirmación es vacía/genérica sin hecho verificable — NO cuenta"
+    },
+    "fallos": [
+      {
+        "id_caso": "6119f0bf4636",
+        "indice": 0,
+        "veredicto": "inválido",
+        "texto": "Dirección Nacional de Empleo",
+        "tipo": "hecho reportado",
+        "comentario": null,
+        "titulo_ficha": "Dirección Nacional de Empleo"
+      },
+      {
+        "id_caso": "88daab9f91ed",
+        "indice": 0,
+        "veredicto": "inválido",
+        "texto": "Nancy Polanco, Author at Ministerio de Educación",
+        "tipo": "hecho reportado",
+        "comentario": null,
+        "titulo_ficha": "Nancy Polanco, Author at Ministerio de Educación"
+      },
+      {
+        "id_caso": "88daab9f91ed",
+        "indice": 1,
+        "veredicto": "inválido",
+        "texto": "El tema circula en 2 medios",
+        "tipo": "inferencia",
+        "comentario": null,
+        "titulo_ficha": "Nancy Polanco, Author at Ministerio de Educación"
+      },
+      {
+        "id_caso": "9413ebb738d9",
+        "indice": 0,
+        "veredicto": "inválido",
+        "texto": "En el marco del Plan Firmeza, en las últimas 24 horas, la Policía Nacional ...",
+        "tipo": "hecho reportado",
+        "comentario": null,
+        "titulo_ficha": "En el marco del Plan Firmeza, en las últimas 24 horas, la Policía Nacional ..."
+      },
+      {
+        "id_caso": "9ff995354afb",
+        "indice": 0,
+        "veredicto": "inválido",
+        "texto": "Inicio - Mi Primer Empleo",
+        "tipo": "hecho reportado",
+        "comentario": null,
+        "titulo_ficha": "Inicio - Mi Primer Empleo"
+      }
+    ]
   }
 }

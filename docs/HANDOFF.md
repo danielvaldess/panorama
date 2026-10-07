@@ -18,28 +18,34 @@ de evidencia** y **borradores**, para **decisión humana**. **Nunca publica.**
 |---|---|
 | F1 Notion · F2 Patrimonio · F3 Datos · F4 Motor · F5 Producto · F6 Pruebas · F7 Pitch | ✅ |
 | Cierre de brechas (IA semántica, contexto oficial, contrato, métricas) | ✅ |
+| Rango §7 de fechas (tarea 2 del backlog) | ✅ en rama `feat/sustento-eval` |
+| Infra revisión humana + eval sustento (tarea 1) | ✅ en rama `feat/sustento-eval` |
+| Etiquetaje ≥30 afirmaciones → meta ≥90% | 🟡 **5/30 hechas** (continuar en la UI) |
 
 - **Motor:** `P = 30R+25I+20U+15N+10E` (0–100), reglas `p-1.0`, estado de evidencia independiente.
 - **IA:** embeddings **locales** (fastembed) para recuperación semántica + baseline BM25; LLM inactivo (costo 0).
-- **Datos:** snapshot congelado (260 noticias · 540 indicadores · 82 sismos) + `manifest.json`.
-- **Métricas:** T01–T10 **10/10** · citas **100%** · abstención **100%** · adversarial **100%** · latencia **~15 ms**.
+- **Datos:** snapshot congelado filtrado a `[2024-01-01, 2025-10-01)` → **82 noticias** (de 260 originales) · 540 indicadores · 82 sismos.
+- **Métricas (post-filtro, 2026-10-07):** T01–T10 **10/10** · citas **100%** · abstención **100%** · adversarial **100%** · sustentadas **100%** · latencia **~8 ms**.
 
 ## Cómo correr (local)
 ```bash
 pip install -r requirements.txt
-python -m pipeline.ingest          # regenera el snapshot (necesita internet)
-python -m pipeline.export          # regenera fichas.jsonl + fuentes.json
+python -m pipeline.ingest --filtrar-snapshot   # aplica rango §7 al CSV congelado (sin red)
+python -m pipeline.ingest                      # regenera el snapshot (necesita internet)
+python -m pipeline.export                      # regenera fichas.jsonl + fuentes.json
 uvicorn pipeline.server:app --reload --port 8000   # http://localhost:8000
 python -m eval.acceptance          # T01–T10
 python -m eval.benchmark           # 40 dev / 20 jurado
-python -m eval.quality             # agrupación, macro-F1, P@5
+python -m eval.quality             # agrupación, macro-F1, P@5 (preserva 'sustento')
+python -m eval.sustento            # métrica de sustento (rúbrica estricta)
+python -m eval.sustento --pendientes  # qué afirmaciones faltan por veredicto
 ```
 
 ## Estructura
 ```
-pipeline/  ingest · snapshot · sources · process · score · draft · context · embed · guard · validate · export · server
-eval/      acceptance (T01–T10) · benchmark (60) · quality · metrics
-data/      raw/ (noticias, indicadores, eventos) · processed/fichas.jsonl · manifest.json · fuentes.json · benchmark.jsonl · diccionario.md
+pipeline/  ingest · snapshot · sources · process · score · draft · context · embed · guard · validate · export · server · store (persistencia JSONL)
+eval/      acceptance (T01–T10) · benchmark (60) · quality · metrics · sustento (≥90%)
+data/      raw/ (noticias, indicadores, eventos) · processed/fichas.jsonl · processed/revisiones.jsonl · processed/sustento_labels.jsonl · manifest.json · fuentes.json · benchmark.jsonl · diccionario.md
 web/       interfaz (SPA) · favicon · como-funciona.png
 docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servidor · capturas · diagramas
 .cursor/rules/panorama.mdc   reglas del proyecto (versionadas)
@@ -56,15 +62,30 @@ docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servid
 
 > Prioridad sugerida. Cada una es un buen PR.
 
-### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica)
-- **Qué:** revisar humanamente **≥30 afirmaciones** y medir el % con respaldo válido (meta ≥90%).
-- **Dónde:** nuevo `eval/sustento.py` + muestra etiquetada; salida en `eval/quality.json` y base “Pruebas y métricas” de Notion.
-- **Acepta:** script reproducible + resultado con numerador/denominador y fallos.
+### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica) 🟡 EN CURSO
+- **Hecho (rama `feat/sustento-eval`):**
+  - `pipeline/store.py` — persistencia JSONL de decisiones y veredictos
+    (`data/processed/revisiones.jsonl`, `sustento_labels.jsonl`; sobrevive reinicios,
+    versionable en git).
+  - API: `POST /api/claims/verdict` · `GET /api/claims/verdicts` ·
+    `GET /api/admin/profile` (preferencias del Administrador, sin re-ranking) ·
+    `POST /api/review` ahora persistente.
+  - UI: botones *Válido / Parcial / Inválido* por afirmación en la ficha +
+    contador de progreso + vista **«Perfil del Admin»**.
+  - `eval/sustento.py` — rúbrica estricta (solo «válido» cuenta), meta ≥90%,
+    ≥30 afirmaciones de ≥10 fichas, descarta etiquetas de afirmaciones que cambiaron,
+    merge en `eval/quality.json` (clave `sustento`; `eval/quality.py` la preserva),
+    modo `--pendientes`.
+- **Falta:** etiquetar **≥30 afirmaciones** en la UI (**5/30 hoy**, 4 fichas) →
+  correr `python -m eval.sustento` → si <90%, pulir `pipeline/draft.py::_claims`
+  (hoy emite títulos vacíos tipo *"REPÚBLICA DE PANAMA?"*) → `python -m pipeline.export`
+  → re-etiquetar lo nuevo → re-medir. Luego fila CSV en `docs/notion/csv/04-pruebas-metricas.csv`.
 
-### 2. `feat/date-range-filter` — Rango de fechas del contrato (§7)
-- **Qué:** filtrar `noticias.csv` al intervalo **`[2024-01-01, 2025-10-01)`** (hoy no se aplica).
-- **Dónde:** `pipeline/ingest.py` (`collect_news`) + documentar en `data/diccionario.md`.
-- **Acepta:** noticias fuera del rango excluidas y registradas en el manifest.
+### 2. ~~`feat/date-range-filter`~~ ✅ HECHO (en `feat/sustento-eval`)
+- Filtro `[2024-01-01, 2025-10-01)` en `pipeline/ingest.py` (`_aplicar_rango`,
+  `--filtrar-snapshot`), CSV congelado filtrado (82/260), `manifest.json`
+  (`rango_fechas_noticias` + sha256), `data/diccionario.md`, guardia de
+  sobrescritura en `pipeline.ingest`. Derivados regenerados (10/10).
 
 ### 3. `feat/sbp-optional` — Extensión bancaria SBP (opcional)
 - **Qué:** 12 informes mensuales 2024 de la SBP → `data/raw/sbp.csv` (período/unidad/página).
