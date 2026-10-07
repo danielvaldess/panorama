@@ -69,7 +69,11 @@ def build_queries(items: list[dict]) -> list[dict]:
     qs: list[dict] = []
 
     def add(query, tipo, esperado, split):
-        qs.append({"query": query, "tipo": tipo, "esperado": esperado, "split": split})
+        # Etiquetado honesto (§7): las sustentadas se derivan del corpus; el resto son sintéticas.
+        sintetico = tipo != "sustentada"
+        etiquetado = "derivado del corpus (revisión humana pendiente)" if tipo == "sustentada" else "sintético (diseño del equipo)"
+        qs.append({"query": query, "tipo": tipo, "esperado": esperado, "split": split,
+                   "sintetico": sintetico, "etiquetado": etiquetado})
 
     # 30 sustentadas → 20 dev / 10 jurado
     sust, seen = [], set()
@@ -127,6 +131,14 @@ def run() -> dict:
         for q in qs:
             fh.write(json.dumps(q, ensure_ascii=False) + "\n")
 
+    # Conjuntos separados: 40 desarrollo / 20 reservadas al jurado (§7).
+    for split in ("dev", "jury"):
+        sp = os.path.join(ROOT, "data", f"benchmark.{split}.jsonl")
+        with open(sp, "w", encoding="utf-8") as fh:
+            for q in qs:
+                if q["split"] == split:
+                    fh.write(json.dumps(q, ensure_ascii=False) + "\n")
+
     C = corpus_embeddings(items)
     results = []
     lat = []
@@ -178,6 +190,7 @@ def run() -> dict:
         "coverage_min": COVERAGE_MIN,
         "sem_min": SEM_MIN,
         "nota": "Métricas sobre las 40 de desarrollo; las 20 restantes quedan reservadas al jurado.",
+        "etiquetado": "sustentadas derivadas del corpus (revisión humana pendiente); contradicción/abstención/adversariales sintéticas",
     }
     out = {"metrics": metrics, "results": results}
     with open(os.path.join(ROOT, "eval", "results.json"), "w", encoding="utf-8") as fh:
