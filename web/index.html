@@ -96,7 +96,12 @@
     .crumbs{margin-bottom:14px}
     .crumbs a{font-family:var(--f-title);font-weight:700;font-size:13px;text-decoration:none;color:var(--muted)}
     .crumbs a:hover{color:var(--primary)}
-    .detail-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .detail-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .detail-nav .pos{font-family:var(--f-title);font-weight:700;font-size:12.5px;color:var(--muted)}
+    .detail-nav .spacer{flex:1}
+    .detail-nav .step{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;color:var(--primary);border-radius:20px;padding:7px 15px;font-family:var(--f-title);font-weight:700;font-size:12.5px;cursor:pointer}
+    .detail-nav .step:hover{border-color:var(--primary);background:#eef4f9}
+    .detail-nav .step[disabled]{opacity:.45;cursor:not-allowed}
     .detail-head{background:linear-gradient(135deg,#fff,#f3f8fc);border:1px solid #d5e5ef;border-radius:10px;padding:22px 24px;margin-bottom:16px;box-shadow:0 10px 28px rgba(0,85,136,.08)}
     .detail-head h1{font-family:var(--f-title);font-weight:800;font-size:25px;line-height:1.25;margin:2px 0 10px}
     .detail-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
@@ -106,10 +111,10 @@
     .lead{font-size:15px}
     .assist{background:#f4f8fb;border:1px solid #d8e6f0;border-left:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;font-size:14px}
     .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;margin-bottom:4px}
-    .ai-progress{background:#fff;border:1px solid #cfe2ee;border-radius:10px;padding:14px;margin-top:12px;overflow:hidden}
-    .ai-progress .label{display:flex;justify-content:space-between;font-family:var(--f-title);font-weight:700;font-size:12px;color:var(--primary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
-    .ai-progress .track{height:10px;background:#e8f1f7;border-radius:20px;overflow:hidden;position:relative}
-    .ai-progress .track span{display:block;height:100%;width:35%;border-radius:20px;background:linear-gradient(90deg,var(--primary),var(--cyan),var(--red));animation:loadbar 1.2s ease-in-out infinite}
+    .ai-progress{background:#f7fbfd;border:1px solid #d8e6f0;border-radius:10px;padding:14px;margin-top:12px}
+    .ai-progress .label{display:flex;justify-content:space-between;font-family:var(--f-title);font-weight:700;font-size:12.5px;color:var(--primary);margin-bottom:9px}
+    .ai-progress .track{height:8px;background:#e3eef5;border-radius:20px;overflow:hidden;position:relative}
+    .ai-progress .track span{position:absolute;top:0;bottom:0;width:38%;border-radius:20px;background:var(--primary);opacity:.85;animation:loadbar 1.15s ease-in-out infinite}
     @keyframes loadbar{0%{transform:translateX(-100%)}50%{transform:translateX(90%)}100%{transform:translateX(260%)}}
     .draftfield{margin-top:12px}
     .draftfield b{font-family:var(--f-title);font-size:13px;color:var(--text)}
@@ -505,7 +510,7 @@
           <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${campo}${ev}${verdict ? ` · veredicto: ${esc(verdict)}` : ""}</div>
           <div class="actions">${buttons}</div></div>`;
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
-      const aiProgress = aiLoading ? `<div class="ai-progress" role="status" aria-live="polite"><div class="label"><span>Analizando con IA</span><span>evidencia + resumen</span></div><div class="track"><span></span></div></div>` : "";
+      const aiProgress = aiLoading ? `<div class="ai-progress" role="status" aria-live="polite"><div class="label"><span>Analizando…</span><span>revisando evidencia y redactando</span></div><div class="track"><span></span></div></div>` : "";
       const aiBox = f.summary ? `<div class="card block"><h3>Resumen asistido</h3><div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>` : `<div class="card block"><h3>Resumen asistido</h3><div class="c">Aún no generado. La IA puede redactar un resumen auxiliar con sustento; la decisión sigue siendo humana.</div>${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>`;
       const ctx = (f.contexto || []).map(c => {
         const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
@@ -519,11 +524,11 @@
 
       $("content").innerHTML = `
         <div class="detail-nav">
-          <button class="btn btn-ghost" id="back">← Volver a resultados</button>
-          <div class="actions">
-            <button class="btn btn-ghost" id="prevTopic" ${prev ? "" : "disabled"}>Anterior</button>
-            <button class="btn btn-ghost" id="nextTopic" ${next ? "" : "disabled"}>Siguiente</button>
-          </div>
+          <button class="btn btn-ghost" id="back">← Resultados</button>
+          <span class="pos">${pos >= 0 ? `Tema ${pos + 1} de ${contextList.length}` : ""}</span>
+          <span class="spacer"></span>
+          <button class="step" id="prevTopic" ${prev ? "" : "disabled"}>‹ Anterior</button>
+          <button class="step" id="nextTopic" ${next ? "" : "disabled"}>Siguiente ›</button>
         </div>
         <div class="detail-head">
           <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
