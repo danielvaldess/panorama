@@ -24,7 +24,7 @@ except Exception:
 ZEN_URL = os.environ.get("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1/chat/completions")
 ZEN_MODELS = [m.strip() for m in os.environ.get(
     "OPENCODE_MODELS",
-    "deepseek-v4-flash,deepseek-v4.1-flash,mimo-v2.5-free,nemotron-3.5-lightning-free",
+    "mimo-v2.6-flash-free,mimo-v2.5-free,nemotron-3.5-lightning-free,longcat-2.5-preview-free,space-bunny-free,ling-3.1-flash-free",
 ).split(",") if m.strip()]
 # OpenRouter (respaldo).
 OR_URL = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions")
