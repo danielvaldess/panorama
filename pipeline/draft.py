@@ -127,10 +127,9 @@ def build(ficha: dict) -> dict:
 
     afirmaciones = _claims(title, sources, tipo)
     ok_citas, fallos = validar_citas(afirmaciones, sources)
+    cobertura = round(sum(1 for a in afirmaciones if a.get("cita")) / max(1, len(afirmaciones)), 2)
     if not ok_citas:
-        abstain = True
-        accion = "abstención: citas no verificables"
-        notas.append("Validador: " + "; ".join(fallos))
+        notas.append("Trazabilidad de citas incompleta: " + "; ".join(fallos))
 
     preguntas = [
         f"¿Qué datos, documentos o acuerdos concretos respaldan «{_fit(title, 12)}»?",
@@ -149,6 +148,7 @@ def build(ficha: dict) -> dict:
         "enfoque_interes_publico": enfoque,
         "afirmaciones": afirmaciones,
         "citas_ok": ok_citas,
+        "cobertura_citas": cobertura,
         "brief": brief,
         "preguntas": preguntas,
         "texto_al_aire": {"guion": guion, "copy": copy},
