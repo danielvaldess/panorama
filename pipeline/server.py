@@ -92,7 +92,7 @@ def _build_fast() -> dict:
         "ai_ready": bool(_cache.get("ai_ready")),
         "ai_configured": ai_mod.available(),
         "method": {"grouping": grouping_method, "retrieval": "BM25 + semántico",
-                   "llm": "OpenRouter bajo demanda" if ai_mod.available() else "inactivo (sin OPENROUTER_API_KEY)"},
+                   "llm": "IA bajo demanda (OpenCode Zen / OpenRouter)" if ai_mod.available() else "inactivo (sin proveedor de IA)"},
         "snapshot": (
             {"used": True, **{k: v for k, v in snapshot.manifest().items() if k in ("version", "fecha_corte_UTC")}}
             if used_snapshot else {"used": False}
