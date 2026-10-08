@@ -31,6 +31,20 @@ bash /root/auto-deploy.sh          # forzar un deploy ahora
 tail -f /var/log/auto-deploy.log   # historial de despliegues
 ```
 
+### Volumen persistente (SQLite operativo)
+
+La DB (`data/panorama.db`) y el caché del LLM viven en `data/`. Monta un volumen
+para que sobrevivan a los redeploys (ver `docs/DB.md`):
+
+```bash
+mkdir -p /var/lib/dokku/data/storage/panorama
+dokku storage:mount panorama /var/lib/dokku/data/storage/panorama:/app/data
+dokku ps:restart panorama
+```
+
+Sin el volumen, la app reconstruye la DB desde el snapshot al arrancar (estado
+operativo no persistente).
+
 ## Otros contenedores
 
 - **CT111 `hackathon`** (`192.168.40.103`): Docker plano, preparado al inicio;

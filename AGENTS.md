@@ -35,6 +35,11 @@ automáticamente.**
 - Aplicar solo el rango de fechas al CSV congelado (sin red):
   `python -m pipeline.ingest --filtrar-snapshot` (documentado en `data/diccionario.md`).
 - Correr el prototipo: `uvicorn pipeline.server:app --reload` (usa el snapshot si existe; si no, *fallback* a fuentes en vivo).
+- **Almacenamiento operativo (SQLite, WAL)**: `data/panorama.db` (env `PANORAMA_DB`),
+  reconstruible desde el snapshot. Esquema en `data/schema.sql`, repositorio en
+  `pipeline/db.py`, decisión técnica en `docs/DB.md`. `make load-snapshot` /
+  `make export-snapshot` (verifica/regenera SHA-256). El snapshot CSV/JSONL/GeoJSON
+  + `manifest.json` sigue siendo el contrato de datos.
 
 ## Revisión humana (Administrador) y eval de sustento
 
@@ -43,8 +48,9 @@ automáticamente.**
   preferencias aprendidas de las decisiones del editor.
 - **API**: `POST /api/claims/verdict` · `GET /api/claims/verdicts` ·
   `GET /api/admin/profile` · `POST /api/review` (persistente).
-- **Persistencia** (versionada, no se pierde al reiniciar): `pipeline/store.py` →
-  `data/processed/revisiones.jsonl` + `data/processed/sustento_labels.jsonl`.
+- **Persistencia** (en SQLite, tabla `decisiones` append-only): `pipeline/store.py`
+  escribe/lee vía `pipeline/db.py` (antes `data/processed/revisiones.jsonl` +
+  `sustento_labels.jsonl`; migración automática en `db.migrate_legacy`).
 - **Métrica de sustento** (rúbrica estricta: solo «válido» cuenta; meta ≥90% sobre
   ≥30 afirmaciones de ≥10 fichas): `python -m eval.sustento` (merge en
   `eval/quality.json`) · `python -m eval.sustento --pendientes`.
