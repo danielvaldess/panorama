@@ -269,7 +269,7 @@ def _verify(g: list[dict]) -> dict:
     }
 
 
-def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
+def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]:
     """Prioridad explicable (P=30R+25I+20U+15N+10E, 0–100) + verificación/evidencia.
 
     El puntaje y el estado de evidencia son independientes. Orden: P desc,
@@ -288,11 +288,11 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
                                             origen=g[0].get("source", ""))
         tema_baseline = score_mod._dominant_topic(g)
         tema, tema_conf, tema_cands = theme_mod.clasificar_tema(g[0]["title"])
-        comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema)
+        comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema, ref)
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
         published = max(pubs) if pubs else None
-        age = score_mod.edad_dias(g)
+        age = score_mod.edad_dias(g, ref)
         recirculada = age is not None and age > score_mod.URGENCY_WINDOW_D
         if recirculada and p > score_mod.RECIRCULADA_CAP:
             p = score_mod.RECIRCULADA_CAP  # T3: sin urgencia no puede quedar en media/alta
