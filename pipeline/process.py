@@ -277,6 +277,7 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
     """
     reps = [g[0]["title"] for g in groups]
     rel = _norm(bm25(query, [tokens(r) for r in reps]))
+    temas = theme_mod.clasificar_temas(reps)  # lote: una sola llamada de embeddings
     fichas = []
     for i, g in enumerate(groups):
         uniq: dict[str, dict] = {}
@@ -287,7 +288,7 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
         tipo = claims.clasificar_afirmacion(g[0]["title"], official=bool(v["official"]),
                                             origen=g[0].get("source", ""))
         tema_baseline = score_mod._dominant_topic(g)
-        tema, tema_conf, tema_cands = theme_mod.clasificar_tema(g[0]["title"])
+        tema, tema_conf, tema_cands = temas[i] if i < len(temas) else theme_mod.clasificar_tema(g[0]["title"])
         comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema, ref)
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
