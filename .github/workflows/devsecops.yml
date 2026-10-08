@@ -24,7 +24,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Pruebas unitarias (pytest)
+        run: python -m pytest tests -q
       - name: Matriz de aceptacion T01-T10
         run: python -m eval.acceptance
       - name: Benchmark (40 desarrollo)
@@ -47,6 +49,11 @@ jobs:
         continue-on-error: true
       - name: SCA - pip-audit (dependencias)
         run: pip-audit -r requirements.txt
+        continue-on-error: true
+      - name: Escaneo de secretos - gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
       - name: Escaneo de secretos - detect-secrets
         run: detect-secrets scan . > detect-secrets-report.json
