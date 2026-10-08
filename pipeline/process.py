@@ -300,6 +300,7 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
         fichas.append({
             "id": g[0].get("id", ""),
             "title": g[0]["title"],
+            "snippet": g[0].get("snippet", ""),
             "published": published,
             "score": p,
             "band": score_mod.band(p),

@@ -1,12 +1,92 @@
 {
-  "fmi proyecta que la economía de panamá crecerá cerca de 5% este 2026": {
-    "summary": "El FMI proyecta que la economía de Panamá crecerá cerca de 5% este 2026.",
-    "respaldo": "",
-    "why": "",
-    "topics": [],
-    "relevance": 0.0,
+  "presidente de panamá visitará ecuador el viernes para hablar sobre economía y seguridad": {
+    "summary": "El presidente de Panamá visitará Ecuador el viernes para hablar sobre economía y seguridad.",
+    "respaldo": "Presidente de Panamá visitará Ecuador el viernes para hablar sobre economía y seguridad",
+    "why": "La visitaAbdica temas de economía y seguridad.",
+    "topics": [
+      "visita presidencial",
+      "economía",
+      "seguridad"
+    ],
+    "relevance": 0.8,
     "method": "ai",
     "grounding": 1.0,
+    "fallback": false,
+    "message": ""
+  },
+  "instituto de geociencias reporta 13 sismos en panamá durante las últimas 48 horas": {
+    "summary": "El Instituto de Geociencias reporta 13 sismos en Panamá durante las últimas 48 horas.",
+    "respaldo": "Instituto de Geociencias reporta 13 sismos en Panamá durante las últimas 48 horas",
+    "why": "Registra la actividad sísmica reciente en Panamá.",
+    "topics": [
+      "sismos",
+      "Panamá",
+      "actividad sísmica"
+    ],
+    "relevance": 0.8,
+    "method": "ai",
+    "grounding": 1.0,
+    "fallback": false,
+    "message": ""
+  },
+  "alcaldía de panamá exonerará el 100 % de los impuestos para nuevos emprendedores por dos años": {
+    "summary": "La Alcaldía de Panamá exonerará el 100 % de los impuestos para nuevos emprendedores por dos años.",
+    "respaldo": "Alcaldía de Panamá exonerará el 100 % de los impuestos para nuevos emprendedores por dos años",
+    "why": "La exoneración alcanza a nuevos emprendedores y dura dos años.",
+    "topics": [
+      "emprendimiento",
+      "impuestos",
+      "Panamá"
+    ],
+    "relevance": 0.9,
+    "method": "ai",
+    "grounding": 1.0,
+    "fallback": false,
+    "message": ""
+  },
+  "playa mata oscura , hábitat crítico de tortugas que merece la máxima protección en panamá": {
+    "summary": "Playa Mata Oscura es un hábitat crítico de tortugas que merece la máxima protección en Panamá.",
+    "respaldo": "Playa Mata Oscura , hábitat crítico de tortugas que merece la máxima protección en Panamá",
+    "why": "Es un hábitat crítico de tortugas en Panamá.",
+    "topics": [
+      "Playa Mata Oscura",
+      "Tortugas",
+      "Protección",
+      "Panamá"
+    ],
+    "relevance": 0.9,
+    "method": "ai",
+    "grounding": 1.0,
+    "fallback": false,
+    "message": ""
+  },
+  "minsa suspendería atención en centros de salud si no se garantiza la seguridad del personal": {
+    "summary": "El Minsa suspendería la atención en centros de salud si no se garantiza la seguridad del personal.",
+    "respaldo": "Minsa suspendería atención en centros de salud si no se garantiza la seguridad del personal",
+    "why": "La seguridad del personal condiciona la atención en los centros de salud.",
+    "topics": [
+      "salud",
+      "seguridad laboral",
+      "centros de salud"
+    ],
+    "relevance": 0.9,
+    "method": "ai",
+    "grounding": 1.0,
+    "fallback": false,
+    "message": ""
+  },
+  "sismo en panamá : temblor sacude la zona cercana a boquete durante la noche": {
+    "summary": "Un sismo sacudió la zona cercana a Boquete, en Panamá, durante la noche.",
+    "respaldo": "temblor sacude la zona cercana a Boquete durante la noche",
+    "why": "El temblor ocurrió cerca de Boquete durante la noche.",
+    "topics": [
+      "sismo",
+      "Boqueté",
+      "Panamá"
+    ],
+    "relevance": 0.85,
+    "method": "ai",
+    "grounding": 0.88,
     "fallback": false,
     "message": ""
   }

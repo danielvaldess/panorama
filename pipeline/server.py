@@ -120,7 +120,7 @@ def _enrich_ai(fichas: list[dict]) -> None:
     bm25: list[float] = []
     ai_rel: list[float] = []
     for f in fichas[:AI_TOP_N]:
-        a = ai_mod.analyze(f["title"], f["sources"])
+        a = ai_mod.analyze(f["title"], f["sources"], f.get("snippet", ""))
         f.update(summary=a["summary"], why=a["why"], topics=a["topics"],
                  relevance_ai=a["relevance"], method=a["method"], grounding=a["grounding"],
                  ai_fallback=a.get("fallback", False), ai_message=a.get("message", ""),

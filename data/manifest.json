@@ -1,7 +1,7 @@
 {
   "version": "Panamá · Señales y Evidencias v1",
   "rules_version": "p-2.1",
-  "fecha_corte_UTC": "2026-10-07T21:20:04.836015+00:00",
+  "fecha_corte_UTC": "2026-10-08T18:51:31.193114+00:00",
   "consultas": {
     "noticias": {
       "feeds": [
@@ -53,9 +53,17 @@
     }
   },
   "cantidad_por_archivo": {
-    "noticias.csv": 250,
+    "noticias.csv": 130,
     "indicadores.csv": 540,
     "eventos.geojson": 82
+  },
+  "rango_fechas_noticias": {
+    "inicio_inclusivo": "2025-10-02",
+    "fin_inclusivo": "2026-09-30",
+    "total_original": 297,
+    "incluidas": 130,
+    "excluidas_por_rango": 167,
+    "excluidas_sin_fecha": 0
   },
   "licencia_condiciones": {
     "TVN RSS": "Metadatos/uso referencial; no republicar artículos",
@@ -64,14 +72,15 @@
     "USGS": "Datos públicos (USGS)"
   },
   "sha256": {
-    "noticias.csv": "e42bf485d45dbe39b1ebd892582565a23de4025407d248eb7999fdb2de890776",
-    "indicadores.csv": "1cb80d0599773702fa99368f1ce3524bce13bb2c6d189c611d8c7783bbf703c3",
-    "eventos.geojson": "391936f063814f0d2cf667c2fe1bb1ebc930609069a42fb2dcaf9ce61a95ced2"
+    "noticias.csv": "562e05f3a4a4d84aeee1879af12addd8007994331da4ea5359c5c5f002c667a1",
+    "indicadores.csv": "7907e4a034491db9fd5660cabf46c7ed656f2d43224a6db227547b7792ef5b78",
+    "eventos.geojson": "02dedbac4da148500cc9aaff9cbca23f1de921f5ab29386c74953751eea77dcb"
   },
   "transformaciones": [
     "Noticias: filtradas a la ventana del reto y dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
     "Noticias: GDELT dividido por ventanas mensuales y filtrado a salidas panameñas",
     "Google News excluido (agregador, no fuente primaria)",
+    "Noticias: ventana de coordinación [2025-10-02, 2026-09-30] — 130 de 297 (excluidas 167 por rango, 0 sin fecha)",
     "Indicadores: valores nulos conservados (no se rellenan con 0)",
     "Eventos: solo hechos sísmicos (no evidencia de inundación/pérdidas)"
   ]
