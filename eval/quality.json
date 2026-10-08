@@ -52,17 +52,17 @@
   "sustento": {
     "descripcion": "Validez de sustento de afirmaciones (revisión humana, rúbrica estricta)",
     "fuente_datos": "data/processed/sustento_labels.jsonl",
-    "numerador_validos": 32,
-    "denominador": 37,
-    "pct_validos": 0.8649,
+    "numerador_validos": 0,
+    "denominador": 0,
+    "pct_validos": null,
     "meta_pct": 0.9,
     "cumple_meta": false,
     "muestra": {
       "min_afirmaciones": 30,
       "min_fichas": 10,
-      "afirmaciones": 37,
-      "fichas": 30,
-      "suficiente": true,
+      "afirmaciones": 0,
+      "fichas": 0,
+      "suficiente": false,
       "etiquetas_descartadas_cambiadas": 0
     },
     "rubrica": {
@@ -70,52 +70,6 @@
       "parcial": "la fuente respalda solo parte de la afirmación — NO cuenta para la meta",
       "inválido": "la fuente no respalda, o la afirmación es vacía/genérica sin hecho verificable — NO cuenta"
     },
-    "fallos": [
-      {
-        "id_caso": "0c32d7610a02",
-        "indice": 0,
-        "veredicto": "parcial",
-        "texto": "Panama City to Chiriquí Railway : The Undeniable Tourism Potential",
-        "tipo": "hecho_verificable",
-        "comentario": null,
-        "titulo_ficha": "Panama City to Chiriquí Railway : The Undeniable Tourism Potential"
-      },
-      {
-        "id_caso": "1bf53d364454",
-        "indice": 0,
-        "veredicto": "parcial",
-        "texto": "CCIAP aboga por una reforma educativa integral para cerrar brechas en Panamá",
-        "tipo": "hecho_verificable",
-        "comentario": null,
-        "titulo_ficha": "CCIAP aboga por una reforma educativa integral para cerrar brechas en Panamá"
-      },
-      {
-        "id_caso": "2943ed633a29",
-        "indice": 0,
-        "veredicto": "parcial",
-        "texto": "Francia redescubre su huella humana en el Canal de Panamá",
-        "tipo": "hecho_verificable",
-        "comentario": null,
-        "titulo_ficha": "Francia redescubre su huella humana en el Canal de Panamá"
-      },
-      {
-        "id_caso": "32ec4d0ac742",
-        "indice": 0,
-        "veredicto": "parcial",
-        "texto": "TVN Media oficializa patrocinio para el World of Coffee Panamá 2026",
-        "tipo": "hecho_verificable",
-        "comentario": null,
-        "titulo_ficha": "TVN Media oficializa patrocinio para el World of Coffee Panamá 2026"
-      },
-      {
-        "id_caso": "482697aae8b3",
-        "indice": 0,
-        "veredicto": "parcial",
-        "texto": "Metro de Panamá sin sistema de recarga : esto deben hacer los usuarios en las estaciones",
-        "tipo": "hecho_verificable",
-        "comentario": null,
-        "titulo_ficha": "Metro de Panamá sin sistema de recarga : esto deben hacer los usuarios en las estaciones"
-      }
-    ]
+    "fallos": []
   }
 }
