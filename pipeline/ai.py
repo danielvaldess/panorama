@@ -35,7 +35,29 @@ OR_MODELS = [m.strip() for m in os.environ.get(
 PROFILE = "una mesa de redacción de noticias nacionales en Panamá (TVN)"
 GROUNDING_MIN = 0.5  # si el resumen no se sostiene en el titular, se descarta (anti-alucinación)
 
-_CACHE: dict[str, dict] = {}
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_CACHE_PATH = os.path.join(_ROOT, "data", "processed", "ai_cache.json")
+
+
+def _load_cache() -> dict[str, dict]:
+    try:
+        with open(_CACHE_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_cache() -> None:
+    try:
+        os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
+        with open(_CACHE_PATH, "w", encoding="utf-8") as fh:
+            json.dump(_CACHE, fh, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+_CACHE: dict[str, dict] = _load_cache()  # salidas válidas persistidas -> demo offline (T10)
 
 
 def _zen_key() -> str:
@@ -167,6 +189,7 @@ def analyze(title: str, sources_list: list[dict]) -> dict:
             "message": "",
         }
         _CACHE[clean_title.strip().lower()] = out
+        _save_cache()  # persistir para la demo offline (T10)
         return out
     print(f"[ai] fallback local (sin IA): {clean_title[:48]}", flush=True)
     return _fallback(clean_title, sources_list,
