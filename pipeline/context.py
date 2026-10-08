@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from pipeline import snapshot
 
-# Tabla explícita tema -> indicadores permitidos (T5).
+# Tabla explícita tema -> indicadores permitidos (T5). Fuera de alcance NO tiene contexto.
 TEMA_INDICADORES = {
     "economia": ["NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG", "SL.UEM.TOTL.ZS"],
-    "logistica": ["NE.EXP.GNFS.ZS"],
-    "relaciones_exteriores": ["NE.EXP.GNFS.ZS"],
+    "logistica_canal": ["NE.EXP.GNFS.ZS"],
+    "relaciones_exteriores_comercio": ["NE.EXP.GNFS.ZS"],
     "turismo": ["NE.EXP.GNFS.ZS"],
 }
 
@@ -30,8 +30,8 @@ JUSTIFICACION = {
     ("economia", "NY.GDP.MKTP.KD.ZG"): "El crecimiento del PIB enmarca el desempeño económico del país.",
     ("economia", "FP.CPI.TOTL.ZG"): "La inflación mide la evolución de los precios.",
     ("economia", "SL.UEM.TOTL.ZS"): "El desempleo mide el mercado laboral.",
-    ("logistica", "NE.EXP.GNFS.ZS"): "Las exportaciones (% del PIB) aproximan el peso del comercio ligado al Canal y la logística.",
-    ("relaciones_exteriores", "NE.EXP.GNFS.ZS"): "El comercio exterior se mide con las exportaciones (% del PIB).",
+    ("logistica_canal", "NE.EXP.GNFS.ZS"): "Las exportaciones (% del PIB) aproximan el peso del comercio ligado al Canal y la logística.",
+    ("relaciones_exteriores_comercio", "NE.EXP.GNFS.ZS"): "El comercio exterior se mide con las exportaciones (% del PIB).",
     ("turismo", "NE.EXP.GNFS.ZS"): "Las exportaciones (% del PIB) aproximan el aporte del sector externo, que incluye el turismo.",
 }
 

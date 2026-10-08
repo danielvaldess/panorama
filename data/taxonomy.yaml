@@ -1,0 +1,15 @@
+version: 1
+en_alcance:
+  economia: "economía, presupuesto, inflación, empleo, precios, crédito"
+  logistica_canal: "Canal de Panamá, puertos, esclusas, buques, contenedores, carga, aduanas, Zona Libre, ACP"
+  turismo: "turismo, cruceros, hoteles, vuelos, visitantes"
+  servicios_publicos: "salud, transporte público, agua, energía, educación pública"
+  eventos_naturales: "sismos, lluvias, inundaciones, protección civil, simulacros de evacuación"
+  regulacion: "leyes, decretos, contratos, licitaciones, tribunales, Asamblea"
+  relaciones_exteriores_comercio: "diplomacia, cancillería, comercio exterior, tratados, cumbres"
+fuera_de_alcance:
+  deportes: "fútbol, selección, torneos"
+  entretenimiento_cultura: "conciertos, artistas, espectáculos"
+  sucesos_judicial: "aprehensiones, investigaciones, audiencias penales"
+  politica_interna_general: "política interna no sectorial"
+  otros: "todo lo demás sin tema claro"

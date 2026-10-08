@@ -17,12 +17,15 @@ from __future__ import annotations
 import math
 from datetime import datetime, timezone
 
-RULES_VERSION = "p-2.1"
+RULES_VERSION = "p-3.0"
 WEIGHTS = {"R": 30, "I": 25, "U": 20, "N": 15, "E": 10}
-CORE_THEMES = {"economia", "logistica", "turismo", "servicios", "eventos_naturales", "regulacion", "relaciones_exteriores"}
+CORE_THEMES = {"economia", "logistica_canal", "turismo", "servicios_publicos",
+               "eventos_naturales", "regulacion", "relaciones_exteriores_comercio"}
+FUERA_ALCANCE = {"deportes", "entretenimiento_cultura", "sucesos_judicial", "politica_interna_general", "otros"}
 URGENCY_WINDOW_D = 14          # días: más allá, urgencia 0 (T3)
 TAU_D = 7.0                    # constante de decaimiento (documentada)
 RECIRCULADA_CAP = 39           # tope de prioridad para noticias fuera de ventana (T3)
+FUERA_ALCANCE_CAP = 39         # tope de prioridad para temas fuera de alcance
 
 
 def _clamp(x: float, lo: float = 0.0, hi: float = 1.0) -> float:
@@ -88,16 +91,29 @@ def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_
         tema = _dominant_topic(g)
     blob = " ".join((x.get("title", "") + " " + x.get("source", "")) for x in g).lower()
     panama = "panam" in blob
-    topic_base = 0.85 if tema in CORE_THEMES else 0.40
+    # R depende del alcance del tema (mencionar "Panamá" no sube R por sí solo).
+    if tema in CORE_THEMES:
+        topic_base = 0.85 if panama else 0.50
+    elif tema == "sin_clasificar_con_certeza":
+        topic_base = 0.30
+    else:
+        topic_base = 0.12  # fuera de alcance
 
     R = _clamp(0.6 * max(rel_i, topic_base) + 0.4 * (1.0 if panama else 0.5))
 
     indep = v.get("independent", 0)
     indep_score = _clamp((indep - 1) / 2.0) if indep > 1 else 0.0  # 2→0.5, 3→1.0
-    I = _clamp(0.40 * topic_base + 0.35 * indep_score + 0.25 * (1.0 if v.get("official") else 0.30))
+    i_base = 0.40 * topic_base if tema not in CORE_THEMES else topic_base
+    I = _clamp(0.40 * i_base + 0.35 * indep_score + 0.25 * (1.0 if v.get("official") else 0.30))
 
     rec = _recency(g, ref)
     U = rec
+    # Eventos con fecha futura próxima suben la urgencia.
+    FUTURO = ("este lunes", "este martes", "este miércoles", "este miercoles", "este jueves",
+              "este viernes", "este sábado", "este sabado", "este domingo", "este 15", "este 16",
+              "próximo", "próxima", "se realizará", "se realizara")
+    if any(m in blob for m in FUTURO):
+        U = max(U, 0.5)
     N = _clamp(0.6 * rec + 0.4 * (1.0 / (1.0 + v.get("echo", 0))))
 
     # --- Evidencia v2: E = 0.35·primaria + 0.40·corroboración + 0.15·confiabilidad + 0.10·trazabilidad − 0.30·contradicción

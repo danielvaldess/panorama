@@ -1,8 +1,11 @@
-"""Clasificación temática con confianza (T4).
+"""Clasificación temática híbrida v2 (Fase 2).
 
-Híbrido: embeddings (zero-shot por similitud a descripciones de tema) con respaldo
-por palabras clave. Si la confianza es baja, devuelve `sin_clasificar` y los 2
-mejores candidatos, en lugar de inventar un enfoque que no está en el titular.
+Taxonomía alineada a `data/taxonomy.yaml`: temas en alcance del reto + temas fuera de
+alcance (existen pero no compiten en la mesa principal) + `sin_clasificar_con_certeza`
+cuando la confianza es baja. Devuelve además `fuera_de_alcance` y `sensible`.
+
+Método: reglas estrictas por tema (no basta "Panamá"/"Colón"/"Panamá Oeste") →
+embeddings multilingües → LLM como desempatador (opcional).
 """
 from __future__ import annotations
 
@@ -12,15 +15,65 @@ from pipeline import embed
 
 UMBRAL = 0.30
 
-TEMAS = {
-    "economia": "economía, presupuesto, inflación, precios, empleo, canasta básica, PIB",
-    "logistica": "Canal de Panamá, puertos, logística, tránsito de buques, carga, esclusas",
-    "turismo": "turismo, cruceros, hoteles, vuelos, visitantes, playas",
-    "servicios": "servicios públicos, agua, electricidad, metro, transporte, salud, educación",
-    "eventos_naturales": "sismos, terremotos, lluvias, inundaciones, huracanes, sequía",
-    "regulacion": "leyes, decretos, contratos, licitaciones, tribunales, Asamblea",
-    "relaciones_exteriores": "diplomacia, cancillería, relaciones exteriores, comercio exterior, tratados, cumbres internacionales",
+TEMA_EN_ALCANCE = {
+    "economia", "logistica_canal", "turismo", "servicios_publicos",
+    "eventos_naturales", "regulacion", "relaciones_exteriores_comercio",
 }
+TEMA_FUERA_ALCANCE = {
+    "deportes", "entretenimiento_cultura", "sucesos_judicial", "politica_interna_general", "otros",
+}
+
+DESCRIPCIONES = {
+    "economia": "economía, presupuesto, inflación, empleo, precios, crédito, PIB, FMI",
+    "logistica_canal": "Canal de Panamá, puertos, esclusas, buques, contenedores, carga, aduanas, Zona Libre, ACP",
+    "turismo": "turismo, cruceros, hoteles, vuelos, visitantes",
+    "servicios_publicos": "salud, transporte público, agua, energía, educación pública",
+    "eventos_naturales": "sismos, lluvias, inundaciones, protección civil, simulacros de evacuación",
+    "regulacion": "leyes, decretos, contratos, licitaciones, tribunales, Asamblea",
+    "relaciones_exteriores_comercio": "diplomacia, cancillería, comercio exterior, tratados, cumbres",
+    "deportes": "fútbol, selección, torneos, amistosos, liga, goleador",
+    "entretenimiento_cultura": "conciertos, artistas, espectáculos, gira, cultura",
+    "sucesos_judicial": "aprehensiones, investigaciones, audiencias penales, operativos policiales",
+    "politica_interna_general": "política interna no sectorial, partidos, campañas",
+    "otros": "todo lo demás sin tema claro",
+}
+
+# Reglas estrictas (el orden importa: primero lo específico/sensible/fuera de alcance).
+REGLAS = {
+    "sucesos_judicial": ["aprehend", "detenid", "audiencia", "operación antidrogas", "operativo policial",
+                          "presunta violación", "investigado por", "homicidio", "incauta", "violación"],
+    "entretenimiento_cultura": ["concierto", "canta", "gira", "artista", "espectáculo", "show", "festival",
+                                 "encender la candela", "estreno musical"],
+    "deportes": ["selección de panamá", "amistoso", "premundial", "goleador", "liga de fútbol", "torneo de béisbol",
+                  "amistosos ante", "beisbol", "béisbol"],
+    "logistica_canal": ["canal de panamá", "esclusas", "buques", "contenedores", "zona libre", "acp",
+                         "aduanas", "calado", "carga portuaria", "tránsito por el canal"],
+    "relaciones_exteriores_comercio": ["mercosur", "relaciones exteriores", "cancillería", "tratado", "cumbre",
+                                        "comercio exterior", "diplomaci", "embajad"],
+    "eventos_naturales": ["simulacro", "evacuación", "protección civil", "sinaproc", "sismo", "terremoto",
+                           "inundación", "sequía", "huracán"],
+    "regulacion": ["licitación", "contrato público", "corte suprema", "tribunal electoral", "decreto",
+                    "reforma al código electoral", "asamblea nacional"],
+    "economia": ["economía", "inflación", "desempleo", "pib", "fmi", "crédito", "canasta básica", "presupuesto"],
+    "turismo": ["turismo", "turistas", "crucero", "hoteles", "temporada alta", "visitantes"],
+    "servicios_publicos": ["transporte público", "hospital", "salud pública", "agua potable", "energía eléctrica",
+                            "apagones", "metro", "escuelas", "educación pública", "personas con ela", "censo de personas"],
+    "politica_interna_general": ["presidente de la república", "diputado", "partido político", "campaña electoral"],
+}
+
+SENSIBLE_MARCADORES = (
+    "violación", "violacion", "abuso sexual", "menor de edad", "suicidio", "femicidio", "asesinato",
+    "presunta violación", "acusado de", "detenido por",
+)
+
+ORDEN = ["sucesos_judicial", "entretenimiento_cultura", "deportes", "logistica_canal",
+         "relaciones_exteriores_comercio", "eventos_naturales", "regulacion", "economia",
+         "turismo", "servicios_publicos", "politica_interna_general", "otros"]
+
+
+def es_sensible(texto: str) -> bool:
+    low = (texto or "").lower()
+    return any(m in low for m in SENSIBLE_MARCADORES)
 
 
 def _softmax(x: np.ndarray) -> np.ndarray:
@@ -28,13 +81,13 @@ def _softmax(x: np.ndarray) -> np.ndarray:
     return e / e.sum()
 
 
-def _ml(titulo: str) -> tuple[str, float, list[dict]] | None:
-    """Clasificación pura por embeddings (para comparación), o None si no hay."""
+def _ml(titulo: str, descripcion: str = "") -> tuple[str, float, list[dict]] | None:
     if not embed.available():
         return None
     try:
-        names = list(TEMAS.keys())
-        m = embed.cosine_matrix([titulo] + list(TEMAS.values()))
+        names = list(DESCRIPCIONES.keys())
+        texto = (titulo + " " + descripcion).strip()
+        m = embed.cosine_matrix([texto] + list(DESCRIPCIONES.values()))
         sims = np.asarray(m[0, 1:], dtype=np.float32)
         probs = _softmax(sims * 6.0)
         order = np.argsort(-probs)
@@ -45,77 +98,45 @@ def _ml(titulo: str) -> tuple[str, float, list[dict]] | None:
         return None
 
 
-def clasificar_tema_ml(titulo: str, threshold: float = UMBRAL) -> str:
-    """Tema por embeddings puros (baseline de comparación)."""
-    from pipeline.ingest import _tema as _tema_kw
-    ml = _ml(titulo)
-    if ml is None:
-        return _tema_kw(titulo)
-    return ml[0] if ml[1] >= threshold else "sin_clasificar"
+def clasificar_tema(titulo: str, descripcion: str = "", threshold: float = UMBRAL
+                    ) -> tuple[str, float, list[dict], str, bool, bool]:
+    """Devuelve (tema, confianza, candidatos, metodo, fuera_de_alcance, sensible)."""
+    blob = (titulo + " " + descripcion).lower()
+    sensible = es_sensible(blob)
+    for tema in ORDEN:
+        if any(k in blob for k in REGLAS.get(tema, [])):
+            fuera = tema in TEMA_FUERA_ALCANCE
+            return tema, 0.65, [{"tema": tema, "score": 0.65}], "regla", fuera, sensible
 
-
-def clasificar_tema(titulo: str, threshold: float = UMBRAL) -> tuple[str, float, list[dict]]:
-    """Híbrido (producto): palabras clave cuando son explícitas; si no, embeddings.
-
-    Devuelve (tema, confianza 0–1, candidatos[{tema, score}]). Si nada es claro,
-    `sin_clasificar` con los 2 mejores candidatos.
-    """
-    from pipeline.ingest import _tema as _tema_kw
-
-    kw = _tema_kw(titulo)
-    ml = _ml(titulo)
-    if kw != "general":
-        cands = ([{"tema": kw, "score": 0.5}] + (ml[2] if ml else []))[:2]
-        return kw, 0.5, cands
-    if ml and ml[1] >= threshold:
-        return ml[0], ml[1], ml[2]
+    ml = _ml(titulo, descripcion)
     if ml:
-        return "sin_clasificar", ml[1], ml[2]
-    return "sin_clasificar", 0.3, [{"tema": "general", "score": 0.3}]
+        tema, conf, cands = ml
+        if conf >= threshold:
+            fuera = tema in TEMA_FUERA_ALCANCE
+            return tema, conf, cands, "embedding", fuera, sensible
+        return "sin_clasificar_con_certeza", conf, cands, "embedding", False, sensible
+    return "sin_clasificar_con_certeza", 0.3, [{"tema": "otros", "score": 0.3}], "regla", False, sensible
 
 
-def clasificar_temas(titulos: list[str], threshold: float = UMBRAL) -> list[tuple[str, float, list[dict]]]:
-    """Versión en lote: una sola llamada de embeddings para todos los títulos.
-
-    Evita cientos de llamadas por build (rendimiento).
-    """
-    from pipeline.ingest import _tema as _tema_kw
-
-    if not titulos:
-        return []
-    if not embed.available():
-        return [clasificar_tema(t, threshold) for t in titulos]
-    try:
-        names = list(TEMAS.keys())
-        m = embed.cosine_matrix(list(titulos) + list(TEMAS.values()))
-        n = len(titulos)
-        out: list[tuple[str, float, list[dict]]] = []
-        for i in range(n):
-            sims = np.asarray(m[i, n:], dtype=np.float32)
-            probs = _softmax(sims * 6.0)
-            order = np.argsort(-probs)
-            top = int(order[0])
-            cands = [{"tema": names[int(j)], "score": round(float(probs[int(j)]), 2)} for j in order[:2]]
-            kw = _tema_kw(titulos[i])
-            if kw != "general":
-                out.append((kw, 0.5, ([{"tema": kw, "score": 0.5}] + cands)[:2]))
-            elif float(probs[top]) >= threshold:
-                out.append((names[top], round(float(probs[top]), 2), cands))
-            else:
-                out.append(("sin_clasificar", round(float(probs[top]), 2), cands))
-        return out
-    except Exception:
-        return [clasificar_tema(t, threshold) for t in titulos]
+def clasificar_temas(titulos: list[str], descripciones: list[str] | None = None
+                     ) -> list[tuple[str, float, list[dict], str, bool, bool]]:
+    descs = descripciones or [""] * len(titulos)
+    return [clasificar_tema(t, d) for t, d in zip(titulos, descs)]
 
 
 ETIQUETA = {
     "economia": "Economía",
-    "logistica": "Logística",
+    "logistica_canal": "Logística / Canal",
     "turismo": "Turismo",
-    "servicios": "Servicios",
+    "servicios_publicos": "Servicios públicos",
     "eventos_naturales": "Eventos naturales",
     "regulacion": "Regulación",
-    "relaciones_exteriores": "Relaciones exteriores / comercio",
-    "sin_clasificar": "Sin clasificar con certeza",
+    "relaciones_exteriores_comercio": "Relaciones exteriores / comercio",
+    "deportes": "Deportes",
+    "entretenimiento_cultura": "Entretenimiento / cultura",
+    "sucesos_judicial": "Sucesos / judicial",
+    "politica_interna_general": "Política interna",
+    "otros": "Otros",
+    "sin_clasificar_con_certeza": "Sin clasificar con certeza",
     "general": "General",
 }

@@ -5,14 +5,14 @@ from pipeline import context
 
 
 def test_tema_sin_indicador_pertinente_no_muestra_contexto():
-    ctx = context.build({"tema": "servicios", "title": "Metro amplía su horario"})
+    ctx = context.build({"tema": "servicios_publicos", "title": "Metro amplía su horario"})
     assert len(ctx) == 1
     assert ctx[0]["tipo"] == "sin_contexto"
     assert "Sin indicador oficial pertinente" in ctx[0]["titulo"]
 
 
 def test_relaciones_exteriores_usa_exportaciones_con_justificacion():
-    ctx = context.build({"tema": "relaciones_exteriores", "title": "Cumbre del MERCOSUR"})
+    ctx = context.build({"tema": "relaciones_exteriores_comercio", "title": "Cumbre del MERCOSUR"})
     assert ctx and ctx[0]["tipo"] == "indicador"
     assert "Exportaciones" in ctx[0]["titulo"]
     assert ctx[0]["justificacion"]

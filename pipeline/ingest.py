@@ -71,12 +71,12 @@ USGS_PARAMS = {
 
 TEMAS = {
     "economia": ["economía", "economia", "pib", "inflación", "presupuesto", "banco", "dólar", "canasta", "empleo", "salario"],
-    "logistica": ["canal", "puerto", "logística", "logistica", "tránsito", "esclusa", "naviera", "carga"],
+    "logistica_canal": ["canal", "puerto", "logística", "logistica", "tránsito", "esclusa", "naviera", "carga"],
     "turismo": ["turismo", "turista", "hotel", "vuelo", "crucero", "playa", "vacacion"],
-    "servicios": ["agua", "electricidad", "energía", "aseo", "metro", "transporte", "salud", "hospital", "educación"],
+    "servicios_publicos": ["agua", "electricidad", "energía", "aseo", "metro", "transporte", "salud", "hospital", "educación"],
     "eventos_naturales": ["sismo", "terremoto", "inundación", "lluvia", "huracán", "volcán", "sequía"],
     "regulacion": ["regula", "decreto", "ley", "asamblea", "contrato", "licitación", "tribunal", "corte"],
-    "relaciones_exteriores": ["canciller", "relaciones exteriores", "diplom", "tratado", "mercosur",
+    "relaciones_exteriores_comercio": ["canciller", "relaciones exteriores", "diplom", "tratado", "mercosur",
                               "comercio exterior", "cumbre", "onu", "embajad", "exterior"],
 }
 

@@ -19,7 +19,7 @@ from pipeline.ingest import _tema
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-TEMAS = ["economia", "logistica", "turismo", "servicios", "eventos_naturales", "regulacion"]
+TEMAS = ["economia", "logistica_canal", "turismo", "servicios_publicos", "eventos_naturales", "regulacion"]
 
 # Etiquetas humanas (muestra pequeña, ilustrativa) ---------------------------------
 LABELED = [
@@ -28,11 +28,11 @@ LABELED = [
     ("El PIB de Panamá crecerá 4% este año, proyecta el MEF", "economia"),
     ("Aumenta el desempleo en la ciudad de Colón", "economia"),
     ("Gobierno presenta el presupuesto general del Estado 2027", "economia"),
-    ("Canal de Panamá amplía los cupos de tránsito para buques", "logistica"),
-    ("Puerto de Balboa rompe récord de movimiento de contenedores", "logistica"),
-    ("Nueva naviera inicia operaciones en aguas panameñas", "logistica"),
-    ("Las esclusas Panamax aumentan su capacidad de carga", "logistica"),
-    ("Tránsito de carga por el Canal crece en el primer trimestre", "logistica"),
+    ("Canal de Panamá amplía los cupos de tránsito para buques", "logistica_canal"),
+    ("Puerto de Balboa rompe récord de movimiento de contenedores", "logistica_canal"),
+    ("Nueva naviera inicia operaciones en aguas panameñas", "logistica_canal"),
+    ("Las esclusas Panamax aumentan su capacidad de carga", "logistica_canal"),
+    ("Tránsito de carga por el Canal crece en el primer trimestre", "logistica_canal"),
     ("Temporada de cruceros traerá más turistas a Bocas del Toro", "turismo"),
     ("Hoteles reportan alta ocupación en la temporada alta", "turismo"),
     ("Nueva conexión aérea conecta Panamá con Colombia", "turismo"),
@@ -48,11 +48,11 @@ LABELED = [
     ("Decreto regula el uso del agua en la cuenca del Canal", "regulacion"),
     ("La Corte Suprema admite demanda contra una ley", "regulacion"),
     ("Nueva licitación para el contrato de aseo en la capital", "regulacion"),
-    ("Metro de Panamá amplía su horario de operación", "servicios"),
-    ("Corte de agua afecta a varios sectores de la capital", "servicios"),
-    ("Hospital Santo Tomás refuerza sus servicios de urgencia", "servicios"),
-    ("Fallas eléctricas dejan sin luz a barrios de Arraiján", "servicios"),
-    ("Empresa de aseo anuncia cambios en las rutas de recolección", "servicios"),
+    ("Metro de Panamá amplía su horario de operación", "servicios_publicos"),
+    ("Corte de agua afecta a varios sectores de la capital", "servicios_publicos"),
+    ("Hospital Santo Tomás refuerza sus servicios de urgencia", "servicios_publicos"),
+    ("Fallas eléctricas dejan sin luz a barrios de Arraiján", "servicios_publicos"),
+    ("Empresa de aseo anuncia cambios en las rutas de recolección", "servicios_publicos"),
 ]
 
 GROUP_PAIRS = [

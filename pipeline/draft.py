@@ -14,13 +14,18 @@ DISCLAIMER = "Basado únicamente en titular/metadatos; no se leyó el artículo 
 
 TEMA_FOCO = {
     "economia": "impacto en la economía familiar y el bolsillo",
-    "logistica": "operación del Canal y la logística nacional",
+    "logistica_canal": "operación del Canal y la logística nacional",
     "turismo": "actividad turística y su efecto económico",
-    "servicios": "servicios públicos y calidad de vida",
+    "servicios_publicos": "servicios públicos y calidad de vida",
     "eventos_naturales": "seguridad y gestión de riesgo",
     "regulacion": "marco legal y control institucional",
-    "relaciones_exteriores": "posición internacional y comercio del país",
-    "sin_clasificar": "interés público (tema por confirmar)",
+    "relaciones_exteriores_comercio": "posición internacional y comercio del país",
+    "deportes": "actividad deportiva",
+    "entretenimiento_cultura": "entretenimiento y cultura",
+    "sucesos_judicial": "hechos judiciales y de sucesos",
+    "politica_interna_general": "política interna",
+    "otros": "interés público general",
+    "sin_clasificar_con_certeza": "interés público (tema por confirmar)",
     "general": "interés público general",
 }
 
@@ -114,6 +119,7 @@ def build(ficha: dict) -> dict:
     titulo_corto = _fit(title, 16)
     proyeccion = any(m in title.lower() for m in PROYECCION_MARKERS)
     fuente_primaria = _fuente_primaria(title)
+    sensible = bool(ficha.get("sensible"))
 
     # Qué falta comprobar (coherente con el estado; invariante T1.4)
     pendientes: list[str] = []
@@ -140,7 +146,10 @@ def build(ficha: dict) -> dict:
 
     # --- Texto al aire (sin meta-mensajes internos; ~45–60 s) ---
     atrib = _atribucion(tipo, fuente_txt)
-    if tipo == "declaracion_institucional":
+    if sensible:
+        guion = ""          # no se genera guion ni copy automático para temas sensibles
+        copy = ""
+    elif tipo == "declaracion_institucional":
         guion = (f"Al aire. {fuente_txt} afirma: {titulo_corto}. "
                  f"Por ahora es una declaración de la propia institución y así la presentamos. "
                  f"El tema interesa por su {enfoque}. Estamos reuniendo los elementos disponibles y "
@@ -162,7 +171,9 @@ def build(ficha: dict) -> dict:
                  f"con la cobertura.")
     guion = _fit(guion, 150)
 
-    if tipo == "declaracion_institucional":
+    if sensible:
+        copy = ""
+    elif tipo == "declaracion_institucional":
         copy = f"{fuente_txt} afirma: {titulo_corto}."
     elif tipo == "declaracion_tercero":
         copy = f"{fuente_txt} informa que {titulo_corto}."
@@ -173,6 +184,8 @@ def build(ficha: dict) -> dict:
     # --- Notas internas (para el editor) ---
     notas = [DISCLAIMER, f"Estado de evidencia: {ev}.",
              f"Antes de publicar falta comprobar: {', '.join(pendientes)}."]
+    if sensible:
+        notas.insert(0, "Tema sensible: requiere criterio editorial; no se genera guion ni copy automático.")
 
     afirmaciones = _claims(title, sources, tipo)
     ok_citas, fallos = validar_citas(afirmaciones, sources)
@@ -207,6 +220,7 @@ def build(ficha: dict) -> dict:
         "verificaciones_pendientes": pendientes,
         "proyeccion": proyeccion,
         "fuente_primaria": fuente_primaria,
+        "sensible": sensible,
         "disclaimer": DISCLAIMER,
         "abstain": abstain,
         "accion_recomendada": accion,

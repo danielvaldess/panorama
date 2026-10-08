@@ -21,10 +21,10 @@ LABELED = [
     ("El PIB de Panamá crecerá 4% este año, proyecta el MEF", "economia"),
     ("Aumenta el desempleo en la ciudad de Colón", "economia"),
     ("Gobierno presenta el presupuesto general del Estado 2027", "economia"),
-    ("Canal de Panamá amplía los cupos de tránsito para buques", "logistica"),
-    ("Puerto de Balboa rompe récord de movimiento de contenedores", "logistica"),
-    ("Nueva naviera inicia operaciones en aguas panameñas", "logistica"),
-    ("Tránsito de carga por el Canal crece en el primer trimestre", "logistica"),
+    ("Canal de Panamá amplía los cupos de tránsito para buques", "logistica_canal"),
+    ("Puerto de Balboa rompe récord de movimiento de contenedores", "logistica_canal"),
+    ("Nueva naviera inicia operaciones en aguas panameñas", "logistica_canal"),
+    ("Tránsito de carga por el Canal crece en el primer trimestre", "logistica_canal"),
     ("Temporada de cruceros traerá más turistas a Bocas del Toro", "turismo"),
     ("Hoteles reportan alta ocupación en la temporada alta", "turismo"),
     ("Nueva conexión aérea conecta Panamá con Colombia", "turismo"),
@@ -37,16 +37,16 @@ LABELED = [
     ("Tribunal Electoral reglamenta las próximas elecciones", "regulacion"),
     ("Decreto regula el uso del agua en la cuenca del Canal", "regulacion"),
     ("La Corte Suprema admite demanda contra una ley", "regulacion"),
-    ("Metro de Panamá amplía su horario de operación", "servicios"),
-    ("Corte de agua afecta a varios sectores de la capital", "servicios"),
-    ("Hospital Santo Tomás refuerza sus servicios de urgencia", "servicios"),
-    ("Fallas eléctricas dejan sin luz a barrios de Arraiján", "servicios"),
-    ("Panamá llega a la Cumbre del MERCOSUR como el principal conector global de la región", "relaciones_exteriores"),
-    ("La Cancillería firma un tratado de comercio exterior con la Unión Europea", "relaciones_exteriores"),
-    ("Panamá y Costa Rica revisan acuerdos diplomáticos", "relaciones_exteriores"),
-    ("El país amplía su comercio exterior con Asia", "relaciones_exteriores"),
-    ("Embajada de Panamá inaugura nueva sede en Asia", "relaciones_exteriores"),
-    ("Panamá asume presidencia de un foro internacional", "relaciones_exteriores"),
+    ("Metro de Panamá amplía su horario de operación", "servicios_publicos"),
+    ("Corte de agua afecta a varios sectores de la capital", "servicios_publicos"),
+    ("Hospital Santo Tomás refuerza sus servicios de urgencia", "servicios_publicos"),
+    ("Fallas eléctricas dejan sin luz a barrios de Arraiján", "servicios_publicos"),
+    ("Panamá llega a la Cumbre del MERCOSUR como el principal conector global de la región", "relaciones_exteriores_comercio"),
+    ("La Cancillería firma un tratado de comercio exterior con la Unión Europea", "relaciones_exteriores_comercio"),
+    ("Panamá y Costa Rica revisan acuerdos diplomáticos", "relaciones_exteriores_comercio"),
+    ("El país amplía su comercio exterior con Asia", "relaciones_exteriores_comercio"),
+    ("Embajada de Panamá inaugura nueva sede en Asia", "relaciones_exteriores_comercio"),
+    ("Panamá asume presidencia de un foro internacional", "relaciones_exteriores_comercio"),
 ]
 
 
@@ -67,7 +67,7 @@ def main() -> int:
     y = [lbl for _, lbl in LABELED]
     labels = sorted(set(y))
     base = [tema_kw(t) for t in texts]
-    ml = [theme.clasificar_tema_ml(t) for t in texts]
+    ml = [(theme._ml(t) or ("general", 0.0, []))[0] for t in texts]
     out = {
         "set": "sintético, revisión del equipo",
         "n_etiquetas": len(texts),

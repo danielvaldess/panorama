@@ -277,7 +277,7 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
     """
     reps = [g[0]["title"] for g in groups]
     rel = _norm(bm25(query, [tokens(r) for r in reps]))
-    temas = theme_mod.clasificar_temas(reps)  # lote: una sola llamada de embeddings
+    temas = theme_mod.clasificar_temas(reps, [g[0].get("snippet", "") for g in groups])  # lote
     fichas = []
     for i, g in enumerate(groups):
         uniq: dict[str, dict] = {}
@@ -288,7 +288,11 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
         tipo = claims.clasificar_afirmacion(g[0]["title"], official=bool(v["official"]),
                                             origen=g[0].get("source", ""))
         tema_baseline = score_mod._dominant_topic(g)
-        tema, tema_conf, tema_cands = temas[i] if i < len(temas) else theme_mod.clasificar_tema(g[0]["title"])
+        if i < len(temas):
+            tema, tema_conf, tema_cands, tema_metodo, fuera_alcance, sensible = temas[i]
+        else:
+            tema, tema_conf, tema_cands, tema_metodo, fuera_alcance, sensible = theme_mod.clasificar_tema(
+                g[0]["title"], g[0].get("snippet", ""))
         comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema, ref)
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
@@ -297,6 +301,8 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
         recirculada = age is not None and age > score_mod.URGENCY_WINDOW_D
         if recirculada and p > score_mod.RECIRCULADA_CAP:
             p = score_mod.RECIRCULADA_CAP  # T3: sin urgencia no puede quedar en media/alta
+        if fuera_alcance and p > score_mod.FUERA_ALCANCE_CAP:
+            p = score_mod.FUERA_ALCANCE_CAP  # fuera de alcance no compite en la mesa
         fichas.append({
             "id": g[0].get("id", ""),
             "title": g[0]["title"],
@@ -319,7 +325,10 @@ def priority(groups: list[list[dict]], query: list[str], ref=None) -> list[dict]
             "tema": tema,
             "tema_confianza": tema_conf,
             "tema_candidatos": tema_cands,
+            "tema_metodo": tema_metodo,
             "tema_baseline": tema_baseline,
+            "fuera_de_alcance": fuera_alcance,
+            "sensible": sensible,
             "verification": {
                 "state": v["state"], "reason": v["reason"], "official": v["official"],
                 "independent": v["independent"], "echo": v["echo"], "wire": v["wire"],

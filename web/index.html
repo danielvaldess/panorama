@@ -102,6 +102,7 @@
     .detail-nav .step{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;color:var(--primary);border-radius:20px;padding:7px 15px;font-family:var(--f-title);font-weight:700;font-size:12.5px;cursor:pointer}
     .detail-nav .step:hover{border-color:var(--primary);background:#eef4f9}
     .detail-nav .step[disabled]{opacity:.45;cursor:not-allowed}
+    .banner-sensible{background:#fdecec;border:1px solid #f5c6c6;border-left:4px solid var(--red);color:#7a1f1f;border-radius:var(--radius);padding:12px 16px;font-family:var(--f-title);font-weight:700;font-size:13px;margin-bottom:14px}
     .detail-head{background:linear-gradient(135deg,#fff,#f3f8fc);border:1px solid #d5e5ef;border-radius:10px;padding:22px 24px;margin-bottom:16px;box-shadow:0 10px 28px rgba(0,85,136,.08)}
     .detail-head h1{font-family:var(--f-title);font-weight:800;font-size:25px;line-height:1.25;margin:2px 0 10px}
     .detail-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
@@ -258,7 +259,7 @@
     const REVIEW = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const VEREDICTOS = ["válido", "parcial", "inválido"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
-    const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores: "Relaciones exteriores / comercio", sin_clasificar: "Sin clasificar con certeza", general: "General" };
+    const TEMA_LABEL = { economia: "Economía", logistica_canal: "Logística / Canal", turismo: "Turismo", servicios_publicos: "Servicios públicos", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores_comercio: "Relaciones exteriores / comercio", deportes: "Deportes", entretenimiento_cultura: "Entretenimiento / cultura", sucesos_judicial: "Sucesos / judicial", politica_interna_general: "Política interna", otros: "Otros", sin_clasificar_con_certeza: "Sin clasificar con certeza", general: "General" };
     const sugerido = f => f.band === "alto" ? "Revisar hoy" : f.band === "medio" ? "Esta semana" : "Seguimiento";
     function relDate(p) {
       if (!p) return "";
@@ -403,14 +404,16 @@
     function renderPrioridades() {
       const base = fichas();
       const needsEvidence = f => ((f.verification?.independent || 0) < 2) || ["Sin verificar", "Contradicho"].includes(f.state);
-      const TABS = [["todos", "Todas las señales"], ["hoy", "Mesa de hoy"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"], ["recirculadas", "Recirculadas"]];
+      const TABS = [["todos", "Todas las señales"], ["hoy", "Mesa de hoy"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"], ["recirculadas", "Recirculadas"], ["fuera", "Fuera de alcance"]];
       const byEstado = (arr, k) => {
-        if (k === "hoy") return arr.filter(f => !f.recirculada);
-        if (k === "recirculadas") return arr.filter(f => f.recirculada);
-        if (k === "evidencia") return arr.filter(needsEvidence);
-        if (k === "revision") return arr.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
-        if (k === "listos") return arr.filter(f => f.review_state === "aprobado como borrador");
-        return arr;
+        if (k === "fuera") return arr.filter(f => f.fuera_de_alcance);
+        const inScope = arr.filter(f => !f.fuera_de_alcance);
+        if (k === "hoy") return inScope.filter(f => !f.recirculada && (f.score || 0) >= 40);
+        if (k === "recirculadas") return inScope.filter(f => f.recirculada);
+        if (k === "evidencia") return inScope.filter(needsEvidence);
+        if (k === "revision") return inScope.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
+        if (k === "listos") return inScope.filter(f => f.review_state === "aprobado como borrador");
+        return inScope;
       };
       const baseEstado = byEstado(base, estadoFilter);
       const fs = baseEstado;
@@ -429,6 +432,8 @@
               <span class="chip ${bandChip(f.band)}">${f.score || 0}/100</span>
               <span class="chip ${stateChip(f.state)}">${esc(f.state || "")}</span>
               ${f.recirculada ? `<span class="chip rev">Publicada hace ${Math.round(f.edad_dias || 0)} días</span>` : ""}
+              ${f.fuera_de_alcance ? `<span class="chip ghost">Fuera de alcance</span>` : ""}
+              ${f.sensible ? `<span class="chip a">Sensible</span>` : ""}
             </div>
           </div>
           <div class="go">›</div>
@@ -515,8 +520,9 @@
           <button class="step" id="prevTopic" ${prev ? "" : "disabled"}>‹ Anterior</button>
           <button class="step" id="nextTopic" ${next ? "" : "disabled"}>Siguiente ›</button>
         </div>
+        ${f.sensible ? `<div class="banner-sensible">Sensible: requiere criterio editorial. No se genera guion ni copy automático.</div>` : ""}
         <div class="detail-head">
-          <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
+          <div class="kicker">${esc(bandLabel(f.band))} · ${esc(TEMA_LABEL[f.tema] || f.tema || "General")}</div>
           <h1>${esc(f.title)}</h1>
           <div class="meta">
             <span class="chip ${bandChip(f.band)}">Prioridad ${f.score || 0}/100 · ${esc(f.band || "")}</span>
