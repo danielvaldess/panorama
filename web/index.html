@@ -406,6 +406,7 @@
             <span class="chip ${stateChip(f.state)}">${esc(f.state || "Sin verificar")}</span>
             <span class="chip ghost">Evidencia: ${esc(f.evidence_state || "")}</span>
             <span class="chip ghost">Decisión: ${esc(f.review_state || "nuevo")}</span>
+            <span class="chip ghost">Reglas ${esc(f.rules_version || "")}</span>
             ${f.published ? `<span class="chip ghost">${esc(panamaTime(f.published))}</span>` : ""}
           </div>
         </div>

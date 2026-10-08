@@ -25,6 +25,7 @@ import feedparser
 import httpx
 
 from pipeline import process
+from pipeline import score as score_mod
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw")
@@ -381,6 +382,7 @@ def main() -> int:
 
     manifest = {
         "version": "Panamá · Señales y Evidencias v1",
+        "rules_version": score_mod.RULES_VERSION,
         "fecha_corte_UTC": CORTE,
         "consultas": {
             "noticias": {

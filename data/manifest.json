@@ -1,5 +1,6 @@
 {
   "version": "Panamá · Señales y Evidencias v1",
+  "rules_version": "p-2.1",
   "fecha_corte_UTC": "2026-10-07T21:20:04.836015+00:00",
   "consultas": {
     "noticias": {
