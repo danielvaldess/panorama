@@ -12,6 +12,7 @@ import re
 
 import httpx
 
+from pipeline import db
 from pipeline import guard
 
 try:
@@ -35,29 +36,26 @@ OR_MODELS = [m.strip() for m in os.environ.get(
 PROFILE = "una mesa de redacción de noticias nacionales en Panamá (TVN)"
 GROUNDING_MIN = 0.5  # si el resumen no se sostiene en el titular, se descarta (anti-alucinación)
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_CACHE_PATH = os.path.join(_ROOT, "data", "processed", "ai_cache.json")
-
-
-def _load_cache() -> dict[str, dict]:
+def _cache_get(key: str) -> dict | None:
+    """Lee la caché del LLM desde la base SQLite (None si no está disponible)."""
+    conn = db.connection()
+    if conn is None:
+        return None
     try:
-        with open(_CACHE_PATH, encoding="utf-8") as fh:
-            data = json.load(fh)
-            return data if isinstance(data, dict) else {}
+        return db.get_llm_cache(conn, key)
     except Exception:
-        return {}
+        return None
 
 
-def _save_cache() -> None:
+def _cache_set(key: str, value: dict, modelo: str | None = None) -> None:
+    """Persiste una salida válida del LLM (demo offline T10)."""
+    conn = db.connection()
+    if conn is None:
+        return
     try:
-        os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
-        with open(_CACHE_PATH, "w", encoding="utf-8") as fh:
-            json.dump(_CACHE, fh, ensure_ascii=False, indent=2)
+        db.set_llm_cache(conn, key, value, modelo)
     except Exception:
         pass
-
-
-_CACHE: dict[str, dict] = _load_cache()  # salidas válidas persistidas -> demo offline (T10)
 
 
 def _zen_key() -> str:
@@ -148,8 +146,9 @@ def analyze(title: str, sources_list: list[dict], snippet: str = "") -> dict:
     la versión determinística.
     """
     key = (title or "").strip().lower()
-    if key in _CACHE:  # cache de últimas salidas válidas (T7)
-        return _CACHE[key]
+    cached = _cache_get(key)
+    if cached is not None:  # cache de últimas salidas válidas (T7)
+        return cached
     clean_title, flagged = guard.sanitize(title)
     clean_snip = (snippet or "").strip()[:600]
     reference = (clean_title + " " + clean_snip).strip()
@@ -192,8 +191,7 @@ def analyze(title: str, sources_list: list[dict], snippet: str = "") -> dict:
             "fallback": False,
             "message": "",
         }
-        _CACHE[clean_title.strip().lower()] = out
-        _save_cache()  # persistir para la demo offline (T10)
+        _cache_set(clean_title.strip().lower(), out, out.get("method"))  # demo offline (T10)
         return out
     print(f"[ai] fallback local (sin IA): {clean_title[:48]}", flush=True)
     return _fallback(clean_title, sources_list,

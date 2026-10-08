@@ -1,7 +1,17 @@
 """T6.6 — puerta anti-alucinación del resumen + tipado de proyección + contexto."""
 from __future__ import annotations
 
-from pipeline import ai, claims, context, draft, process
+import pytest
+
+from pipeline import ai, claims, context, db, draft, process
+
+
+@pytest.fixture(autouse=True)
+def _mem_db():
+    db.reset()
+    db.ensure_ready(":memory:")
+    yield
+    db.reset()
 
 
 def _item(title, url="https://www.tvn-2.com/a", source="TVN Noticias", official=False):
@@ -11,8 +21,7 @@ def _item(title, url="https://www.tvn-2.com/a", source="TVN Noticias", official=
 
 # --- Resumen asistido: se descarta si no se sostiene en el titular ---
 def test_resumen_no_respaldado_se_descarta(monkeypatch):
-    ai._CACHE.clear()
-    monkeypatch.setattr(ai, "_save_cache", lambda: None)
+    monkeypatch.setattr(ai, "_cache_set", lambda *a, **k: None)
     monkeypatch.setattr(ai, "_chat", lambda *a, **k: '{"resumen": "La proyección orienta el seguimiento económico nacional y las expectativas para 2026."}')
     r = ai.analyze("FMI proyecta que la economía de Panamá crecerá cerca de 5% este 2026",
                    [{"name": "TVN", "url": "https://x"}])
@@ -21,8 +30,7 @@ def test_resumen_no_respaldado_se_descarta(monkeypatch):
 
 
 def test_resumen_respaldado_se_acepta(monkeypatch):
-    ai._CACHE.clear()
-    monkeypatch.setattr(ai, "_save_cache", lambda: None)
+    monkeypatch.setattr(ai, "_cache_set", lambda *a, **k: None)
     monkeypatch.setattr(ai, "_chat", lambda *a, **k: '{"resumen": "El FMI proyecta que la economía de Panamá crecerá cerca de 5% este 2026."}')
     r = ai.analyze("FMI proyecta que la economía de Panamá crecerá cerca de 5% este 2026",
                    [{"name": "TVN", "url": "https://x"}])

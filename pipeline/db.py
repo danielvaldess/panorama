@@ -339,3 +339,46 @@ def get_snapshot(conn: sqlite3.Connection) -> dict | None:
 
 def count_noticias(conn: sqlite3.Connection) -> int:
     return int(conn.execute("SELECT COUNT(*) AS c FROM noticias").fetchone()["c"])
+
+
+def migrate_legacy(conn: sqlite3.Connection) -> None:
+    """Importa el estado operativo legacy a la DB (una vez, idempotente).
+
+    - data/processed/ai_cache.json -> cache_llm
+    - data/processed/revisiones.jsonl / sustento_labels.jsonl -> decisiones
+    """
+    # Caché del LLM.
+    if conn.execute("SELECT COUNT(*) AS c FROM cache_llm").fetchone()["c"] == 0:
+        cache_path = os.path.join(DATA, "processed", "ai_cache.json")
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, encoding="utf-8") as fh:
+                    data = json.load(fh)
+                for k, v in (data.items() if isinstance(data, dict) else []):
+                    if isinstance(v, dict):
+                        set_llm_cache(conn, k, v, v.get("method"))
+            except Exception:
+                pass
+
+    # Decisiones previas (append-only): solo si la tabla está vacía.
+    if conn.execute("SELECT COUNT(*) AS c FROM decisiones").fetchone()["c"] == 0:
+        for tipo, path, clave in (
+            ("revision", os.path.join(DATA, "processed", "revisiones.jsonl"), "id"),
+            ("veredicto", os.path.join(DATA, "processed", "sustento_labels.jsonl"), "id_caso"),
+        ):
+            if not os.path.exists(path):
+                continue
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            rec = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        add_decision(conn, tipo, rec.get("reviewer"), rec.get("note") or rec.get("comentario"),
+                                     rec.get("ts"), rec.get(clave), rec)
+            except Exception:
+                continue

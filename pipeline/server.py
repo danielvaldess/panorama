@@ -23,6 +23,7 @@ from pydantic import BaseModel
 
 from pipeline import process, sources, snapshot, draft, embed, context, store
 from pipeline import ai as ai_mod
+from pipeline import db, persist, snapshot_io
 from eval import metrics, sustento
 
 REVIEW_STATES = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"]
@@ -162,6 +163,13 @@ def _poll_live() -> None:
             _live["ok"] = False
         return
     editorial = process.filter_editorial(items)
+    # Persistir noticias nuevas + clasificación en una transacción (dedup por URL).
+    conn = db.connection()
+    if conn is not None:
+        try:
+            persist.persist_noticias(conn, editorial)
+        except Exception:
+            pass
     nuevos: list[dict] = []
     with _lock:
         for x in editorial:
@@ -202,6 +210,14 @@ def _refresher():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # DB operativa: inicializar (WAL + esquema) y reconstruir desde el snapshot si está vacía.
+    try:
+        conn = db.ensure_ready()
+        db.migrate_legacy(conn)
+        if db.count_noticias(conn) == 0 and snapshot.available():
+            snapshot_io.load_snapshot(conn=conn)
+    except Exception as e:
+        print(f"[db] inicialización: {e}", flush=True)
     _review.update(store.cargar_revisiones())
     for r in store.cargar_veredictos():
         clave = f"{r.get('id_caso')}#{r.get('indice')}"
