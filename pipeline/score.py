@@ -14,20 +14,23 @@ automáticamente una noticia como verdadera o falsa.
 """
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
 
-RULES_VERSION = "p-2.0"
+RULES_VERSION = "p-2.1"
 WEIGHTS = {"R": 30, "I": 25, "U": 20, "N": 15, "E": 10}
-CORE_THEMES = {"economia", "logistica", "turismo", "servicios", "eventos_naturales", "regulacion"}
-URGENCY_WINDOW_H = 24 * 14  # 14 días hasta urgencia ~0
+CORE_THEMES = {"economia", "logistica", "turismo", "servicios", "eventos_naturales", "regulacion", "relaciones_exteriores"}
+URGENCY_WINDOW_D = 14          # días: más allá, urgencia 0 (T3)
+TAU_D = 7.0                    # constante de decaimiento (documentada)
+RECIRCULADA_CAP = 39           # tope de prioridad para noticias fuera de ventana (T3)
 
 
 def _clamp(x: float, lo: float = 0.0, hi: float = 1.0) -> float:
     return max(lo, min(hi, x))
 
 
-def _recency(g: list[dict]) -> float:
-    """0–1 según antigüedad de la publicación más reciente del grupo."""
+def edad_dias(g: list[dict]) -> float | None:
+    """Antigüedad en días desde la publicación más reciente del grupo (None si no hay fecha)."""
     best = None
     for x in g:
         p = x.get("published")
@@ -42,9 +45,16 @@ def _recency(g: list[dict]) -> float:
         except Exception:
             continue
     if best is None:
-        return 0.5
-    age_h = (datetime.now(timezone.utc) - best).total_seconds() / 3600
-    return _clamp(1.0 - age_h / URGENCY_WINDOW_H)
+        return None
+    return (datetime.now(timezone.utc) - best).total_seconds() / 86400
+
+
+def _recency(g: list[dict]) -> float:
+    """Urgencia 0–1 con decaimiento exponencial (T3): U = exp(-edad/τ), 0 si edad > ventana."""
+    age = edad_dias(g)
+    if age is None or age > URGENCY_WINDOW_D:
+        return 0.0
+    return _clamp(math.exp(-age / TAU_D))
 
 
 def _dominant_topic(g: list[dict]) -> str:

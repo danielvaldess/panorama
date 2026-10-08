@@ -45,13 +45,13 @@
     "id": "T08",
     "prueba": "Caso de prioridad alta",
     "pass": true,
-    "observado": "P=52 banda=medio componentes expuestos; sin aprobación automática"
+    "observado": "P=39 banda=bajo componentes expuestos; sin aprobación automática"
   },
   {
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=71 guion=58 copy=32; citas por afirmación; tipos=['hecho_verificable', 'inferencia']"
+    "observado": "brief=64 guion=53 copy=29; citas por afirmación; tipos=['hecho_verificable']"
   },
   {
     "id": "T10",

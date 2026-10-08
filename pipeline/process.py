@@ -289,12 +289,18 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
         published = max(pubs) if pubs else None
+        age = score_mod.edad_dias(g)
+        recirculada = age is not None and age > score_mod.URGENCY_WINDOW_D
+        if recirculada and p > score_mod.RECIRCULADA_CAP:
+            p = score_mod.RECIRCULADA_CAP  # T3: sin urgencia no puede quedar en media/alta
         fichas.append({
             "id": g[0].get("id", ""),
             "title": g[0]["title"],
             "published": published,
             "score": p,
             "band": score_mod.band(p),
+            "edad_dias": round(age, 1) if age is not None else None,
+            "recirculada": recirculada,
             "components": comp,
             "rules_version": score_mod.RULES_VERSION,
             "tipo_afirmacion": tipo,
