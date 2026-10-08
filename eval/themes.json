@@ -1,0 +1,78 @@
+{
+  "set": "sintético, revisión del equipo",
+  "n_etiquetas": 30,
+  "clases": [
+    "economia",
+    "eventos_naturales",
+    "logistica",
+    "regulacion",
+    "relaciones_exteriores",
+    "servicios",
+    "turismo"
+  ],
+  "baseline_palabras_clave_macro_f1": 0.83,
+  "embeddings_macro_f1": 0.7,
+  "embeddings_disponibles": true,
+  "desacuerdos": [
+    {
+      "texto": "Sube el precio de la canasta básica en Panamá",
+      "humano": "economia",
+      "baseline": "economia",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "El PIB de Panamá crecerá 4% este año, proyecta el MEF",
+      "humano": "economia",
+      "baseline": "economia",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Nueva conexión aérea conecta Panamá con Colombia",
+      "humano": "turismo",
+      "baseline": "general",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Decreto regula el uso del agua en la cuenca del Canal",
+      "humano": "regulacion",
+      "baseline": "logistica",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Metro de Panamá amplía su horario de operación",
+      "humano": "servicios",
+      "baseline": "servicios",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Fallas eléctricas dejan sin luz a barrios de Arraiján",
+      "humano": "servicios",
+      "baseline": "general",
+      "embeddings": "eventos_naturales"
+    },
+    {
+      "texto": "Panamá llega a la Cumbre del MERCOSUR como el principal conector global de la región",
+      "humano": "relaciones_exteriores",
+      "baseline": "relaciones_exteriores",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Panamá y Costa Rica revisan acuerdos diplomáticos",
+      "humano": "relaciones_exteriores",
+      "baseline": "relaciones_exteriores",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Embajada de Panamá inaugura nueva sede en Asia",
+      "humano": "relaciones_exteriores",
+      "baseline": "relaciones_exteriores",
+      "embeddings": "logistica"
+    },
+    {
+      "texto": "Panamá asume presidencia de un foro internacional",
+      "humano": "relaciones_exteriores",
+      "baseline": "general",
+      "embeddings": "logistica"
+    }
+  ]
+}

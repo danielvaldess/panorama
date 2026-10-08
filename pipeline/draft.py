@@ -17,6 +17,8 @@ TEMA_FOCO = {
     "servicios": "servicios públicos y calidad de vida",
     "eventos_naturales": "seguridad y gestión de riesgo",
     "regulacion": "marco legal y control institucional",
+    "relaciones_exteriores": "posición internacional y comercio del país",
+    "sin_clasificar": "interés público (tema por confirmar)",
     "general": "interés público general",
 }
 

@@ -11,6 +11,7 @@ from rapidfuzz import fuzz
 from pipeline import score as score_mod
 from pipeline import claims
 from pipeline import origin
+from pipeline import theme as theme_mod
 
 # Confiabilidad por fuente (1-5).
 SOURCE_RELIABILITY = {
@@ -285,7 +286,9 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
         rel_i = rel[i] if i < len(rel) else 0.0
         tipo = claims.clasificar_afirmacion(g[0]["title"], official=bool(v["official"]),
                                             origen=g[0].get("source", ""))
-        comp, tema = score_mod.compute_components(g, rel_i, v, tipo)
+        tema_baseline = score_mod._dominant_topic(g)
+        tema, tema_conf, tema_cands = theme_mod.clasificar_tema(g[0]["title"])
+        comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema)
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
         published = max(pubs) if pubs else None
@@ -312,6 +315,9 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
             "state": v["state"],
             "status": v["state"],
             "tema": tema,
+            "tema_confianza": tema_conf,
+            "tema_candidatos": tema_cands,
+            "tema_baseline": tema_baseline,
             "verification": {
                 "state": v["state"], "reason": v["reason"], "official": v["official"],
                 "independent": v["independent"], "echo": v["echo"], "wire": v["wire"],

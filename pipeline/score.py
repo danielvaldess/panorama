@@ -62,13 +62,15 @@ def _dominant_topic(g: list[dict]) -> str:
     return max(set(temas), key=temas.count) if temas else "general"
 
 
-def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_verificable") -> tuple[dict, str]:
+def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_verificable",
+                       tema: str | None = None) -> tuple[dict, str]:
     """Devuelve (componentes 0–1, tema dominante).
 
     E (evidencia v2, continua): una fuente oficial sobre sí misma es **declaración**,
     no hecho verificado; sin corroboración independiente no basta para "suficiente".
     """
-    tema = _dominant_topic(g)
+    if tema is None:
+        tema = _dominant_topic(g)
     blob = " ".join((x.get("title", "") + " " + x.get("source", "")) for x in g).lower()
     panama = "panam" in blob
     topic_base = 0.85 if tema in CORE_THEMES else 0.40

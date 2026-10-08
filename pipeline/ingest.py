@@ -75,6 +75,8 @@ TEMAS = {
     "servicios": ["agua", "electricidad", "energía", "aseo", "metro", "transporte", "salud", "hospital", "educación"],
     "eventos_naturales": ["sismo", "terremoto", "inundación", "lluvia", "huracán", "volcán", "sequía"],
     "regulacion": ["regula", "decreto", "ley", "asamblea", "contrato", "licitación", "tribunal", "corte"],
+    "relaciones_exteriores": ["canciller", "relaciones exteriores", "diplom", "tratado", "mercosur",
+                              "comercio exterior", "cumbre", "onu", "embajad", "exterior"],
 }
 
 

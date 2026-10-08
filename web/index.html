@@ -244,7 +244,7 @@
     const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", reportes: "Calidad", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
     const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
-    const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", general: "General" };
+    const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores: "Relaciones exteriores / comercio", sin_clasificar: "Sin clasificar con certeza", general: "General" };
     const sugerido = f => f.band === "alto" ? "Revisar hoy" : f.band === "medio" ? "Esta semana" : "Seguimiento";
     function relDate(p) {
       if (!p) return "";
