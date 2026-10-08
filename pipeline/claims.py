@@ -37,6 +37,7 @@ ATRIBUCION = (
     "sostuvo", "señaló", "manifestó",
 )
 UNIDADES = ("%", "por ciento", "millones", "mil millones", "habitantes", "dólares", "dolares")
+PROYECCION = ("proyecta", "proyección", "proyeccion", "estima", "prevé", "preve", "pronostica")
 
 
 def clasificar_afirmacion(titulo: str, *, official: bool = False, origen: str = "") -> str:
@@ -49,6 +50,9 @@ def clasificar_afirmacion(titulo: str, *, official: bool = False, origen: str = 
             return "hecho_verificable"
         # Fuente oficial sobre su propia actuación: es declaración, no hecho verificado.
         return "declaracion_institucional"
+    if any(p in low for p in PROYECCION):
+        # Una proyección es lo que afirma un tercero; no es un hecho observado.
+        return "declaracion_tercero"
     if any(m in low for m in ATRIBUCION):
         return "declaracion_tercero"
     return "hecho_verificable"

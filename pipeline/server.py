@@ -123,7 +123,8 @@ def _enrich_ai(fichas: list[dict]) -> None:
         a = ai_mod.analyze(f["title"], f["sources"])
         f.update(summary=a["summary"], why=a["why"], topics=a["topics"],
                  relevance_ai=a["relevance"], method=a["method"], grounding=a["grounding"],
-                 ai_fallback=a.get("fallback", False), ai_message=a.get("message", ""))
+                 ai_fallback=a.get("fallback", False), ai_message=a.get("message", ""),
+                 ai_respaldo=a.get("respaldo", ""))
         bm25.append(f.get("relevance", 0))
         ai_rel.append(a["relevance"])
     n = len(bm25)

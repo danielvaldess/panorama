@@ -73,10 +73,33 @@ def validar_citas(afirmaciones: list[dict], sources: list[dict]) -> tuple[bool, 
 
 def _atribucion(tipo: str, fuente_txt: str) -> str:
     if tipo == "declaracion_institucional":
-        return f"Según {fuente_txt},"
+        return f"Según {fuente_txt}"
     if tipo == "declaracion_tercero":
         return f"{fuente_txt} informa que"
-    return f"Lo reporta {fuente_txt}."
+    return f"Lo reporta {fuente_txt}"
+
+
+FUENTE_PRIMARIA = {
+    "fmi": "FMI · World Economic Outlook",
+    "banco mundial": "Banco Mundial (datos abiertos)",
+    "onu": "Naciones Unidas",
+    "contraloría": "Contraloría General de la República",
+    "contraloria": "Contraloría General de la República",
+    "inec": "INEC",
+    "oms": "Organización Mundial de la Salud",
+}
+
+
+def _fuente_primaria(title: str) -> str | None:
+    low = (title or "").lower()
+    for k, v in FUENTE_PRIMARIA.items():
+        if k in low:
+            return v
+    return None
+
+
+PROYECCION_MARKERS = ("proyecta", "proyección", "proyeccion", "estima", "prevé", "preve",
+                      "pronostica", "espera que", "se espera")
 
 
 def build(ficha: dict) -> dict:
@@ -89,6 +112,8 @@ def build(ficha: dict) -> dict:
     fuente_txt = ", ".join(s.get("name", "") for s in sources) or "una fuente"
     enfoque = TEMA_FOCO.get(tema, TEMA_FOCO["general"])
     titulo_corto = _fit(title, 16)
+    proyeccion = any(m in title.lower() for m in PROYECCION_MARKERS)
+    fuente_primaria = _fuente_primaria(title)
 
     # Qué falta comprobar (coherente con el estado; invariante T1.4)
     pendientes: list[str] = []
@@ -103,23 +128,47 @@ def build(ficha: dict) -> dict:
             pendientes.append("un documento o dato oficial que respalde la afirmación")
         if not pendientes:
             pendientes.append("confirmar detalles y alcance antes de publicar")
+    if proyeccion:
+        pendientes.append("confirmar la proyección en su fuente primaria (no es un dato observado)")
+    if fuente_primaria:
+        pendientes.append(f"verificar en {fuente_primaria}")
 
     abstain = ficha.get("state") == "Sin verificar" or ev == "Insuficiente"
     accion = ("investigar antes de producir" if abstain
               else ("enviar a revisión editorial" if ev == "Parcial"
                     else "listo para borrador con revisión humana"))
 
-    # --- Texto al aire (sin meta-mensajes internos) ---
+    # --- Texto al aire (sin meta-mensajes internos; ~45–60 s) ---
     atrib = _atribucion(tipo, fuente_txt)
-    guion = (f"Al aire. {atrib} {titulo_corto}. "
-             f"El interés público de este tema: {enfoque}. "
-             f"Seguimos el desarrollo de esta información.")
     if tipo == "declaracion_institucional":
         guion = (f"Al aire. {fuente_txt} afirma: {titulo_corto}. "
-                 f"Por ahora es una declaración de la propia institución. "
-                 f"El interés público de este tema: {enfoque}.")
-    guion = _fit(guion, 130)
-    copy = _fit(f"{titulo_corto} — {atrib} {fuente_txt}.", 80)
+                 f"Por ahora es una declaración de la propia institución y así la presentamos. "
+                 f"El tema interesa por su {enfoque}. Estamos reuniendo los elementos disponibles y "
+                 f"contrastando las fuentes para ampliar este contenido. En los próximos minutos le "
+                 f"contaremos qué se confirma y qué queda por verificar. Seguimos de cerca esta "
+                 f"información; permanezca con nosotros.")
+    elif tipo == "declaracion_tercero":
+        guion = (f"Al aire. {fuente_txt} informa que {titulo_corto}. "
+                 f"Se trata de una declaración atribuida, no de un hecho confirmado. "
+                 f"El tema interesa por su {enfoque}. Estamos verificando los detalles y contrastando "
+                 f"las fuentes disponibles. Ampliaremos este contenido en los próximos minutos. "
+                 f"Permanezca con nosotros.")
+    else:
+        guion = (f"Al aire. {titulo_corto}. La información la reporta {fuente_txt}. "
+                 f"Se trata de un tema de {enfoque}. Estamos reuniendo los elementos disponibles y "
+                 f"contrastando lo que se sabe con lo que aún está por confirmar. En los próximos "
+                 f"minutos ampliaremos este contenido y le explicaremos el alcance. Seguimos de cerca "
+                 f"este tema y volveremos con más información. Permanezca con nosotros; continuamos "
+                 f"con la cobertura.")
+    guion = _fit(guion, 150)
+
+    if tipo == "declaracion_institucional":
+        copy = f"{fuente_txt} afirma: {titulo_corto}."
+    elif tipo == "declaracion_tercero":
+        copy = f"{fuente_txt} informa que {titulo_corto}."
+    else:
+        copy = f"{titulo_corto}. Lo reporta {fuente_txt}."
+    copy = _fit(copy, 80)
 
     # --- Notas internas (para el editor) ---
     notas = [DISCLAIMER, f"Estado de evidencia: {ev}.",
@@ -132,14 +181,14 @@ def build(ficha: dict) -> dict:
         notas.append("Trazabilidad de citas incompleta: " + "; ".join(fallos))
 
     preguntas = [
-        f"¿Qué datos, documentos o acuerdos concretos respaldan «{_fit(title, 12)}»?",
-        (f"¿Existe una fuente independiente de {fuente_txt} que confirme o matice lo afirmado?"
+        f"¿Qué datos o documentos concretos respaldan «{title}»?",
+        (f"¿Existe una fuente distinta de {fuente_txt} que confirme o matice lo afirmado?"
          if v.get("independent", 0) < 2 else
          f"¿Qué alcance tiene la información de {fuente_txt} y a quién afecta?"),
         "¿Qué otras fuentes o datos permitirían descartar la versión contraria?",
     ]
 
-    brief = (f"{title}. {atrib} {fuente_txt}. {notas[1]} "
+    brief = (f"{title}. {atrib}. {notas[1]} "
              f"El enfoque de interés público es {enfoque}; acción recomendada: {accion}. {DISCLAIMER}")
     brief = _fit(brief, 250)
 
@@ -156,6 +205,8 @@ def build(ficha: dict) -> dict:
         "copy_digital": copy,
         "notas_internas": notas,
         "verificaciones_pendientes": pendientes,
+        "proyeccion": proyeccion,
+        "fuente_primaria": fuente_primaria,
         "disclaimer": DISCLAIMER,
         "abstain": abstain,
         "accion_recomendada": accion,

@@ -51,7 +51,7 @@
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=43 guion=30 copy=13; citas por afirmación; tipos=['hecho_verificable']"
+    "observado": "brief=42 guion=73 copy=11; citas por afirmación; tipos=['hecho_verificable']"
   },
   {
     "id": "T10",
