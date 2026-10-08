@@ -10,6 +10,7 @@ from rapidfuzz import fuzz
 
 from pipeline import score as score_mod
 from pipeline import claims
+from pipeline import origin
 
 # Confiabilidad por fuente (1-5).
 SOURCE_RELIABILITY = {
@@ -170,12 +171,8 @@ def _reliability(x: dict) -> int:
 
 
 def _independent(g: list[dict]) -> int:
-    """Nº de orígenes textuales distintos dentro del grupo (colapsa eco/reescrituras)."""
-    origins: list[dict] = []
-    for x in g:
-        if not any(_sim(x["title"], o["title"]) >= ECHO_SIM for o in origins):
-            origins.append(x)
-    return max(1, len(origins))
+    """T2: nº de orígenes reales distintos (agencia/dominio) tras colapsar eco/reescrituras."""
+    return origin.collapse_origins(g)
 
 
 def _contradiction(g: list[dict]) -> bool:
@@ -267,6 +264,7 @@ def _verify(g: list[dict]) -> dict:
         "state": state, "confidence": conf, "reason": reason,
         "official": len(official), "independent": indep, "echo": echo, "wire": wires > 0,
         "contradict": contradict, "reliability_avg": reliability_avg, "trazabilidad": trazabilidad,
+        "origenes": sorted({origin.origen_real(x) for x in items})[:8],
     }
 
 
@@ -313,6 +311,7 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
                 "independent": v["independent"], "echo": v["echo"], "wire": v["wire"],
                 "contradict": v.get("contradict", False),
                 "reliability_avg": v.get("reliability_avg", 0.0),
+                "origenes": v.get("origenes", []),
             },
             "sources": [{"name": n, "url": x["url"]} for n, x in uniq.items()],
             "relevance": round(rel_i, 2),
