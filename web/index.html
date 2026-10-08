@@ -48,12 +48,14 @@
     .item:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(0,85,136,.08)}
     .filters{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 16px}
     .workbench{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
-    .toolbar{display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(3,minmax(140px,.7fr));gap:10px;align-items:end}
+    .toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;align-items:end}
+    .toolbar .search-tool{grid-column:1/-1}
     .tool label{display:block;font-family:var(--f-title);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.45px;color:var(--muted);margin-bottom:5px}
     .tool input,.tool select{width:100%;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-family:var(--f-ui);font-size:14px;padding:10px 11px}
     .tool input:focus,.tool select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(0,119,200,.12)}
     .quickbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
     .quickbar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+    .filter-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:12px}
     .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
     .pager .actions{margin:0}
     .pagebtn{border:1px solid var(--border);background:#fff;border-radius:7px;padding:8px 12px;font-family:var(--f-title);font-weight:700;color:var(--muted);cursor:pointer}
@@ -281,8 +283,8 @@
 
     const PAGE_SIZE = 50;
     let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", estadoFilter = "todos", semIds = null;
-    let page = 1, feedPage = 1, dateMode = "edicion", dateFrom = "", dateTo = "", aiLoading = false;
-    let NOVEDADES = [], lastNovShown = 0;
+    let page = 1, feedPage = 1, dateMode = "semana", priorityFilter = "todos", aiLoading = false;
+    let NOVEDADES = [], lastNovShown = null;
     function setBell(n) {
       const b = $("bell"), c = $("bellCount"); if (!b || !c) return;
       if (n > 0) { c.hidden = false; c.textContent = n; b.classList.add("on"); }
@@ -316,10 +318,9 @@
       const ed = editionDay();
       if (dateMode === "hoy") return { from: isoDay(new Date().toISOString()), to: isoDay(new Date().toISOString()), label: "Hoy" };
       if (dateMode === "ayer") { const y = shiftDay(isoDay(new Date().toISOString()), -1); return { from: y, to: y, label: "Ayer" }; }
-      if (dateMode === "semana") return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días de la edición" };
-      if (dateMode === "rango") return { from: dateFrom, to: dateTo, label: [dateFrom && displayDay(dateFrom), dateTo && displayDay(dateTo)].filter(Boolean).join(" → ") || "Rango específico" };
+      if (dateMode === "semana") return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
       if (dateMode === "todo") return { from: "", to: "", label: "Todo el archivo" };
-      return { from: ed, to: ed, label: ed ? "Día de edición: " + displayDay(ed) : "Día de edición" };
+      return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
     }
     function matchesDate(x) {
       const d = isoDay(x.published), r = dateRange();
@@ -349,35 +350,40 @@
     function filterWorkbench(target, total, shown) {
       const r = dateRange();
       const temas = Array.from(new Set((DATA?.fichas || []).map(f => f.tema || "general"))).sort();
-      const topicChips = target === "prioridades" ? `
-          <button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos los temas</button>
-          ${temas.map(t => `<button class="fchip ${temaFilter === t ? "on" : ""}" data-tema="${esc(t)}">${esc(TEMA_LABEL[t] || t)}</button>`).join("")}` : "";
+      const topicSelect = target === "prioridades" ? `<div class="tool"><label for="temaMode">Categoría</label><select id="temaMode">
+            <option value="todos" ${temaFilter === "todos" ? "selected" : ""}>Todas las categorías</option>
+            ${temas.map(t => `<option value="${esc(t)}" ${temaFilter === t ? "selected" : ""}>${esc(TEMA_LABEL[t] || t)}</option>`).join("")}
+          </select></div>` : "";
+      const prioritySelect = target === "prioridades" ? `<div class="tool"><label for="priorityMode">Prioridad</label><select id="priorityMode">
+            ${[["todos","Todas las prioridades"],["alto","Alta"],["medio","Media"],["bajo","Baja"]].map(([v,l]) => `<option value="${v}" ${priorityFilter === v ? "selected" : ""}>${l}</option>`).join("")}
+          </select></div>` : "";
       return `<div class="workbench">
         <div class="toolbar">
-          <div class="tool"><label for="qLocal">Buscar con IA + texto</label><input id="qLocal" value="${esc(query)}" placeholder="Ej. Canal, salud, presupuesto, seguridad..." /></div>
+          <div class="tool search-tool"><label for="qLocal">Buscar noticias, temas o fuentes</label><input id="qLocal" value="${esc(query)}" placeholder="Ej. Canal, salud, presupuesto, seguridad..." /></div>
           <div class="tool"><label for="dateMode">Fecha</label><select id="dateMode">
-            ${[["edicion","Día de edición"],["hoy","Hoy"],["ayer","Ayer"],["semana","Últimos 7 días"],["rango","Fecha específica / rango"],["todo","Todo el archivo"]].map(([v,l]) => `<option value="${v}" ${dateMode === v ? "selected" : ""}>${l}</option>`).join("")}
+            ${[["hoy","Hoy"],["ayer","Ayer"],["semana","Últimos 7 días"],["todo","Todo"]].map(([v,l]) => `<option value="${v}" ${dateMode === v ? "selected" : ""}>${l}</option>`).join("")}
           </select></div>
-          <div class="tool"><label for="dateFrom">Desde</label><input id="dateFrom" type="date" value="${esc(dateFrom)}" ${dateMode !== "rango" ? "disabled" : ""} /></div>
-          <div class="tool"><label for="dateTo">Hasta</label><input id="dateTo" type="date" value="${esc(dateTo)}" ${dateMode !== "rango" ? "disabled" : ""} /></div>
+          ${prioritySelect}
+          ${topicSelect}
         </div>
-        <div class="quickbar">
-          ${topicChips}
+        <div class="filter-summary">
           <span class="hint"><span class="datechip">${esc(r.label)}</span> · ${shown} de ${total} señales</span>
         </div>
       </div>`;
     }
     function bindWorkbench() {
-      const q = $("qLocal"), dm = $("dateMode"), df = $("dateFrom"), dt = $("dateTo");
+      const q = $("qLocal"), dm = $("dateMode"), pm = $("priorityMode"), tm = $("temaMode");
       if (q) q.oninput = (e) => { query = e.target.value; $("search").value = query; semIds = null; page = 1; feedPage = 1; queueSemanticSearch(); render(); };
       if (dm) dm.onchange = (e) => { dateMode = e.target.value; page = 1; feedPage = 1; render(); };
-      if (df) df.onchange = (e) => { dateFrom = e.target.value; page = 1; feedPage = 1; render(); };
-      if (dt) dt.onchange = (e) => { dateTo = e.target.value; page = 1; feedPage = 1; render(); };
-      $("content").querySelectorAll(".workbench [data-tema]").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; page = 1; feedPage = 1; render(); });
+      if (pm) pm.onchange = (e) => { priorityFilter = e.target.value; page = 1; render(); };
+      if (tm) tm.onchange = (e) => { temaFilter = e.target.value; page = 1; render(); };
     }
     function fichas() {
       const all = DATA?.fichas || [];
-      const dated = all.filter(matchesDate).filter(f => temaFilter === "todos" || (f.tema || "general") === temaFilter);
+      const dated = all
+        .filter(matchesDate)
+        .filter(f => temaFilter === "todos" || (f.tema || "general") === temaFilter)
+        .filter(f => priorityFilter === "todos" || f.band === priorityFilter);
       if (semIds && semIds.length) {
         const pos = new Map(semIds.map((id, i) => [id, i]));
         return dated.filter(f => pos.has(f.id)).sort((a, b) => pos.get(a.id) - pos.get(b.id));
@@ -450,7 +456,7 @@
         <div class="hero">
           <div>
             <div class="hello">${greet}${first ? ", " + esc(first) : ""}</div>
-            <div class="hero-sub">Tu mesa: ${base.length} señales leídas de las fuentes (${baseFresh.length} de los últimos 14 días de la edición), ${alto} de prioridad alta y ${pend} por comprobar.</div>
+            <div class="hero-sub">Vista actual: ${base.length} señales de ${esc(dateRange().label.toLowerCase())}, ${alto} de prioridad alta y ${pend} por comprobar.</div>
           </div>
         </div>
         <div class="stats">
@@ -461,7 +467,7 @@
         </div>
         ${filterWorkbench("prioridades", DATA.fichas.length, fs.length)}
         <div class="tabs">${tabs}</div>
-        <div class="resultnote"><span><b>${fs.length}</b> temas priorizados por relevancia, impacto, urgencia, novedad y evidencia.</span><span>Usa Siguiente para continuar sin perder el orden editorial.</span></div>
+        <div class="resultnote"><span><b>${fs.length}</b> temas priorizados por relevancia, impacto, urgencia, novedad y evidencia.</span><span>Filtros: fecha, prioridad y categoría.</span></div>
         ${list}
         ${pager(fs.length, page, "topics")}`;
       bindWorkbench();
@@ -847,9 +853,9 @@
         const live = DATA.live || {};
         NOVEDADES = live.novedades || [];
         setBell(NOVEDADES.length);
-        if (NOVEDADES.length > lastNovShown) {
+        if (lastNovShown !== null && NOVEDADES.length > lastNovShown) {
           const t = (NOVEDADES[0] && NOVEDADES[0].title) ? NOVEDADES[0].title.slice(0, 60) : "";
-          toast("🔔 " + NOVEDADES.length + " noticia(s) nueva(s)" + (t ? ": " + t : ""));
+          toast(NOVEDADES.length + " noticia(s) nueva(s) reales" + (t ? ": " + t : ""));
         }
         lastNovShown = NOVEDADES.length;
         $("updated").textContent = "actualizado hace instantes";
