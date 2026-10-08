@@ -36,6 +36,9 @@ JUSTIFICACION = {
 }
 
 LIMITE = "Dato anual histórico del Banco Mundial; no es una medición de hoy."
+PROYECCION = ("proyecta", "proyección", "proyeccion", "estima", "prevé", "preve", "pronostica", "se espera")
+COMPARABILIDAD = ("El titular reporta una proyección; el dato oficial es observado. "
+                  "No son comparables directamente.")
 
 _ind_cache = None
 _ev_cache = None
@@ -78,9 +81,11 @@ def _sin_contexto() -> dict:
 
 def build(ficha: dict) -> list[dict]:
     tema = ficha.get("tema", "general")
+    title = (ficha.get("title") or "").lower()
+    proyeccion = any(m in title for m in PROYECCION)
     out: list[dict] = []
 
-    for ind in TEMA_INDICADORES.get(tema, []):
+    for i, ind in enumerate(TEMA_INDICADORES.get(tema, [])):
         serie = _indicators().get(ind, {})
         if not serie:
             continue
@@ -96,6 +101,8 @@ def build(ficha: dict) -> list[dict]:
             "periodo": f"{anio} (anual)", "unidad": row["unidad"], "limite": LIMITE,
             "fuente_url": row.get("fuente_url", ""),
             "justificacion": JUSTIFICACION.get((tema, ind), "Relación temática con la serie."),
+            "principal": i == 0,
+            "comparabilidad": COMPARABILIDAD if proyeccion else "",
         })
 
     if tema == "eventos_naturales":

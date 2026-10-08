@@ -111,6 +111,9 @@
     .lead{font-size:15px}
     .assist{background:#f4f8fb;border:1px solid #d8e6f0;border-left:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;font-size:14px}
     .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;margin-bottom:4px}
+    .more{margin-top:8px}
+    .more summary{cursor:pointer;color:var(--primary);font-family:var(--f-title);font-weight:700;font-size:12.5px}
+    .more[open] summary{margin-bottom:6px}
     .ai-progress{background:#f7fbfd;border:1px solid #d8e6f0;border-radius:10px;padding:14px;margin-top:12px}
     .ai-progress .label{display:flex;justify-content:space-between;font-family:var(--f-title);font-weight:700;font-size:12.5px;color:var(--primary);margin-bottom:9px}
     .ai-progress .track{height:8px;background:#e3eef5;border-radius:20px;overflow:hidden;position:relative}
@@ -512,12 +515,20 @@
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
       const aiProgress = aiLoading ? `<div class="ai-progress" role="status" aria-live="polite"><div class="label"><span>Analizando…</span><span>revisando evidencia y redactando</span></div><div class="track"><span></span></div></div>` : "";
       const aiBox = f.summary ? `<div class="card block"><h3>Resumen asistido</h3><div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>` : `<div class="card block"><h3>Resumen asistido</h3><div class="c">Aún no generado. La IA puede redactar un resumen auxiliar con sustento; la decisión sigue siendo humana.</div>${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>`;
-      const ctx = (f.contexto || []).map(c => {
+      const ctxItems = (f.contexto || []).map(c => {
         const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
         const link = c.fuente_url ? ` · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a>` : "";
         const just = c.justificacion ? `<div class="c">Por qué es pertinente: ${esc(c.justificacion)}</div>` : "";
-        return `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div>${(meta || link) ? `<div class="c">${esc(meta)}${link}</div>` : ""}${just}${c.limite ? `<div class="c">${esc(c.limite)}</div>` : ""}</div>`;
-      }).join("") || "<div class='c'>Sin contexto oficial.</div>";
+        const comp = c.comparabilidad ? `<div class="c" style="color:var(--red)">${esc(c.comparabilidad)}</div>` : "";
+        return `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div>${(meta || link) ? `<div class="c">${esc(meta)}${link}</div>` : ""}${just}${comp}${c.limite ? `<div class="c">${esc(c.limite)}</div>` : ""}</div>`;
+      });
+      const ctxPrincipal = ctxItems.filter((_, i) => (f.contexto[i] || {}).principal !== false);
+      const ctxExtra = ctxItems.filter((_, i) => (f.contexto[i] || {}).principal === false);
+      const ctx = ctxItems.length
+        ? ctxPrincipal.join("") + (ctxExtra.length ? `<details class="more"><summary>Otros indicadores (${ctxExtra.length})</summary>${ctxExtra.join("")}</details>` : "")
+        : "<div class='c'>Sin contexto oficial.</div>";
+      const reviewed = (d.afirmaciones || []).map((_, idx) => CLAIM_VERDICTS[f.id + "#" + idx]).filter(Boolean);
+      const humanNote = reviewed.length ? `${reviewed.filter(x => x.veredicto === "válido").length}/${reviewed.length} validadas por humano` : "pendiente de revisión humana";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
       const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
       const reviewBtns = REVIEW.map(s => `<button class="btn ${(f.review_state || "nuevo") === s ? "btn-primary" : "btn-ghost"}" data-review="${esc(s)}">${esc(s)}</button>`).join("");
@@ -562,7 +573,7 @@
             </div>
             <div class="card block">
               <h3>Afirmaciones y evidencia</h3>
-              <div class="c" style="margin-bottom:8px">Cobertura de citas: <b>${Math.round((d.cobertura_citas || 0) * 100)}%</b> — cada afirmación enlaza su fuente, campo y evidencia.</div>
+              <div class="c" style="margin-bottom:8px">Verificación automática de citas: <b>${Math.round((d.cobertura_citas || 0) * 100)}%</b> · Revisión humana: <b>${esc(humanNote)}</b>.</div>
               ${claims}
             </div>
             ${aiBox}
@@ -579,7 +590,8 @@
               <h3>Evidencia</h3>
               <div class="metric"><span>Tipo de afirmación</span><b>${esc(f.tipo_afirmacion_label || f.tipo_afirmacion || "—")}</b></div>
               <div class="metric"><span>Fuentes oficiales</span><b>${v.official || 0}</b></div>
-              <div class="metric"><span>Corroboración independiente</span><b>${v.independent || 0}</b></div>
+              <div class="metric"><span>Orígenes independientes</span><b>${v.independent || 0}${(v.independent || 0) <= 1 ? " (el propio)" : ""}</b></div>
+              <div class="metric"><span>Corroboraciones adicionales</span><b>${Math.max(0, (v.independent || 1) - 1)}</b></div>
               <div class="metric"><span>Repeticiones entre medios</span><b>${v.echo || 0}</b></div>
               <div class="metric"><span>Estado</span><b>${esc(f.evidence_state || "")}</b></div>
               <div class="c" style="margin-top:8px;color:var(--soft);font-size:12.5px">${esc(f.evidence_reason || v.reason || "")}</div>
