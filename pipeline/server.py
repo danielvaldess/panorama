@@ -67,7 +67,11 @@ def _build_fast() -> dict:
     raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
     editorial = process.filter_editorial(raw)
     groups, grouping_method = _cluster(editorial)
-    fichas = process.priority(groups, USER_TOPICS)[:MAX_FICHAS]
+    # La frescura se mide contra la fecha de la edición (lo más nuevo del snapshot),
+    # no contra el reloj: el paquete es un archivo congelado.
+    pubs = [x["published"] for x in editorial if x.get("published")]
+    edicion = max(pubs) if pubs else None
+    fichas = process.priority(groups, USER_TOPICS, ref=edicion)[:MAX_FICHAS]
     for f in fichas:  # contexto oficial + paquete editorial + estado de revisión
         f["contexto"] = context.build(f)
         f["draft"] = draft.build(f)
@@ -78,6 +82,7 @@ def _build_fast() -> dict:
             for x in feed_items[:120]]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "edicion": edicion,
         "counts": {"fetched": len(raw), "after_dedupe": len(deduped), "editorial_signals": len(editorial),
                    "fichas": len(fichas), "official_items": sum(1 for x in raw if x.get("official"))},
         "fichas": fichas,

@@ -29,8 +29,23 @@ def _clamp(x: float, lo: float = 0.0, hi: float = 1.0) -> float:
     return max(lo, min(hi, x))
 
 
-def edad_dias(g: list[dict]) -> float | None:
-    """Antigüedad en días desde la publicación más reciente del grupo (None si no hay fecha)."""
+def _ref_dt(ref) -> datetime:
+    """Fecha de referencia de la edición (por defecto, ahora)."""
+    if ref is None:
+        return datetime.now(timezone.utc)
+    if isinstance(ref, str):
+        dt = datetime.fromisoformat(ref)
+    else:
+        dt = ref
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def edad_dias(g: list[dict], ref=None) -> float | None:
+    """Antigüedad en días desde la publicación más reciente del grupo (None si no hay fecha).
+
+    `ref` permite medir contra la **fecha de la edición** del snapshot (fecha más
+    reciente del dataset) en lugar del reloj, para un paquete congelado.
+    """
     best = None
     for x in g:
         p = x.get("published")
@@ -46,12 +61,12 @@ def edad_dias(g: list[dict]) -> float | None:
             continue
     if best is None:
         return None
-    return (datetime.now(timezone.utc) - best).total_seconds() / 86400
+    return (_ref_dt(ref) - best).total_seconds() / 86400
 
 
-def _recency(g: list[dict]) -> float:
+def _recency(g: list[dict], ref=None) -> float:
     """Urgencia 0–1 con decaimiento exponencial (T3): U = exp(-edad/τ), 0 si edad > ventana."""
-    age = edad_dias(g)
+    age = edad_dias(g, ref)
     if age is None or age > URGENCY_WINDOW_D:
         return 0.0
     return _clamp(math.exp(-age / TAU_D))
@@ -63,7 +78,7 @@ def _dominant_topic(g: list[dict]) -> str:
 
 
 def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_verificable",
-                       tema: str | None = None) -> tuple[dict, str]:
+                       tema: str | None = None, ref=None) -> tuple[dict, str]:
     """Devuelve (componentes 0–1, tema dominante).
 
     E (evidencia v2, continua): una fuente oficial sobre sí misma es **declaración**,
@@ -81,7 +96,7 @@ def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_
     indep_score = _clamp((indep - 1) / 2.0) if indep > 1 else 0.0  # 2→0.5, 3→1.0
     I = _clamp(0.40 * topic_base + 0.35 * indep_score + 0.25 * (1.0 if v.get("official") else 0.30))
 
-    rec = _recency(g)
+    rec = _recency(g, ref)
     U = rec
     N = _clamp(0.6 * rec + 0.4 * (1.0 / (1.0 + v.get("echo", 0))))
 

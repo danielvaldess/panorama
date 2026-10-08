@@ -4,8 +4,13 @@ from __future__ import annotations
 from pipeline import ai
 
 
+def _sin_claves(monkeypatch):
+    monkeypatch.setattr(ai, "_zen_key", lambda: "")
+    monkeypatch.setattr(ai, "_or_key", lambda: "")
+
+
 def test_fallback_visible_sin_ia(monkeypatch):
-    monkeypatch.setattr(ai, "_key", lambda: "")   # fuerza el camino sin LLM
+    _sin_claves(monkeypatch)
     ai._CACHE.clear()
     r = ai.analyze("El Canal de Panamá amplía sus cupos de tránsito", [{"name": "TVN", "url": "https://x"}])
     assert r["method"] == "local"
@@ -15,7 +20,7 @@ def test_fallback_visible_sin_ia(monkeypatch):
 
 
 def test_cache_devuelve_la_misma_salida(monkeypatch):
-    monkeypatch.setattr(ai, "_key", lambda: "")
+    _sin_claves(monkeypatch)
     ai._CACHE.clear()
     titulo = "Nota de prueba en caché sobre el Canal"
     a = ai.analyze(titulo, [{"name": "TVN", "url": "https://x"}])
