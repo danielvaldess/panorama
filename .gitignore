@@ -34,3 +34,8 @@ tmp/
 data/panorama.json
 data/raw/_gdelt_cache/
 .fastembed_cache/
+
+# ===== SQLite operativo (reconstruible desde el snapshot) =====
+data/*.db
+data/*.db-wal
+data/*.db-shm
