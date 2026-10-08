@@ -250,7 +250,7 @@
     const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
     const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", reportes: "Calidad", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
-    const REVIEW = ["en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
+    const REVIEW = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
     const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores: "Relaciones exteriores / comercio", sin_clasificar: "Sin clasificar con certeza", general: "General" };
     const sugerido = f => f.band === "alto" ? "Revisar hoy" : f.band === "medio" ? "Esta semana" : "Seguimiento";
@@ -389,17 +389,13 @@
         const val = c[k] ?? 0;
         return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${Math.round(val * 100)}%</div></div>`;
       }).join("");
-      const claims = (d.afirmaciones || []).map((a, i) => {
-        const v = CLAIM_VERDICTS[f.id + "#" + i];
-        const chipV = v ? `<span class="chip ${v.veredicto === "válido" ? "ok" : v.veredicto === "parcial" ? "m" : "a"}">${esc(v.veredicto)}</span>` : "";
-        const btns = ["válido", "parcial", "inválido"].map(x =>
-          `<button class="btn btn-ghost${v && v.veredicto === x ? " on" : ""}" data-claim="${i}" data-verdict="${esc(x)}">${esc(x)}</button>`).join("");
-        return `<div class="claim"><div class="t">${esc(a.tipo)}</div><div>${esc(a.texto)}</div>
-          <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${a.campo ? ` · campo: ${esc(a.campo)}` : ""}${a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : ""} ${chipV}</div>
-          <div class="actions">${btns}</div></div>`;
+      const claims = (d.afirmaciones || []).map(a => {
+        const campo = a.campo ? ` · campo: ${esc(a.campo)}` : "";
+        const ev = a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : "";
+        return `<div class="claim"><div class="t">${esc(a.tipo_label || a.tipo)}</div><div>${esc(a.texto)}</div>
+          <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${campo}${ev}</div></div>`;
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
-      const aiBox = `<div class="card block"><h3>Resumen asistido</h3>${f.summary ? `<div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}` : `<div class="c">Aún no generado. Genera una versión determinística desde el titular.</div>`}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
-      const prog = sustentoProgreso();
+      const aiBox = f.summary ? `<div class="card block"><h3>Resumen asistido</h3><div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>` : `<div class="card block"><h3>Resumen asistido</h3><div class="c">Aún no generado.</div><div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
       const ctx = (f.contexto || []).map(c => {
         const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
         const link = c.fuente_url ? ` · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a>` : "";
@@ -408,7 +404,7 @@
       }).join("") || "<div class='c'>Sin contexto oficial.</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
       const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
-      const reviewBtns = REVIEW.map(s => `<button class="btn btn-ghost" data-review="${esc(s)}">${esc(s)}</button>`).join("");
+      const reviewBtns = REVIEW.map(s => `<button class="btn ${(f.review_state || "nuevo") === s ? "btn-primary" : "btn-ghost"}" data-review="${esc(s)}">${esc(s)}</button>`).join("");
 
       $("content").innerHTML = `
         <div class="crumbs"><a id="back">← Volver a la mesa</a></div>
@@ -439,8 +435,8 @@
               ${(d.notas_internas || []).length ? `<div class="draftfield"><b>Notas internas (no van al aire)</b><ul class="sources">${d.notas_internas.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : ""}
             </div>
             <div class="card block">
-              <h3>Afirmaciones y citas</h3>
-              <div class="draftfield"><b>Afirmaciones</b><div class="c" style="margin-bottom:8px">${prog.total === 0 ? "Pendiente de revisión humana (0 afirmaciones revisadas)." : `Validación: <b>${prog.validos}/${prog.total} válidas (${prog.pct}%)</b> · ${prog.fichas} fichas`} — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
+              <h3>Afirmaciones y evidencia</h3>
+              <div class="c" style="margin-bottom:8px">Cobertura de citas: <b>${Math.round((d.cobertura_citas || 0) * 100)}%</b> — cada afirmación enlaza su fuente, campo y evidencia.</div>
               ${claims}
             </div>
             ${aiBox}
@@ -477,7 +473,8 @@
             <div class="card block">
               <h3>Decisión del editor</h3>
               <div class="actions">${reviewBtns}</div>
-              <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">${esc(d.disclaimer || "")}${d.abstain ? " · <b>No hay evidencia suficiente: se recomienda no publicar.</b>" : ""}</div>
+              <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">Estado actual: <b>${esc(f.review_state || "nuevo")}</b>${f.reviewer ? " · " + esc(f.reviewer) : ""}. Aprobar un borrador no significa publicar.</div>
+              <div class="c" style="margin-top:6px;color:var(--soft);font-size:12px">${esc(d.disclaimer || "")}${d.abstain ? " · <b>No hay evidencia suficiente: se recomienda no publicar.</b>" : ""}</div>
             </div>
           </div>
         </div>`;

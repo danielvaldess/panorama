@@ -83,7 +83,10 @@ def _build_fast() -> dict:
     for f in fichas:  # contexto oficial + paquete editorial + estado de revisión
         f["contexto"] = context.build(f)
         f["draft"] = draft.build(f)
-        f["review_state"] = _review.get(f.get("id"), {}).get("state", "nuevo")
+        rev = _review.get(f.get("id"), {})
+        f["review_state"] = rev.get("state", "nuevo")
+        f["reviewer"] = rev.get("reviewer")
+        f["review_ts"] = rev.get("ts")
     deduped = process.dedupe(raw)  # métrica de entrada completa
     feed_items = process.dedupe(editorial)
     feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
