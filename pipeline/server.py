@@ -44,7 +44,7 @@ _cache: dict = {"fichas": [], "generated_at": None}
 # --- Tiempo real: poller de fuentes en vivo + novedades ---
 LIVE_POLL_SECONDS = int(os.environ.get("LIVE_POLL_SECONDS", "180"))
 MAX_LIVE = int(os.environ.get("MAX_LIVE", "200"))
-_live: dict = {"items": [], "seen": set(), "novedades": [], "last_poll": None, "ok": None}
+_live: dict = {"items": [], "raw_items": [], "seen": set(), "novedades": [], "last_poll": None, "ok": None}
 
 
 def _published_day(value: str | None) -> str | None:
@@ -81,7 +81,7 @@ def _persist_operational_state(fichas: list[dict]) -> None:
 def _merge_live_news(data: dict) -> dict:
     """Mantiene Publicaciones al día aunque el cache principal venga del snapshot."""
     with _lock:
-        live_items = list(_live.get("items") or [])
+        live_items = list(_live.get("raw_items") or []) + list(_live.get("items") or [])
     if not live_items:
         return data
     out = dict(data)
@@ -224,12 +224,16 @@ def refresh() -> dict:
 def _poll_live() -> None:
     """Trae noticias nuevas de las fuentes en vivo, las clasifica y registra novedades."""
     try:
-        items = sources.fetch_all(gdelt_query="Panamá")
+        feed_items: list[dict] = []
+        for name, url in sources.FEEDS:
+            feed_items += sources.fetch_feed(name, url)
+        items = feed_items + sources.fetch_gdelt("Panamá", maxrecords=100)
     except Exception:
         with _lock:
             _live["ok"] = False
         return
     editorial = process.filter_editorial(items)
+    editorial_recent = sources._recent(editorial)
     # Persistir noticias nuevas + clasificación en una transacción (dedup por URL).
     conn = db.connection()
     if conn is not None:
@@ -239,7 +243,16 @@ def _poll_live() -> None:
             pass
     nuevos: list[dict] = []
     with _lock:
-        for x in editorial:
+        raw_seen: set[str] = set()
+        raw_items: list[dict] = []
+        for x in items:
+            key = (x.get("url") or "").split("?")[0]
+            if not key or key in raw_seen:
+                continue
+            raw_seen.add(key)
+            raw_items.append(x)
+        _live["raw_items"] = raw_items[:MAX_LIVE]
+        for x in editorial_recent:
             key = (x.get("url") or "").split("?")[0]
             if not key or key in _live["seen"]:
                 continue
@@ -369,7 +382,7 @@ async def fichas():
 async def force_refresh(x_panorama_token: str | None = Header(default=None)):
     if not _authorized(x_panorama_token):
         return JSONResponse({"ok": False, "error": "no autorizado"}, status_code=401)
-    return JSONResponse(refresh())
+    return JSONResponse(_merge_live_news(refresh()))
 
 
 @app.post("/api/seen")
