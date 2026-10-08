@@ -33,7 +33,6 @@ _claim_verdicts: dict[str, dict] = {}
 
 USER_TOPICS = ["Panamá", "economía", "presupuesto", "Canal", "seguridad", "salud", "Asamblea"]
 REFRESH_SECONDS = int(os.environ.get("REFRESH_SECONDS", "900"))
-MAX_FICHAS = int(os.environ.get("MAX_FICHAS", "40"))
 AI_TOP_N = int(os.environ.get("AI_TOP_N", "6"))
 ADMIN_TOKEN = os.environ.get("PANORAMA_ADMIN_TOKEN", "")
 
@@ -79,7 +78,7 @@ def _build_fast() -> dict:
     # no contra el reloj: el paquete es un archivo congelado.
     pubs = [x["published"] for x in editorial if x.get("published")]
     edicion = max(pubs) if pubs else None
-    fichas = process.priority(groups, USER_TOPICS, ref=edicion)[:MAX_FICHAS]
+    fichas = process.priority(groups, USER_TOPICS, ref=edicion)
     for f in fichas:  # contexto oficial + paquete editorial + estado de revisión
         f["contexto"] = context.build(f)
         f["draft"] = draft.build(f)
@@ -89,8 +88,9 @@ def _build_fast() -> dict:
         f["review_ts"] = rev.get("ts")
     deduped = process.dedupe(raw)  # métrica de entrada completa
     feed_items = process.dedupe(editorial)
-    feed = [{"title": x["title"], "url": x["url"], "source": x["source"], "published": x.get("published")}
-            for x in feed_items[:120]]
+    feed = [{"id": x.get("id"), "title": x["title"], "url": x["url"], "source": x["source"],
+             "published": x.get("published"), "tema": x.get("tema"), "origin": x.get("origin")}
+            for x in feed_items]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "edicion": edicion,

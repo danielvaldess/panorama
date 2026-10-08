@@ -47,6 +47,21 @@
     .item{display:grid;grid-template-columns:44px 1fr auto;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin-bottom:11px;cursor:pointer;transition:border-color .15s, box-shadow .15s}
     .item:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(0,85,136,.08)}
     .filters{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 16px}
+    .workbench{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+    .toolbar{display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(3,minmax(140px,.7fr));gap:10px;align-items:end}
+    .tool label{display:block;font-family:var(--f-title);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.45px;color:var(--muted);margin-bottom:5px}
+    .tool input,.tool select{width:100%;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-family:var(--f-ui);font-size:14px;padding:10px 11px}
+    .tool input:focus,.tool select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(0,119,200,.12)}
+    .quickbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+    .quickbar .hint{color:var(--muted);font-size:12px;margin-left:auto}
+    .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+    .pager .actions{margin:0}
+    .pagebtn{border:1px solid var(--border);background:#fff;border-radius:7px;padding:8px 12px;font-family:var(--f-title);font-weight:700;color:var(--muted);cursor:pointer}
+    .pagebtn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+    .pagebtn:disabled{opacity:.45;cursor:not-allowed}
+    .resultnote{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;color:var(--muted);font-size:13px;flex-wrap:wrap}
+    .resultnote b{font-family:var(--f-title);color:var(--text)}
+    .datechip{font-family:var(--f-title);font-weight:700;color:var(--primary);background:#eef4f9;border-radius:20px;padding:4px 10px;font-size:12px}
     .fchip{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:6px 14px;font-family:var(--f-title);font-weight:700;font-size:12.5px;cursor:pointer}
     .fchip:hover{border-color:var(--blue);color:var(--primary)}
     .fchip.on{background:var(--primary);border-color:var(--primary);color:#fff}
@@ -81,7 +96,8 @@
     .crumbs{margin-bottom:14px}
     .crumbs a{font-family:var(--f-title);font-weight:700;font-size:13px;text-decoration:none;color:var(--muted)}
     .crumbs a:hover{color:var(--primary)}
-    .detail-head{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px}
+    .detail-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .detail-head{background:linear-gradient(135deg,#fff,#f3f8fc);border:1px solid #d5e5ef;border-radius:10px;padding:22px 24px;margin-bottom:16px;box-shadow:0 10px 28px rgba(0,85,136,.08)}
     .detail-head h1{font-family:var(--f-title);font-weight:800;font-size:25px;line-height:1.25;margin:2px 0 10px}
     .detail-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
     .stack>*{margin-bottom:16px}
@@ -90,6 +106,11 @@
     .lead{font-size:15px}
     .assist{background:#f4f8fb;border:1px solid #d8e6f0;border-left:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;font-size:14px}
     .assist small{display:block;color:var(--soft);font-size:11px;text-transform:uppercase;margin-bottom:4px}
+    .ai-progress{background:#fff;border:1px solid #cfe2ee;border-radius:10px;padding:14px;margin-top:12px;overflow:hidden}
+    .ai-progress .label{display:flex;justify-content:space-between;font-family:var(--f-title);font-weight:700;font-size:12px;color:var(--primary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+    .ai-progress .track{height:10px;background:#e8f1f7;border-radius:20px;overflow:hidden;position:relative}
+    .ai-progress .track span{display:block;height:100%;width:35%;border-radius:20px;background:linear-gradient(90deg,var(--primary),var(--cyan),var(--red));animation:loadbar 1.2s ease-in-out infinite}
+    @keyframes loadbar{0%{transform:translateX(-100%)}50%{transform:translateX(90%)}100%{transform:translateX(260%)}}
     .draftfield{margin-top:12px}
     .draftfield b{font-family:var(--f-title);font-size:13px;color:var(--text)}
     .draftfield .val{margin-top:3px;color:#333}
@@ -122,10 +143,12 @@
     .comp .track span{display:block;height:100%;background:var(--blue)}
     .comp .num{width:34px;text-align:right;font-family:var(--f-title);font-weight:700;font-size:12.5px}
     .empty{color:var(--soft);padding:34px;text-align:center}
+    .empty strong{display:block;color:var(--text);font-family:var(--f-title);font-size:18px;margin-bottom:4px}
     .foot{padding:14px 26px;color:var(--soft);font-size:12px}
     .toast{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:13px 18px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(20px);transition:all .3s;z-index:60;font-size:13.5px}
     .toast.show{opacity:1;transform:none}
-    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.repgrid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;display:flex;flex-wrap:wrap}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.repgrid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.search{width:220px}}
+    @media(max-width:640px){.topbar{height:auto;align-items:flex-start;flex-wrap:wrap;padding:12px}.topbar .spacer{display:none}.search{width:100%}.main{padding:18px 14px 48px}.toolbar{grid-template-columns:1fr}.item{grid-template-columns:36px 1fr}.score,.item .go{display:none}.stats{grid-template-columns:1fr}.quickbar .hint{margin-left:0}.detail-nav{align-items:stretch}.detail-nav .actions{width:100%}.detail-nav .btn{flex:1}}
 
     /* Accesibilidad (WCAG 2.1 AA) */
     .skip{position:absolute;left:-999px;top:0;background:#fff;color:var(--primary);padding:10px 14px;z-index:100;border-radius:0 0 6px 0;font-family:var(--f-title);font-weight:700}
@@ -203,7 +226,7 @@
         PANORAMA <small>Mesa editorial · TVN Media</small>
       </div>
       <div class="spacer"></div>
-      <input class="search" id="search" placeholder="Buscar temas…" aria-label="Buscar temas" />
+      <input class="search" id="search" placeholder="Buscar noticias, temas o fuentes…" aria-label="Buscar noticias, temas o fuentes" />
       <button class="bell" id="bell" type="button" aria-label="Novedades" title="Novedades">
         <span aria-hidden="true">🔔</span><span class="bellcount" id="bellCount" hidden>0</span>
       </button>
@@ -251,6 +274,7 @@
     const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
     const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", reportes: "Calidad", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
     const REVIEW = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
+    const VEREDICTOS = ["válido", "parcial", "inválido"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
     const TEMA_LABEL = { economia: "Economía", logistica: "Logística", turismo: "Turismo", servicios: "Servicios", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores: "Relaciones exteriores / comercio", sin_clasificar: "Sin clasificar con certeza", general: "General" };
     const sugerido = f => f.band === "alto" ? "Revisar hoy" : f.band === "medio" ? "Esta semana" : "Seguimiento";
@@ -272,7 +296,9 @@
 
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: PANAMA_TZ });
 
+    const PAGE_SIZE = 50;
     let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", estadoFilter = "todos", semIds = null;
+    let page = 1, feedPage = 1, dateMode = "edicion", dateFrom = "", dateTo = "", aiLoading = false;
     let NOVEDADES = [], lastNovShown = 0;
     function setBell(n) {
       const b = $("bell"), c = $("bellCount"); if (!b || !c) return;
@@ -289,14 +315,91 @@
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
     const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
+    const isoDay = (p) => {
+      if (!p) return "";
+      const d = new Date(p);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleDateString("en-CA", { timeZone: PANAMA_TZ });
+    };
+    const displayDay = (day) => day ? new Date(day + "T12:00:00").toLocaleDateString("es-PA", { day: "2-digit", month: "short", year: "numeric" }) : "sin fecha";
+    const allPublishedDays = (items) => Array.from(new Set((items || []).map(x => isoDay(x.published)).filter(Boolean))).sort().reverse();
+    const editionDay = () => isoDay(DATA?.edicion) || allPublishedDays(DATA?.feed)[0] || "";
+    const shiftDay = (day, delta) => {
+      if (!day) return "";
+      const d = new Date(day + "T12:00:00"); d.setDate(d.getDate() + delta);
+      return d.toLocaleDateString("en-CA", { timeZone: PANAMA_TZ });
+    };
+    function dateRange() {
+      const ed = editionDay();
+      if (dateMode === "hoy") return { from: isoDay(new Date().toISOString()), to: isoDay(new Date().toISOString()), label: "Hoy" };
+      if (dateMode === "ayer") { const y = shiftDay(isoDay(new Date().toISOString()), -1); return { from: y, to: y, label: "Ayer" }; }
+      if (dateMode === "semana") return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días de la edición" };
+      if (dateMode === "rango") return { from: dateFrom, to: dateTo, label: [dateFrom && displayDay(dateFrom), dateTo && displayDay(dateTo)].filter(Boolean).join(" → ") || "Rango específico" };
+      if (dateMode === "todo") return { from: "", to: "", label: "Todo el archivo" };
+      return { from: ed, to: ed, label: ed ? "Día de edición: " + displayDay(ed) : "Día de edición" };
+    }
+    function matchesDate(x) {
+      const d = isoDay(x.published), r = dateRange();
+      if (!d) return !r.from && !r.to;
+      return (!r.from || d >= r.from) && (!r.to || d <= r.to);
+    }
+    const textMatches = (x) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return [x.title, x.source, x.tema, x.state, x.evidence_state, (x.sources || []).map(s => s.name).join(" ")].join(" ").toLowerCase().includes(q);
+    };
+    const paginate = (arr, n) => arr.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
+    const pager = (total, current, prefix) => {
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      const start = total ? (current - 1) * PAGE_SIZE + 1 : 0;
+      const end = Math.min(total, current * PAGE_SIZE);
+      return `<div class="pager"><span>Mostrando <b>${start}-${end}</b> de <b>${total}</b> resultados · ${PAGE_SIZE} por página</span><div class="actions"><button class="pagebtn" data-page="${prefix}:prev" ${current <= 1 ? "disabled" : ""}>Anterior</button><button class="pagebtn" data-page="${prefix}:next" ${current >= pages ? "disabled" : ""}>Siguiente</button></div></div>`;
+    };
+    const bindPager = (prefix, total) => {
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      $("content").querySelectorAll(`[data-page^="${prefix}:"]`).forEach(b => b.onclick = () => {
+        if (prefix === "feed") feedPage = Math.max(1, Math.min(feedPage + (b.dataset.page.endsWith("next") ? 1 : -1), pages));
+        else page = Math.max(1, Math.min(page + (b.dataset.page.endsWith("next") ? 1 : -1), pages));
+        render();
+      });
+    };
+    function filterWorkbench(target, total, shown) {
+      const r = dateRange();
+      const temas = Array.from(new Set((DATA?.fichas || []).map(f => f.tema || "general"))).sort();
+      const topicChips = target === "prioridades" ? `
+          <button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos los temas</button>
+          ${temas.map(t => `<button class="fchip ${temaFilter === t ? "on" : ""}" data-tema="${esc(t)}">${esc(TEMA_LABEL[t] || t)}</button>`).join("")}` : "";
+      return `<div class="workbench">
+        <div class="toolbar">
+          <div class="tool"><label for="qLocal">Buscar con IA + texto</label><input id="qLocal" value="${esc(query)}" placeholder="Ej. Canal, salud, presupuesto, seguridad..." /></div>
+          <div class="tool"><label for="dateMode">Fecha</label><select id="dateMode">
+            ${[["edicion","Día de edición"],["hoy","Hoy"],["ayer","Ayer"],["semana","Últimos 7 días"],["rango","Fecha específica / rango"],["todo","Todo el archivo"]].map(([v,l]) => `<option value="${v}" ${dateMode === v ? "selected" : ""}>${l}</option>`).join("")}
+          </select></div>
+          <div class="tool"><label for="dateFrom">Desde</label><input id="dateFrom" type="date" value="${esc(dateFrom)}" ${dateMode !== "rango" ? "disabled" : ""} /></div>
+          <div class="tool"><label for="dateTo">Hasta</label><input id="dateTo" type="date" value="${esc(dateTo)}" ${dateMode !== "rango" ? "disabled" : ""} /></div>
+        </div>
+        <div class="quickbar">
+          ${topicChips}
+          <span class="hint"><span class="datechip">${esc(r.label)}</span> · ${shown} de ${total} señales</span>
+        </div>
+      </div>`;
+    }
+    function bindWorkbench() {
+      const q = $("qLocal"), dm = $("dateMode"), df = $("dateFrom"), dt = $("dateTo");
+      if (q) q.oninput = (e) => { query = e.target.value; $("search").value = query; semIds = null; page = 1; feedPage = 1; queueSemanticSearch(); render(); };
+      if (dm) dm.onchange = (e) => { dateMode = e.target.value; page = 1; feedPage = 1; render(); };
+      if (df) df.onchange = (e) => { dateFrom = e.target.value; page = 1; feedPage = 1; render(); };
+      if (dt) dt.onchange = (e) => { dateTo = e.target.value; page = 1; feedPage = 1; render(); };
+      $("content").querySelectorAll(".workbench [data-tema]").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; page = 1; feedPage = 1; render(); });
+    }
     function fichas() {
       const all = DATA?.fichas || [];
+      const dated = all.filter(matchesDate).filter(f => temaFilter === "todos" || (f.tema || "general") === temaFilter);
       if (semIds && semIds.length) {
         const pos = new Map(semIds.map((id, i) => [id, i]));
-        return all.filter(f => pos.has(f.id)).sort((a, b) => pos.get(a.id) - pos.get(b.id));
+        return dated.filter(f => pos.has(f.id)).sort((a, b) => pos.get(a.id) - pos.get(b.id));
       }
-      const q = query.toLowerCase();
-      return all.filter(f => !q || (f.title + " " + (f.sources || []).map(s => s.name).join(" ") + " " + (f.tema || "")).toLowerCase().includes(q));
+      return dated.filter(textMatches);
     }
 
     function render() {
@@ -328,17 +431,13 @@
         return arr;
       };
       const baseEstado = byEstado(base, estadoFilter);
-      const temas = Array.from(new Set(baseEstado.map(f => f.tema || "general")));
-      const fs = temaFilter === "todos" ? baseEstado : baseEstado.filter(f => (f.tema || "general") === temaFilter);
+      const fs = baseEstado;
+      const pageItems = paginate(fs, page);
       const tabs = TABS.map(([k, lbl]) => `<button class="tab ${estadoFilter === k ? "on" : ""}" data-estado="${k}">${lbl} <span class="n">${byEstado(base, k).length}</span></button>`).join("");
-      const chips = [`<button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos · ${baseEstado.length}</button>`]
-        .concat(temas.map(t => {
-          const n = baseEstado.filter(f => (f.tema || "general") === t).length;
-          return `<button class="fchip ${temaFilter === t ? "on" : ""}" data-tema="${esc(t)}">${esc(TEMA_LABEL[t] || t)} · ${n}</button>`;
-        })).join("");
-      const list = fs.length ? fs.map((f, i) => {
+      const list = pageItems.length ? pageItems.map((f, i) => {
+        const rank = (page - 1) * PAGE_SIZE + i + 1;
         return `<article class="item" data-id="${esc(f.id)}">
-          <div class="rank">${i + 1}</div>
+          <div class="rank">${rank}</div>
           <div>
             <div class="kicker">${esc(TEMA_LABEL[f.tema] || f.tema || "General")} · <b style="color:var(--text)">${esc(sugerido(f))}</b></div>
             <div class="title">${esc(f.title)}</div>
@@ -352,7 +451,7 @@
           </div>
           <div class="go">›</div>
         </article>`;
-      }).join("") : `<div class="empty">No hay temas en esta vista.</div>`;
+      }).join("") : `<div class="empty"><strong>No hay señales con esos filtros.</strong>Cambia la fecha, el tema o la búsqueda para ampliar la mesa.</div>`;
       const baseFresh = base.filter(f => !f.recirculada);
       const alto = base.filter(f => f.band === "alto").length;
       const suf = base.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
@@ -373,29 +472,41 @@
           <div class="stat"><div class="v">${suf}</div><div class="l">Evidencia suficiente</div></div>
           <div class="stat"><div class="v">${pend}</div><div class="l">Por comprobar</div></div>
         </div>
+        ${filterWorkbench("prioridades", DATA.fichas.length, fs.length)}
         <div class="tabs">${tabs}</div>
-        <div class="filters">${chips}</div>
-        ${list}`;
-      $("content").querySelectorAll(".tab").forEach(b => b.onclick = () => { estadoFilter = b.dataset.estado; temaFilter = "todos"; renderPrioridades(); });
-      $("content").querySelectorAll(".fchip").forEach(b => b.onclick = () => { temaFilter = b.dataset.tema; renderPrioridades(); });
+        <div class="resultnote"><span><b>${fs.length}</b> temas priorizados por relevancia, impacto, urgencia, novedad y evidencia.</span><span>Usa Siguiente para continuar sin perder el orden editorial.</span></div>
+        ${list}
+        ${pager(fs.length, page, "topics")}`;
+      bindWorkbench();
+      bindPager("topics", fs.length);
+      $("content").querySelectorAll(".tab").forEach(b => b.onclick = () => { estadoFilter = b.dataset.estado; page = 1; renderPrioridades(); });
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
     }
 
     function renderDetail() {
       const f = byId(selectedId);
       if (!f) { closeDetail(); return; }
+      const contextList = fichas().length ? fichas() : (DATA?.fichas || []);
+      const pos = contextList.findIndex(x => x.id === selectedId);
+      const prev = pos > 0 ? contextList[pos - 1] : null;
+      const next = pos >= 0 && pos < contextList.length - 1 ? contextList[pos + 1] : null;
       const v = f.verification || {}, c = f.components || {}, d = f.draft || {};
       const comp = COMP.map(([k, lbl]) => {
         const val = c[k] ?? 0;
         return `<div class="comp"><div class="lbl">${lbl}</div><div class="track"><span style="width:${Math.round(val * 100)}%"></span></div><div class="num">${Math.round(val * 100)}%</div></div>`;
       }).join("");
-      const claims = (d.afirmaciones || []).map(a => {
+      const claims = (d.afirmaciones || []).map((a, idx) => {
         const campo = a.campo ? ` · campo: ${esc(a.campo)}` : "";
         const ev = a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : "";
+        const key = `${f.id}#${idx}`;
+        const verdict = CLAIM_VERDICTS[key]?.veredicto;
+        const buttons = VEREDICTOS.map(v => `<button class="btn ${verdict === v ? "btn-primary" : "btn-ghost"}" data-claim="${idx}" data-verdict="${esc(v)}">${esc(v)}</button>`).join("");
         return `<div class="claim"><div class="t">${esc(a.tipo_label || a.tipo)}</div><div>${esc(a.texto)}</div>
-          <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${campo}${ev}</div></div>`;
+          <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${campo}${ev}${verdict ? ` · veredicto: ${esc(verdict)}` : ""}</div>
+          <div class="actions">${buttons}</div></div>`;
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
-      const aiBox = f.summary ? `<div class="card block"><h3>Resumen asistido</h3><div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>` : `<div class="card block"><h3>Resumen asistido</h3><div class="c">Aún no generado.</div><div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
+      const aiProgress = aiLoading ? `<div class="ai-progress" role="status" aria-live="polite"><div class="label"><span>Analizando con IA</span><span>evidencia + resumen</span></div><div class="track"><span></span></div></div>` : "";
+      const aiBox = f.summary ? `<div class="card block"><h3>Resumen asistido</h3><div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>` : `<div class="card block"><h3>Resumen asistido</h3><div class="c">Aún no generado. La IA puede redactar un resumen auxiliar con sustento; la decisión sigue siendo humana.</div>${aiProgress}<div class="actions"><button class="btn btn-ghost" id="aiBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Analizando…" : "Generar resumen"}</button></div></div>`;
       const ctx = (f.contexto || []).map(c => {
         const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
         const link = c.fuente_url ? ` · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a>` : "";
@@ -407,7 +518,13 @@
       const reviewBtns = REVIEW.map(s => `<button class="btn ${(f.review_state || "nuevo") === s ? "btn-primary" : "btn-ghost"}" data-review="${esc(s)}">${esc(s)}</button>`).join("");
 
       $("content").innerHTML = `
-        <div class="crumbs"><a id="back">← Volver a la mesa</a></div>
+        <div class="detail-nav">
+          <button class="btn btn-ghost" id="back">← Volver a resultados</button>
+          <div class="actions">
+            <button class="btn btn-ghost" id="prevTopic" ${prev ? "" : "disabled"}>Anterior</button>
+            <button class="btn btn-ghost" id="nextTopic" ${next ? "" : "disabled"}>Siguiente</button>
+          </div>
+        </div>
         <div class="detail-head">
           <div class="kicker">${esc(bandLabel(f.band))} · ${esc(f.tema || "general")}</div>
           <h1>${esc(f.title)}</h1>
@@ -418,6 +535,10 @@
             <span class="chip ghost">Decisión: ${esc(f.review_state || "nuevo")}</span>
             <span class="chip ghost">Reglas ${esc(f.rules_version || "")}</span>
             ${f.published ? `<span class="chip ghost">${esc(panamaTime(f.published))}</span>` : ""}
+          </div>
+          <div class="actions" style="margin-top:14px">
+            ${(f.sources || [])[0]?.url ? `<a class="btn btn-primary" href="${esc(f.sources[0].url)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir fuente principal</a>` : ""}
+            <button class="btn btn-ghost" id="aiHeadBtn" ${aiLoading ? "disabled" : ""}>${aiLoading ? "IA analizando…" : "Analizar con IA"}</button>
           </div>
         </div>
         <div class="detail-grid">
@@ -479,6 +600,8 @@
           </div>
         </div>`;
       $("back").onclick = closeDetail;
+      $("prevTopic").onclick = () => prev && openDetail(prev.id);
+      $("nextTopic").onclick = () => next && openDetail(next.id);
       $("content").querySelectorAll("[data-review]").forEach(b => b.onclick = async () => {
         try {
           const r = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ id: f.id, state: b.dataset.review, reviewer: reviewerName() }) });
@@ -497,16 +620,20 @@
           renderDetail();
         } catch { toast("No se pudo guardar el veredicto."); }
       });
-      $("aiBtn").onclick = async () => {
+      const runAI = async () => {
+        if (aiLoading) return;
         try {
-          toast("Generando resumen…");
+          aiLoading = true; renderDetail(); toast("Generando análisis con IA…");
           const r = await fetch("/api/analyze", { method: "POST", headers: authHeaders() });
           if (!r.ok) throw new Error("analyze failed");
           DATA = await r.json();
+          aiLoading = false;
           renderDetail();
           toast("Resumen listo.");
-        } catch { toast("No se pudo generar el resumen."); }
+        } catch { aiLoading = false; renderDetail(); toast("No se pudo generar el resumen."); }
       };
+      $("aiBtn").onclick = runAI;
+      $("aiHeadBtn").onclick = runAI;
     }
 
     function sustentoProgreso() {
@@ -518,12 +645,18 @@
     }
 
     function renderBandeja() {
-      const rows = (DATA.feed || []).slice(0, 120).map(x =>
-        `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published))}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></td></tr>`).join("");
-      $("content").innerHTML = `        <h1>Publicaciones</h1>
-        <p class="sub">Lo que han publicado las fuentes, sin repetidos y con la hora de Panamá.</p>
+      const all = (DATA.feed || []).filter(matchesDate).filter(textMatches);
+      const rows = paginate(all, feedPage).map((x, i) =>
+        `<tr><td><b>${(feedPage - 1) * PAGE_SIZE + i + 1}.</b> ${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published) || "Sin fecha")}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir fuente</a></td></tr>`).join("");
+      $("content").innerHTML = `<h1>Publicaciones</h1>
+        <p class="sub">Todas las noticias públicas deduplicadas. Filtra por fecha o busca una señal específica sin perder el archivo.</p>
+        ${filterWorkbench("feed", DATA.feed.length, all.length)}
+        <div class="resultnote"><span><b>${all.length}</b> publicaciones coinciden con los filtros.</span><span>La mesa editorial agrupa estas publicaciones en temas priorizados.</span></div>
         <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th>Publicado</th><th></th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="4" class="empty">Sin datos</td></tr>`}</tbody></table></div>`;
+        <tbody>${rows || `<tr><td colspan="4" class="empty"><strong>No hay publicaciones.</strong>Prueba con otra fecha o limpia la búsqueda.</td></tr>`}</tbody></table></div>
+        ${pager(all.length, feedPage, "feed")}`;
+      bindWorkbench();
+      bindPager("feed", all.length);
     }
 
     function renderFuentes() {
@@ -679,8 +812,7 @@
     });
 
     let searchTimer = null;
-    $("search").addEventListener("input", (e) => {
-      query = e.target.value;
+    function queueSemanticSearch() {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(async () => {
         if (query.trim().length >= 3) {
@@ -690,8 +822,14 @@
             semIds = j.ids || [];
           } catch (err) { semIds = null; }
         } else { semIds = null; }
-        if (section === "prioridades" && !selectedId) renderPrioridades();
+        if (!selectedId) render();
       }, 250);
+    }
+    $("search").addEventListener("input", (e) => {
+      query = e.target.value;
+      semIds = null;
+      page = 1; feedPage = 1;
+      queueSemanticSearch();
     });
     window.addEventListener("hashchange", () => {
       const m = location.hash.match(/^#\/tema\/(.+)$/);
