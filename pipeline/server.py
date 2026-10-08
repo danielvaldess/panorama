@@ -37,6 +37,7 @@ AI_TOP_N = int(os.environ.get("AI_TOP_N", "6"))
 ADMIN_TOKEN = os.environ.get("PANORAMA_ADMIN_TOKEN", "")
 
 _lock = threading.Lock()
+_build_lock = threading.Lock()
 _cache: dict = {"fichas": [], "generated_at": None}
 
 # --- Tiempo real: poller de fuentes en vivo + novedades ---
@@ -138,11 +139,17 @@ def _enrich_ai(fichas: list[dict]) -> None:
 
 
 def refresh() -> dict:
-    """Refresco determinista (sin IA). La IA se dispara solo a pedido (/api/analyze)."""
-    data = _build_fast()
-    with _lock:
-        _cache.update(data)
-    return data
+    """Refresco determinista. Serializado: nunca hay dos builds a la vez (evita saturar CPU)."""
+    if not _build_lock.acquire(blocking=False):
+        with _lock:
+            return dict(_cache)  # ya hay un build en curso; devolvemos lo actual
+    try:
+        data = _build_fast()
+        with _lock:
+            _cache.update(data)
+        return data
+    finally:
+        _build_lock.release()
 
 
 def _poll_live() -> None:

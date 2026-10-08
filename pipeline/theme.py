@@ -74,6 +74,40 @@ def clasificar_tema(titulo: str, threshold: float = UMBRAL) -> tuple[str, float,
     return "sin_clasificar", 0.3, [{"tema": "general", "score": 0.3}]
 
 
+def clasificar_temas(titulos: list[str], threshold: float = UMBRAL) -> list[tuple[str, float, list[dict]]]:
+    """Versión en lote: una sola llamada de embeddings para todos los títulos.
+
+    Evita cientos de llamadas por build (rendimiento).
+    """
+    from pipeline.ingest import _tema as _tema_kw
+
+    if not titulos:
+        return []
+    if not embed.available():
+        return [clasificar_tema(t, threshold) for t in titulos]
+    try:
+        names = list(TEMAS.keys())
+        m = embed.cosine_matrix(list(titulos) + list(TEMAS.values()))
+        n = len(titulos)
+        out: list[tuple[str, float, list[dict]]] = []
+        for i in range(n):
+            sims = np.asarray(m[i, n:], dtype=np.float32)
+            probs = _softmax(sims * 6.0)
+            order = np.argsort(-probs)
+            top = int(order[0])
+            cands = [{"tema": names[int(j)], "score": round(float(probs[int(j)]), 2)} for j in order[:2]]
+            kw = _tema_kw(titulos[i])
+            if kw != "general":
+                out.append((kw, 0.5, ([{"tema": kw, "score": 0.5}] + cands)[:2]))
+            elif float(probs[top]) >= threshold:
+                out.append((names[top], round(float(probs[top]), 2), cands))
+            else:
+                out.append(("sin_clasificar", round(float(probs[top]), 2), cands))
+        return out
+    except Exception:
+        return [clasificar_tema(t, threshold) for t in titulos]
+
+
 ETIQUETA = {
     "economia": "Economía",
     "logistica": "Logística",
