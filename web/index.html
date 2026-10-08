@@ -148,6 +148,11 @@
     .usermenu{position:absolute;right:0;top:44px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 34px rgba(0,0,0,.2);min-width:220px;overflow:hidden;z-index:50}
     .usermenu button{display:block;width:100%;text-align:left;background:none;border:none;padding:12px 16px;font-family:var(--f-ui);font-size:14px;color:var(--text);cursor:pointer}
     .usermenu button:hover{background:var(--bg-soft)}
+    /* Novedades / en vivo */
+    .bell{position:relative;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:7px 12px;cursor:pointer;font-family:var(--f-ui);font-size:13px;display:inline-flex;align-items:center;gap:7px}
+    .bell.on{border-color:#ffd166;box-shadow:0 0 0 2px rgba(255,209,102,.4)}
+    .bell .bellcount{background:var(--red);color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:1px 7px}
+    .pill.live{color:#fff;background:var(--ok)}
     /* Pestañas de estado */
     .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin:2px 0 16px;flex-wrap:wrap}
     .tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;margin-bottom:-2px;font-family:var(--f-title);font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer}
@@ -199,6 +204,9 @@
       </div>
       <div class="spacer"></div>
       <input class="search" id="search" placeholder="Buscar temas…" aria-label="Buscar temas" />
+      <button class="bell" id="bell" type="button" aria-label="Novedades" title="Novedades">
+        <span aria-hidden="true">🔔</span><span class="bellcount" id="bellCount" hidden>0</span>
+      </button>
       <div class="user">
         <button class="usermenu-btn" id="userBtn" aria-haspopup="true" aria-expanded="false" type="button"><span id="userName">—</span> · <span id="userRole">—</span></button>
         <div class="usermenu" id="userMenu" hidden>
@@ -265,6 +273,12 @@
     $("date").textContent = new Date().toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: PANAMA_TZ });
 
     let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", estadoFilter = "todos", semIds = null;
+    let NOVEDADES = [], lastNovShown = 0;
+    function setBell(n) {
+      const b = $("bell"), c = $("bellCount"); if (!b || !c) return;
+      if (n > 0) { c.hidden = false; c.textContent = n; b.classList.add("on"); }
+      else { c.hidden = true; b.classList.remove("on"); }
+    }
     const authHeaders = () => {
       const token = localStorage.getItem("panorama_token");
       return token ? { "X-Panorama-Token": token } : {};
@@ -699,13 +713,27 @@
           setTimeout(() => load(false), 6000); return;
         }
         const c = DATA.counts || {};
+        const live = DATA.live || {};
+        NOVEDADES = live.novedades || [];
+        setBell(NOVEDADES.length);
+        if (NOVEDADES.length > lastNovShown) {
+          const t = (NOVEDADES[0] && NOVEDADES[0].title) ? NOVEDADES[0].title.slice(0, 60) : "";
+          toast("🔔 " + NOVEDADES.length + " noticia(s) nueva(s)" + (t ? ": " + t : ""));
+        }
+        lastNovShown = NOVEDADES.length;
         $("updated").textContent = "actualizado hace instantes";
-        $("status").textContent = `${c.fetched || 0} publicaciones · ${c.fichas || 0} temas`;
+        $("status").textContent = `${c.fetched || 0} publicaciones · ${c.fichas || 0} temas` + (live.last_poll ? " · en vivo" : "");
         render();
       } catch (e) { $("content").innerHTML = `<div class="empty">No se pudo cargar la mesa.</div>`; }
     }
 
     $("refresh").addEventListener("click", () => load(true));
+    $("bell").addEventListener("click", async () => {
+      try { await fetch("/api/seen", { method: "POST", headers: authHeaders() }); } catch (e) { /* ignore */ }
+      NOVEDADES = []; lastNovShown = 0; setBell(0);
+      if (section === "prioridades" && !selectedId) renderPrioridades();
+      toast("Novedades marcadas como vistas.");
+    });
     fetch("/api/claims/verdicts").then(r => r.json()).then(j => { CLAIM_VERDICTS = j || {}; }).catch(() => {});
 
     function showUser() {
@@ -732,7 +760,7 @@
       if (started) return; started = true;
       const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
       load(false);
-      setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 180000);
+      setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 30000);
     }
     if (showUser()) start();
   </script>

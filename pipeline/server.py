@@ -40,6 +40,11 @@ ADMIN_TOKEN = os.environ.get("PANORAMA_ADMIN_TOKEN", "")
 _lock = threading.Lock()
 _cache: dict = {"fichas": [], "generated_at": None}
 
+# --- Tiempo real: poller de fuentes en vivo + novedades ---
+LIVE_POLL_SECONDS = int(os.environ.get("LIVE_POLL_SECONDS", "180"))
+MAX_LIVE = int(os.environ.get("MAX_LIVE", "200"))
+_live: dict = {"items": [], "seen": set(), "novedades": [], "last_poll": None, "ok": None}
+
 
 def _sources_catalog() -> list[dict]:
     """Catálogo alineado a las fuentes declaradas por el reto (última página del PDF)."""
@@ -62,9 +67,12 @@ def _authorized(token: str | None) -> bool:
 
 def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
-    # D5: preferir el snapshot congelado; si no existe, fallback a fuentes en vivo.
+    # D5: snapshot congelado como base + lo que va llegando en vivo (tiempo real).
     used_snapshot = snapshot.available()
-    raw = snapshot.load_news() if used_snapshot else sources.fetch_all(gdelt_query="Panamá")
+    if used_snapshot:
+        raw = snapshot.load_news() + list(_live["items"])
+    else:
+        raw = sources.fetch_all(gdelt_query="Panamá")
     editorial = process.filter_editorial(raw)
     groups, grouping_method = _cluster(editorial)
     # La frescura se mide contra la fecha de la edición (lo más nuevo del snapshot),
@@ -91,6 +99,8 @@ def _build_fast() -> dict:
         "metrics": metrics.summarize(raw, deduped, fichas),
         "ai_ready": bool(_cache.get("ai_ready")),
         "ai_configured": ai_mod.available(),
+        "live": {"last_poll": _live["last_poll"], "items": len(_live["items"]),
+                 "novedades": list(_live["novedades"])[:30], "ok": _live["ok"]},
         "method": {"grouping": grouping_method, "retrieval": "BM25 + semántico",
                    "llm": "IA bajo demanda (OpenCode Zen / OpenRouter)" if ai_mod.available() else "inactivo (sin proveedor de IA)"},
         "snapshot": (
@@ -132,6 +142,44 @@ def refresh() -> dict:
     return data
 
 
+def _poll_live() -> None:
+    """Trae noticias nuevas de las fuentes en vivo, las clasifica y registra novedades."""
+    try:
+        items = sources.fetch_all(gdelt_query="Panamá")
+    except Exception:
+        with _lock:
+            _live["ok"] = False
+        return
+    editorial = process.filter_editorial(items)
+    nuevos: list[dict] = []
+    with _lock:
+        for x in editorial:
+            key = (x.get("url") or "").split("?")[0]
+            if not key or key in _live["seen"]:
+                continue
+            _live["seen"].add(key)
+            _live["items"].insert(0, x)
+            nuevos.append(x)
+        _live["items"] = _live["items"][:MAX_LIVE]
+        if nuevos:
+            _live["novedades"] = ([{"id": x.get("id"), "title": x.get("title"), "source": x.get("source"),
+                                    "published": x.get("published")} for x in nuevos]
+                                  + _live["novedades"])[:50]
+        _live["last_poll"] = datetime.now(timezone.utc).isoformat()
+        _live["ok"] = True
+    if nuevos:
+        refresh()  # recalcula la mesa con lo que acaba de llegar
+
+
+def _live_poller():
+    while True:
+        try:
+            _poll_live()
+        except Exception:
+            pass
+        time.sleep(LIVE_POLL_SECONDS)
+
+
 def _refresher():
     while True:
         try:
@@ -149,7 +197,10 @@ async def lifespan(app: FastAPI):
         if r.get("id_caso") is not None and r.get("indice") is not None:
             _claim_verdicts[clave] = {"veredicto": r.get("veredicto"),
                                       "comentario": r.get("comentario"), "ts": r.get("ts")}
+    if snapshot.available():  # las URLs del snapshot no cuentan como novedad
+        _live["seen"].update((x.get("url") or "").split("?")[0] for x in snapshot.load_news())
     threading.Thread(target=_refresher, daemon=True).start()
+    threading.Thread(target=_live_poller, daemon=True).start()
     yield
 
 
@@ -225,6 +276,14 @@ async def force_refresh(x_panorama_token: str | None = Header(default=None)):
     if not _authorized(x_panorama_token):
         return JSONResponse({"ok": False, "error": "no autorizado"}, status_code=401)
     return JSONResponse(refresh())
+
+
+@app.post("/api/seen")
+async def mark_seen():
+    """Marca las novedades como vistas (apaga las notificaciones)."""
+    with _lock:
+        _live["novedades"] = []
+    return JSONResponse({"ok": True})
 
 
 class ReviewIn(BaseModel):
