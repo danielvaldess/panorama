@@ -33,7 +33,7 @@ def load_news(limit: int | None = None) -> list[dict]:
                 "url": item["url"],
                 "source": item["source"],
                 "published": (r.get("fecha_publicacion") or r.get("fecha_deteccion") or "") or None,
-                "snippet": "",
+                "snippet": (r.get("descripcion") or "").strip(),
                 "topic": (r.get("tema") or "").strip(),
                 "topics": [],
                 "id": (r.get("id_noticia") or "").strip(),

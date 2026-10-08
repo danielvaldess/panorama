@@ -33,7 +33,7 @@
     "id": "T06",
     "prueba": "Consulta sin respuesta en el corpus",
     "pass": true,
-    "observado": "respondido=False top=5.56 cobertura=0.2 → abstención (sin cifra inventada)"
+    "observado": "respondido=False top=0.0 cobertura=0.0 → abstención (sin cifra inventada)"
   },
   {
     "id": "T07",
@@ -51,12 +51,12 @@
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=42 guion=73 copy=11; citas por afirmación; tipos=['hecho_verificable']"
+    "observado": "brief=53 guion=84 copy=20; citas por afirmación; tipos=['hecho_verificable']"
   },
   {
     "id": "T10",
     "prueba": "Sin internet durante la demo",
     "pass": true,
-    "observado": "snapshot local disponible y cargado (250 noticias) sin red; fallback documentado"
+    "observado": "snapshot local disponible y cargado (130 noticias) sin red; fallback documentado"
   }
 ]

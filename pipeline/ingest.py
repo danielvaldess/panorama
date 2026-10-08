@@ -167,7 +167,7 @@ def _month_windows() -> list[tuple[str, str]]:
 
 CAMPOS_NOTICIAS = ["id_noticia", "titulo", "url", "medio", "idioma",
                    "fecha_publicacion", "fecha_deteccion", "fecha_extraccion",
-                   "tema", "origen", "alcance_texto"]
+                   "tema", "origen", "alcance_texto", "descripcion"]
 
 
 def _aplicar_rango(rows: list[dict]) -> tuple[list[dict], dict]:
@@ -195,7 +195,7 @@ def collect_news() -> tuple[list[dict], dict]:
     rows: list[dict] = []
     seen: set[str] = set()
 
-    def add(titulo, url, medio, publicacion, deteccion, origen):
+    def add(titulo, url, medio, publicacion, deteccion, origen, descripcion=""):
         if not titulo or not url:
             return
         key = url.split("?")[0]
@@ -214,6 +214,7 @@ def collect_news() -> tuple[list[dict], dict]:
             "tema": _tema(titulo),
             "origen": origen,
             "alcance_texto": "titular+metadatos",
+            "descripcion": (descripcion or "")[:400],
         })
 
     for name, url in FEEDS:
@@ -225,7 +226,8 @@ def collect_news() -> tuple[list[dict], dict]:
             titulo = _clean(e.get("title"))
             link = (e.get("link") or "").strip()
             pub = _iso(e.get("published_parsed") or e.get("updated_parsed"))
-            add(titulo, link, name, pub, pub or EXTRACCION, "RSS")
+            desc = _clean(e.get("summary") or e.get("description"))
+            add(titulo, link, name, pub, pub or EXTRACCION, "RSS", desc)
 
     for name, url in OFFICIAL_FEEDS:
         try:
