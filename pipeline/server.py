@@ -129,8 +129,10 @@ def _build_fast() -> dict:
     """Determinista y rápido (sin IA): fuentes → dedupe → prioridad + citas."""
     # D5: snapshot congelado como base + lo que va llegando en vivo (tiempo real).
     used_snapshot = snapshot.available()
+    with _lock:
+        live_items = list(_live.get("items") or [])
     if used_snapshot:
-        raw = snapshot.load_news() + list(_live["items"])
+        raw = snapshot.load_news() + live_items
     else:
         raw = sources.fetch_all(gdelt_query="Panamá")
     editorial = process.filter_editorial(raw)
@@ -172,7 +174,8 @@ def _build_fast() -> dict:
         "ai_ready": bool(_cache.get("ai_ready")),
         "ai_configured": ai_mod.available(),
         "live": {"last_poll": _live["last_poll"], "items": len(_live["items"]),
-                 "novedades": list(_live["novedades"])[:30], "ok": _live["ok"]},
+                  "novedades": list(_live["novedades"])[:30], "ok": _live["ok"]},
+        "live_count_in_fichas": len(live_items),
         "method": {"grouping": grouping_method, "retrieval": "BM25 + semántico",
                    "llm": "IA bajo demanda (OpenCode Zen / OpenRouter)" if ai_mod.available() else "inactivo (sin proveedor de IA)"},
         "snapshot": (
@@ -372,6 +375,9 @@ async def benchmark():
 async def fichas():
     with _lock:
         data = dict(_cache)
+        live_count = len(_live.get("items") or [])
+    if live_count and int(data.get("live_count_in_fichas") or 0) < live_count:
+        data = refresh()
     if not data.get("fichas"):
         threading.Thread(target=refresh, daemon=True).start()
         return JSONResponse({"generating": True, "fichas": [], "counts": {}})
