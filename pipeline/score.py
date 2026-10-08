@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-RULES_VERSION = "p-1.0"
+RULES_VERSION = "p-2.0"
 WEIGHTS = {"R": 30, "I": 25, "U": 20, "N": 15, "E": 10}
 CORE_THEMES = {"economia", "logistica", "turismo", "servicios", "eventos_naturales", "regulacion"}
 URGENCY_WINDOW_H = 24 * 14  # 14 días hasta urgencia ~0
@@ -52,8 +52,12 @@ def _dominant_topic(g: list[dict]) -> str:
     return max(set(temas), key=temas.count) if temas else "general"
 
 
-def compute_components(g: list[dict], rel_i: float, v: dict) -> tuple[dict, str]:
-    """Devuelve (componentes 0–1, tema dominante)."""
+def compute_components(g: list[dict], rel_i: float, v: dict, tipo: str = "hecho_verificable") -> tuple[dict, str]:
+    """Devuelve (componentes 0–1, tema dominante).
+
+    E (evidencia v2, continua): una fuente oficial sobre sí misma es **declaración**,
+    no hecho verificado; sin corroboración independiente no basta para "suficiente".
+    """
     tema = _dominant_topic(g)
     blob = " ".join((x.get("title", "") + " " + x.get("source", "")) for x in g).lower()
     panama = "panam" in blob
@@ -69,18 +73,20 @@ def compute_components(g: list[dict], rel_i: float, v: dict) -> tuple[dict, str]
     U = rec
     N = _clamp(0.6 * rec + 0.4 * (1.0 / (1.0 + v.get("echo", 0))))
 
-    if v.get("official"):
-        E = 1.0
-    elif indep >= 3:
-        E = 0.8
-    elif indep >= 2:
-        E = 0.6
-    elif indep == 1:
-        E = 0.3
-    else:
-        E = 0.0
+    # --- Evidencia v2: E = 0.35·primaria + 0.40·corroboración + 0.15·confiabilidad + 0.10·trazabilidad − 0.30·contradicción
+    primaria = 1.0 if (v.get("official") and tipo == "hecho_verificable") else (0.5 if v.get("official") else 0.0)
+    corroboracion = _clamp(min(max(indep - 1, 0), 2) / 2.0)
+    confiabilidad = _clamp(v.get("reliability_avg", 0.6))
+    trazabilidad = _clamp(v.get("trazabilidad", 1.0))
+    contradiccion = 1.0 if v.get("contradict") else 0.0
+    E = _clamp(0.35 * primaria + 0.40 * corroboracion + 0.15 * confiabilidad + 0.10 * trazabilidad
+               - 0.30 * contradiccion)
+    detalle = {"primaria": round(primaria, 2), "corroboracion": round(corroboracion, 2),
+               "confiabilidad": round(confiabilidad, 2), "trazabilidad": round(trazabilidad, 2),
+               "contradiccion": round(contradiccion, 2)}
 
-    return {"R": round(R, 2), "I": round(I, 2), "U": round(U, 2), "N": round(N, 2), "E": round(E, 2)}, tema
+    return ({"R": round(R, 2), "I": round(I, 2), "U": round(U, 2), "N": round(N, 2),
+             "E": round(E, 2), "E_detalle": detalle}, tema)
 
 
 def final_score(components: dict) -> int:
@@ -95,10 +101,34 @@ def band(score: int) -> str:
     return "alto"
 
 
-def evidence_state(v: dict) -> str:
-    """Estado de evidencia, independiente del puntaje."""
-    if v.get("official", 0) >= 1 or v.get("independent", 0) >= 2:
-        return "Suficiente para el borrador"
+def evidence_state(v: dict, tipo: str = "hecho_verificable") -> str:
+    """Estado de evidencia v2 (independiente del puntaje).
+
+    Invariante: si falta corroboración independiente, el estado es "Parcial";
+    nunca "Suficiente" con una fuente oficial que solo se declara a sí misma.
+    """
+    if v.get("contradict"):
+        return "Parcial"                      # contradicción -> revisar, no escoger
+    if v.get("independent", 0) >= 2:
+        return "Suficiente para el borrador"  # corroboración independiente
+    if v.get("official", 0) >= 1 and tipo == "hecho_verificable":
+        return "Suficiente para el borrador"  # hecho verificable con fuente primaria
+    if v.get("official", 0) >= 1:
+        return "Parcial"                      # declaración institucional sin corroboración
     if v.get("independent", 0) == 1:
         return "Parcial"
     return "Insuficiente"
+
+
+def evidence_reason(v: dict, tipo: str = "hecho_verificable") -> str:
+    if v.get("contradict"):
+        return "Las fuentes se contradicen; hay que mostrar ambas versiones."
+    if v.get("independent", 0) >= 2:
+        return "Reportado por orígenes independientes entre sí."
+    if v.get("official", 0) >= 1 and tipo == "hecho_verificable":
+        return "Dato verificable respaldado por una fuente primaria/oficial."
+    if v.get("official", 0) >= 1:
+        return "Declaración de una fuente oficial sobre sí misma; falta corroboración independiente."
+    if v.get("independent", 0) == 1:
+        return "Un solo origen; falta una segunda fuente independiente."
+    return "Sin evidencia suficiente."

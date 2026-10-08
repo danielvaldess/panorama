@@ -15,7 +15,7 @@
     "id": "T03",
     "prueba": "Noticia antigua recirculada",
     "pass": true,
-    "observado": "U=0.0 (baja); fecha original conservada=2026-08-08"
+    "observado": "U=0.0 (baja); fecha original conservada=2026-08-09"
   },
   {
     "id": "T04",
@@ -45,13 +45,13 @@
     "id": "T08",
     "prueba": "Caso de prioridad alta",
     "pass": true,
-    "observado": "P=58 banda=medio componentes expuestos; sin aprobación automática"
+    "observado": "P=52 banda=medio componentes expuestos; sin aprobación automática"
   },
   {
     "id": "T09",
     "prueba": "Brief editorial",
     "pass": true,
-    "observado": "brief=78 guion=65 copy=40; citas por afirmación; tipos=['hecho reportado']"
+    "observado": "brief=71 guion=58 copy=32; citas por afirmación; tipos=['hecho_verificable', 'inferencia']"
   },
   {
     "id": "T10",

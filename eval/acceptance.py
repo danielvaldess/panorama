@@ -96,9 +96,12 @@ def t09():
     f = process.priority(process.cluster(items), ["Panamá", "economía"])
     d = draft.build(f[0])
     wb, wg, wc = len(d["brief"].split()), len(d["guion_45_60s"].split()), len(d["copy_digital"].split())
-    tipos = {a["tipo"] for a in d["afirmaciones"]}
-    passed = wb <= 250 and wg <= 130 and wc <= 80 and all(a["ids_fuente"] for a in d["afirmaciones"]) and all(a.get("campo") for a in d["afirmaciones"]) and "hecho reportado" in tipos
-    return passed, f"brief={wb} guion={wg} copy={wc}; citas por afirmación; tipos={sorted(tipos)}"
+    from pipeline import claims as claims_mod
+    passed = (wb <= 250 and wg <= 130 and wc <= 80
+              and all(a["ids_fuente"] for a in d["afirmaciones"])
+              and all(a.get("campo") for a in d["afirmaciones"])
+              and all(a["tipo"] in claims_mod.TIPOS for a in d["afirmaciones"]))
+    return passed, f"brief={wb} guion={wg} copy={wc}; citas por afirmación; tipos={sorted({a['tipo'] for a in d['afirmaciones']})}"
 
 
 def t10():

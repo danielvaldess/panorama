@@ -6,6 +6,8 @@ y explica qué falta comprobar.
 """
 from __future__ import annotations
 
+from pipeline import claims as claims_mod
+
 DISCLAIMER = "Basado únicamente en titular/metadatos; no se leyó el artículo completo."
 
 TEMA_FOCO = {
@@ -30,19 +32,20 @@ def _fit(s: str, limit: int) -> str:
     return s if len(w) <= limit else " ".join(w[:limit]).rstrip(".,;:") + "…"
 
 
-def _claims(title: str, sources: list[dict]) -> list[dict]:
+def _claims(title: str, sources: list[dict], tipo: str = "hecho_verificable") -> list[dict]:
     ids = [s.get("name") for s in sources] or ["sin fuente"]
     urls = [s.get("url") for s in sources if s.get("url")]
     cita = urls[0] if urls else ""
     low = title.lower()
-    claims = [{"texto": title, "tipo": "hecho reportado", "ids_fuente": ids[:1],
-               "campo": "titular", "cita": cita}]
-    if any(a in low for a in ATRIBUCION):
+    claims = [{"texto": title, "tipo": tipo, "tipo_label": claims_mod.etiqueta(tipo),
+               "ids_fuente": ids[:1], "campo": "titular", "cita": cita}]
+    if any(a in low for a in ATRIBUCION) and tipo != "declaracion_tercero":
         claims.append({"texto": f"Existe una declaración atribuida en el titular: “{title}”",
-                       "tipo": "declaración (atribuida)", "ids_fuente": ids,
-                       "campo": "titular", "cita": cita})
+                       "tipo": "declaracion_tercero", "tipo_label": claims_mod.etiqueta("declaracion_tercero"),
+                       "ids_fuente": ids, "campo": "titular", "cita": cita})
     if len(ids) > 1:
         claims.append({"texto": f"El tema circula en {len(ids)} medios", "tipo": "inferencia",
+                       "tipo_label": claims_mod.etiqueta("inferencia"),
                        "ids_fuente": ids, "campo": "conteo de fuentes", "cita": cita})
     return claims
 
@@ -56,14 +59,20 @@ def build(ficha: dict) -> dict:
     fuente_txt = ", ".join(s.get("name", "") for s in sources) or "sin fuente identificable"
     enfoque = TEMA_FOCO.get(tema, TEMA_FOCO["general"])
 
-    # Qué falta comprobar
+    # Qué falta comprobar — coherente con el estado de evidencia (invariante T1.4):
+    # si el estado es "Suficiente", NO se pide corroboración independiente.
     pendientes: list[str] = []
-    if not v.get("official"):
-        pendientes.append("un documento o dato oficial que respalde la afirmación")
-    if v.get("independent", 0) < 2:
-        pendientes.append("una segunda fuente independiente (no una copia/eco)")
-    if not pendientes:
+    if v.get("contradict"):
+        pendientes.append("contrastar las versiones que se contradicen")
+    elif ev == "Suficiente para el borrador":
         pendientes.append("confirmar detalles y alcance antes de publicar")
+    else:
+        if v.get("independent", 0) < 2:
+            pendientes.append("una segunda fuente independiente (no una copia/eco)")
+        if not v.get("official") and v.get("independent", 0) >= 2:
+            pendientes.append("un documento o dato oficial que respalde la afirmación")
+        if not pendientes:
+            pendientes.append("confirmar detalles y alcance antes de publicar")
 
     abstain = ficha.get("state") == "Sin verificar" or ev == "Insuficiente"
     accion = ("investigar antes de producir" if abstain
@@ -108,7 +117,7 @@ def build(ficha: dict) -> dict:
     return {
         "titulo_propuesto": _fit(title, 16),
         "enfoque_interes_publico": enfoque,
-        "afirmaciones": _claims(title, sources),
+        "afirmaciones": _claims(title, sources, ficha.get("tipo_afirmacion", "hecho_verificable")),
         "brief": brief,
         "preguntas": preguntas,
         "guion_45_60s": guion,
