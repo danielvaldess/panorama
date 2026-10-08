@@ -47,6 +47,37 @@ MAX_LIVE = int(os.environ.get("MAX_LIVE", "200"))
 _live: dict = {"items": [], "seen": set(), "novedades": [], "last_poll": None, "ok": None}
 
 
+def _published_day(value: str | None) -> str | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).date().isoformat()
+    except Exception:
+        return None
+
+
+def _compact_news(x: dict, *, editorial: bool) -> dict:
+    return {"id": x.get("id") or x.get("id_noticia"), "title": x.get("title") or x.get("titulo"),
+            "url": x.get("url"), "source": x.get("source") or x.get("medio"),
+            "published": x.get("published") or x.get("fecha_publicacion"),
+            "tema": x.get("tema"), "origin": x.get("origin") or x.get("origen"),
+            "official": bool(x.get("official")), "editorial_signal": editorial}
+
+
+def _persist_operational_state(fichas: list[dict]) -> None:
+    conn = db.connection()
+    if conn is None:
+        return
+    try:
+        with db.transaction(conn):
+            for f in fichas:
+                db.upsert_ficha(conn, f)
+                if f.get("draft"):
+                    db.set_llm_cache(conn, f"draft:{f.get('id')}", f["draft"], "deterministic")
+    except Exception:
+        pass
+
+
 def _sources_catalog() -> list[dict]:
     """Catálogo alineado a las fuentes declaradas por el reto (última página del PDF)."""
     return [{"name": s["nombre"], "url": s["url"], "reliability": s["confiabilidad"],
@@ -75,6 +106,7 @@ def _build_fast() -> dict:
     else:
         raw = sources.fetch_all(gdelt_query="Panamá")
     editorial = process.filter_editorial(raw)
+    editorial_keys = {(x.get("url") or "").split("?")[0] for x in editorial if x.get("url")}
     groups, grouping_method = _cluster(editorial)
     # La frescura se mide contra la fecha de la edición (lo más nuevo del snapshot),
     # no contra el reloj: el paquete es un archivo congelado.
@@ -90,9 +122,13 @@ def _build_fast() -> dict:
         f["review_ts"] = rev.get("ts")
     deduped = process.dedupe(raw)  # métrica de entrada completa
     feed_items = process.dedupe(editorial)
+    all_news = [_compact_news(x, editorial=(x.get("url") or "").split("?")[0] in editorial_keys)
+                for x in deduped]
+    available_days = sorted({d for d in (_published_day(x.get("published")) for x in all_news) if d}, reverse=True)
     feed = [{"id": x.get("id"), "title": x["title"], "url": x["url"], "source": x["source"],
-             "published": x.get("published"), "tema": x.get("tema"), "origin": x.get("origin")}
-            for x in feed_items]
+              "published": x.get("published"), "tema": x.get("tema"), "origin": x.get("origin")}
+             for x in feed_items]
+    _persist_operational_state(fichas)
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "edicion": edicion,
@@ -100,6 +136,9 @@ def _build_fast() -> dict:
                    "fichas": len(fichas), "official_items": sum(1 for x in raw if x.get("official"))},
         "fichas": fichas,
         "feed": feed,
+        "all_news": all_news,
+        "calendar": {"available_days": available_days, "latest_day": available_days[0] if available_days else None,
+                     "edition_day": _published_day(edicion)},
         "sources": _sources_catalog(),
         "metrics": metrics.summarize(raw, deduped, fichas),
         "ai_ready": bool(_cache.get("ai_ready")),

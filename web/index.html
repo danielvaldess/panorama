@@ -294,7 +294,7 @@
 
     const PAGE_SIZE = 50;
     let DATA = null, section = "prioridades", selectedId = null, query = "", temaFilter = "todos", estadoFilter = "todos", semIds = null;
-    let page = 1, feedPage = 1, dateMode = "semana", priorityFilter = "todos", aiLoading = false;
+    let page = 1, feedPage = 1, dateMode = "hoy", priorityFilter = "todos", aiLoading = false;
     let NOVEDADES = [], lastNovShown = null;
     function setBell(n) {
       const b = $("bell"), c = $("bellCount"); if (!b || !c) return;
@@ -309,6 +309,23 @@
     const reviewerName = () => (user() && user().name) || "Editor/a";
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
+    const canNotify = () => "Notification" in window;
+    async function ensureNotifications() {
+      if (!canNotify()) { toast("Este navegador no soporta notificaciones."); return false; }
+      if (Notification.permission === "granted") return true;
+      if (Notification.permission === "denied") { toast("Las notificaciones están bloqueadas en el navegador."); return false; }
+      const permission = await Notification.requestPermission();
+      toast(permission === "granted" ? "Notificaciones activadas." : "No se activaron las notificaciones.");
+      return permission === "granted";
+    }
+    function browserNotify(item, total) {
+      if (!canNotify() || Notification.permission !== "granted" || !item) return;
+      const n = new Notification(total > 1 ? `${total} nuevas señales editoriales` : "Nueva señal editorial", {
+        body: [item.title, item.source].filter(Boolean).join(" · ").slice(0, 180),
+        tag: item.id || item.title || "panorama-live",
+      });
+      n.onclick = () => { window.focus(); section = "bandeja"; selectedId = null; render(); };
+    }
     const byId = (id) => (DATA?.fichas || []).find(f => f.id === id);
     const isoDay = (p) => {
       if (!p) return "";
@@ -317,8 +334,9 @@
       return d.toLocaleDateString("en-CA", { timeZone: PANAMA_TZ });
     };
     const displayDay = (day) => day ? new Date(day + "T12:00:00").toLocaleDateString("es-PA", { day: "2-digit", month: "short", year: "numeric" }) : "sin fecha";
+    const newsItems = () => DATA?.all_news || DATA?.feed || [];
     const allPublishedDays = (items) => Array.from(new Set((items || []).map(x => isoDay(x.published)).filter(Boolean))).sort().reverse();
-    const editionDay = () => isoDay(DATA?.edicion) || allPublishedDays(DATA?.feed)[0] || "";
+    const editionDay = () => DATA?.calendar?.edition_day || isoDay(DATA?.edicion) || DATA?.calendar?.latest_day || allPublishedDays(newsItems())[0] || "";
     const shiftDay = (day, delta) => {
       if (!day) return "";
       const d = new Date(day + "T12:00:00"); d.setDate(d.getDate() + delta);
@@ -326,8 +344,8 @@
     };
     function dateRange() {
       const ed = editionDay();
-      if (dateMode === "hoy") return { from: isoDay(new Date().toISOString()), to: isoDay(new Date().toISOString()), label: "Hoy" };
-      if (dateMode === "ayer") { const y = shiftDay(isoDay(new Date().toISOString()), -1); return { from: y, to: y, label: "Ayer" }; }
+      if (dateMode === "hoy") return { from: ed, to: ed, label: ed ? "Hoy editorial · " + displayDay(ed) : "Hoy editorial" };
+      if (dateMode === "ayer") { const y = shiftDay(ed, -1); return { from: y, to: y, label: y ? "Ayer editorial · " + displayDay(y) : "Ayer editorial" }; }
       if (dateMode === "semana") return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
       if (dateMode === "todo") return { from: "", to: "", label: "Todo el archivo" };
       return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
@@ -359,7 +377,7 @@
     };
     function filterWorkbench(target, total, shown) {
       const r = dateRange();
-      const temas = Array.from(new Set((DATA?.fichas || []).map(f => f.tema || "general"))).sort();
+      const temas = Array.from(new Set((target === "prioridades" ? (DATA?.fichas || []) : newsItems()).map(f => f.tema || "general"))).sort();
       const topicSelect = target === "prioridades" ? `<div class="tool"><label for="temaMode">Categoría</label><select id="temaMode">
             <option value="todos" ${temaFilter === "todos" ? "selected" : ""}>Todas las categorías</option>
             ${temas.map(t => `<option value="${esc(t)}" ${temaFilter === t ? "selected" : ""}>${esc(TEMA_LABEL[t] || t)}</option>`).join("")}
@@ -377,7 +395,7 @@
           ${topicSelect}
         </div>
         <div class="filter-summary">
-          <span class="hint"><span class="datechip">${esc(r.label)}</span> · ${shown} de ${total} señales</span>
+          <span class="hint"><span class="datechip">${esc(r.label)}</span> · ${shown} de ${total} ${target === "feed" ? "publicaciones" : "señales"}</span>
         </div>
       </div>`;
     }
@@ -655,12 +673,12 @@
     }
 
     function renderBandeja() {
-      const all = (DATA.feed || []).filter(matchesDate).filter(textMatches);
+      const all = newsItems().filter(matchesDate).filter(textMatches);
       const rows = paginate(all, feedPage).map((x, i) =>
-        `<tr><td><b>${(feedPage - 1) * PAGE_SIZE + i + 1}.</b> ${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published) || "Sin fecha")}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir fuente</a></td></tr>`).join("");
+        `<tr><td><b>${(feedPage - 1) * PAGE_SIZE + i + 1}.</b> ${esc(x.title)}${x.editorial_signal ? ` <span class="chip ok">Señal</span>` : ` <span class="chip ghost">Archivo</span>`}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published) || "Sin fecha")}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir fuente</a></td></tr>`).join("");
       $("content").innerHTML = `<h1>Publicaciones</h1>
         <p class="sub">Todas las noticias públicas deduplicadas. Filtra por fecha o busca una señal específica sin perder el archivo.</p>
-        ${filterWorkbench("feed", DATA.feed.length, all.length)}
+        ${filterWorkbench("feed", newsItems().length, all.length)}
         <div class="resultnote"><span><b>${all.length}</b> publicaciones coinciden con los filtros.</span><span>La mesa editorial agrupa estas publicaciones en temas priorizados.</span></div>
         <div class="card"><table><thead><tr><th>Titular</th><th>Medio</th><th>Publicado</th><th></th></tr></thead>
         <tbody>${rows || `<tr><td colspan="4" class="empty"><strong>No hay publicaciones.</strong>Prueba con otra fecha o limpia la búsqueda.</td></tr>`}</tbody></table></div>
@@ -863,16 +881,18 @@
         if (lastNovShown !== null && NOVEDADES.length > lastNovShown) {
           const t = (NOVEDADES[0] && NOVEDADES[0].title) ? NOVEDADES[0].title.slice(0, 60) : "";
           toast(NOVEDADES.length + " noticia(s) nueva(s) reales" + (t ? ": " + t : ""));
+          browserNotify(NOVEDADES[0], NOVEDADES.length);
         }
         lastNovShown = NOVEDADES.length;
         $("updated").textContent = "actualizado hace instantes";
-        $("status").textContent = `${c.fetched || 0} publicaciones · ${c.fichas || 0} temas` + (live.last_poll ? " · en vivo" : "");
+        $("status").textContent = `${newsItems().length || c.after_dedupe || c.fetched || 0} publicaciones · ${c.fichas || 0} temas` + (live.last_poll ? " · en vivo" : "");
         render();
       } catch (e) { $("content").innerHTML = `<div class="empty">No se pudo cargar la mesa.</div>`; }
     }
 
     $("refresh").addEventListener("click", () => load(true));
     $("bell").addEventListener("click", async () => {
+      if (canNotify() && Notification.permission !== "granted") { await ensureNotifications(); return; }
       try { await fetch("/api/seen", { method: "POST", headers: authHeaders() }); } catch (e) { /* ignore */ }
       NOVEDADES = []; lastNovShown = 0; setBell(0);
       if (section === "prioridades" && !selectedId) renderPrioridades();
