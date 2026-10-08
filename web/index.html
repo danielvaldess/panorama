@@ -425,7 +425,7 @@
             </div>
             <div class="card block">
               <h3>Afirmaciones y citas</h3>
-              <div class="draftfield"><b>Afirmaciones</b><div class="c" style="margin-bottom:8px">Validación del Administrador: <b>${prog.validos}/${prog.total} válidas (${prog.pct}%)</b> · ${prog.fichas} fichas — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
+              <div class="draftfield"><b>Afirmaciones</b><div class="c" style="margin-bottom:8px">${prog.total === 0 ? "Pendiente de revisión humana (0 afirmaciones revisadas)." : `Validación: <b>${prog.validos}/${prog.total} válidas (${prog.pct}%)</b> · ${prog.fichas} fichas`} — meta ≥90% (≥30 afirmaciones · ≥10 fichas)</div>
               ${claims}
             </div>
             ${aiBox}
@@ -599,15 +599,16 @@
       const pctV = s.pct_validos != null ? Math.round(s.pct_validos * 100) : 0;
       const suf = p.estado === "insuficiente";
       const m = s.muestra || {};
+      const sinMuestra = (s.denominador ?? 0) === 0;
       const sustCard = `
         <div class="card">
           <h3 style="font-family:var(--f-title)">Validez de sustento (meta ≥90%)</h3>
-          <div class="viz"><div class="lab">Afirmaciones válidas</div><div class="track"><span class="${s.cumple_meta ? "bar-suf" : "bar-par"}" style="width:${pctV}%"></span></div><div class="num">${pctV}%</div></div>
-          <div class="metric"><span>Válidos / etiquetados</span><b>${s.numerador_validos ?? 0} / ${s.denominador ?? 0}</b></div>
+          <div class="viz"><div class="lab">Afirmaciones válidas</div><div class="track"><span class="${s.cumple_meta ? "bar-suf" : "bar-par"}" style="width:${pctV}%"></span></div><div class="num">${sinMuestra ? "—" : pctV + "%"}</div></div>
+          <div class="metric"><span>Válidos / revisadas</span><b>${s.numerador_validos ?? 0} / ${s.denominador ?? 0}</b></div>
           <div class="metric"><span>Muestra (afirmaciones)</span><b>${m.afirmaciones ?? 0} / ${m.min_afirmaciones ?? 30} mín.</b></div>
           <div class="metric"><span>Fichas revisadas</span><b>${m.fichas ?? 0} / ${m.min_fichas ?? 10} mín.</b></div>
-          <div class="metric"><span>Estado</span><b>${s.cumple_meta ? "Cumple la meta" : "Pendiente"}</b></div>
-          <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">Los veredictos se registran en la ficha, sección «Afirmaciones y citas». Rúbrica: solo «válido» cuenta.</div>
+          <div class="metric"><span>Estado</span><b>${sinMuestra ? "Pendiente de revisión humana (0/" + (m.min_afirmaciones ?? 30) + " revisadas)" : (s.cumple_meta ? "Cumple la meta" : "Pendiente")}</b></div>
+          <div class="c" style="margin-top:8px;color:var(--soft);font-size:12px">Los veredictos se registran en la ficha, sección «Afirmaciones». Rúbrica: solo «válido» cuenta. Se reporta numerador, denominador y fallos.</div>
         </div>`;
       if (suf) {
         $("content").innerHTML = `<h1>Perfil de decisiones</h1>
