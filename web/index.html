@@ -384,7 +384,7 @@
           <div class="c">Fuente: ${esc((a.ids_fuente || []).join(", "))}${a.campo ? ` · campo: ${esc(a.campo)}` : ""}${a.cita ? ` · <a href="${esc(a.cita)}" target="_blank" rel="noopener">evidencia</a>` : ""} ${chipV}</div>
           <div class="actions">${btns}</div></div>`;
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
-      const aiBox = `<div class="card block"><h3>Resumen asistido</h3>${f.summary ? `<div class="assist"><small>${esc(f.method || "asistido")} · respaldo ${Math.round((f.grounding || 0) * 100)}%</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}` : `<div class="c">Aún no generado.</div>`}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
+      const aiBox = `<div class="card block"><h3>Resumen asistido</h3>${f.summary ? `<div class="assist"><small>${esc(f.method === "ai" ? "asistido" : "versión determinística")}</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}${f.method && f.method !== "ai" ? `<div class="c" style="margin-top:6px">${esc(f.ai_message || "No se pudo generar el resumen asistido; se muestra una versión determinística.")}</div>` : ""}` : `<div class="c">Aún no generado. Genera una versión determinística desde el titular.</div>`}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
       const prog = sustentoProgreso();
       const ctx = (f.contexto || []).map(c => {
         const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
@@ -421,6 +421,7 @@
               <div class="draftfield"><b>Guion 45–60 s</b><div class="val">${esc(d.guion_45_60s || "")}</div></div>
               <div class="draftfield"><b>Copy digital</b><div class="val">${esc(d.copy_digital || "")}</div></div>
               <div class="draftfield"><b>Preguntas de investigación</b><ol class="qs">${(d.preguntas || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol></div>
+              ${(d.notas_internas || []).length ? `<div class="draftfield"><b>Notas internas (no van al aire)</b><ul class="sources">${d.notas_internas.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : ""}
             </div>
             <div class="card block">
               <h3>Afirmaciones y citas</h3>

@@ -29,6 +29,8 @@ MODELS = os.environ.get(
 ).split(",")
 PROFILE = "una mesa de redacción de noticias nacionales en Panamá (TVN)"
 
+_CACHE: dict[str, dict] = {}
+
 
 def _key() -> str:
     return os.environ.get("OPENROUTER_API_KEY", "")
@@ -87,7 +89,10 @@ def grounding(summary: str, title: str, sources: list[dict]) -> float:
 
 
 def analyze(title: str, sources_list: list[dict]) -> dict:
-    """Devuelve {summary, why, topics, relevance, method}. Con fallback local."""
+    """Devuelve {summary, why, topics, relevance, method, fallback, message}. Con fallback local."""
+    key = (title or "").strip().lower()
+    if key in _CACHE:  # cache de últimas salidas válidas (T7)
+        return _CACHE[key]
     clean_title, flagged = guard.sanitize(title)
     srcs = "; ".join(s["name"] for s in sources_list) or "sin fuente"
     system = ("Eres un asistente editorial. Devuelve ÚNICAMENTE JSON válido, sin texto extra ni "
@@ -104,14 +109,20 @@ def analyze(title: str, sources_list: list[dict]) -> dict:
     raw = _chat(system, user)
     data = _json(raw)
     if data and data.get("resumen"):
-        return {
+        out = {
             "summary": str(data.get("resumen", ""))[:400],
             "why": str(data.get("por_que_importa", ""))[:240],
             "topics": [str(t)[:24] for t in (data.get("temas") or [])][:4],
             "relevance": float(data.get("relevancia", 0) or 0),
             "method": "ai",
             "grounding": grounding(str(data.get("resumen", "")), clean_title, sources_list),
+            "fallback": False,
+            "message": "",
         }
+        _CACHE[clean_title.strip().lower()] = out
+        return out
+    # Fallback determinístico visible (T7)
+    print(f"[ai] fallback local (sin IA): {clean_title[:48]}", flush=True)
     return {
         "summary": f"{clean_title}.",
         "why": "",
@@ -119,4 +130,6 @@ def analyze(title: str, sources_list: list[dict]) -> dict:
         "relevance": 0.0,
         "method": "local",
         "grounding": grounding(clean_title, clean_title, sources_list),
+        "fallback": True,
+        "message": "No se pudo generar el resumen asistido; se muestra una versión determinística (solo titular/metadatos).",
     }
