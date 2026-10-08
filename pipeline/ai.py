@@ -1,10 +1,8 @@
-"""IA sustantiva (OpenRouter): análisis asistido por tema + grounding.
+"""IA sustantiva: análisis asistido por tema + grounding.
 
-Roles:
-  - resumen, "por qué importa", temas (NLP/extracción).
-  - relevancia editorial asistida (para comparar con el baseline BM25).
-  - grounding: comprobar que el resumen se sostiene en la fuente (abstención).
-Degrada con elegancia: lista de modelos + plantilla local si no hay IA.
+Proveedor principal: **OpenCode Zen** (plan Go, endpoint compatible OpenAI). Respaldo:
+OpenRouter. Roles: resumen, "por qué importa", temas (NLP/extracción), relevancia
+asistida y grounding (para abstención). Degrada con elegancia a plantilla local.
 """
 from __future__ import annotations
 
@@ -22,45 +20,61 @@ try:
 except Exception:
     pass
 
-OR_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODELS = os.environ.get(
+# OpenCode Zen (principal) — compatible OpenAI.
+ZEN_URL = os.environ.get("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1/chat/completions")
+ZEN_MODELS = [m.strip() for m in os.environ.get(
+    "OPENCODE_MODELS",
+    "deepseek-v4-flash,deepseek-v4.1-flash,mimo-v2.5-free,nemotron-3.5-lightning-free",
+).split(",") if m.strip()]
+# OpenRouter (respaldo).
+OR_URL = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions")
+OR_MODELS = [m.strip() for m in os.environ.get(
     "OPENROUTER_MODELS",
-    "inclusionai/ling-3.0-flash-sante:free,dots-studio/dots-3-note-preview:free,nvidia/nemotron-3.5-lightning:free",
-).split(",")
+    "inclusionai/ling-3.0-flash-sante:free,dots-studio/dots-3-note-preview:free",
+).split(",") if m.strip()]
 PROFILE = "una mesa de redacción de noticias nacionales en Panamá (TVN)"
 
 _CACHE: dict[str, dict] = {}
 
 
-def _key() -> str:
+def _zen_key() -> str:
+    return os.environ.get("OPENCODE_API_KEY", "")
+
+
+def _or_key() -> str:
     return os.environ.get("OPENROUTER_API_KEY", "")
 
 
+def _key() -> str:
+    return _zen_key() or _or_key()
+
+
 def available() -> bool:
-    return bool(_key())
+    return bool(_zen_key() or _or_key())
 
 
 def _chat(system: str, user: str, max_tokens: int = 900) -> str:
-    if not _key():
-        return ""
-    for model in MODELS:
-        model = model.strip()
-        try:
-            r = httpx.post(OR_URL, headers={"Authorization": f"Bearer {_key()}"},
-                           json={"model": model,
-                                 "messages": [{"role": "system", "content": system},
-                                              {"role": "user", "content": user}],
-                                 "max_tokens": max_tokens}, timeout=60)
-            if r.status_code != 200:
-                continue
-            msg = r.json()["choices"][0]["message"]
-            out = (msg.get("content") or "").strip()
-            if not out and msg.get("reasoning"):
-                out = msg["reasoning"]
-            if out:
-                return out
-        except Exception:
+    providers = ((ZEN_URL, _zen_key(), ZEN_MODELS), (OR_URL, _or_key(), OR_MODELS))
+    for url, key, models in providers:
+        if not key:
             continue
+        for model in models:
+            try:
+                r = httpx.post(url, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                               json={"model": model,
+                                     "messages": [{"role": "system", "content": system},
+                                                  {"role": "user", "content": user}],
+                                     "max_tokens": max_tokens}, timeout=60)
+                if r.status_code != 200:
+                    continue
+                msg = r.json()["choices"][0]["message"]
+                out = (msg.get("content") or "").strip()
+                if not out and msg.get("reasoning"):
+                    out = msg["reasoning"]
+                if out:
+                    return out
+            except Exception:
+                continue
     return ""
 
 

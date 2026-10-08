@@ -1,6 +1,6 @@
-# IA — embeddings locales + OpenRouter bajo demanda
+# IA — embeddings locales + OpenCode Zen (respaldo OpenRouter)
 
-Panorama usa IA en dos niveles: **embeddings locales** para recuperación/agrupación semántica y **OpenRouter bajo demanda** para enriquecer algunos temas si hay `OPENROUTER_API_KEY`. El flujo principal no depende de un LLM.
+Panorama usa IA en dos niveles: **embeddings locales** para recuperación/agrupación semántica y un **LLM bajo demanda** para enriquecer algunos temas. Proveedor **principal: OpenCode Zen** (plan Go, endpoint compatible OpenAI, `OPENCODE_API_KEY`); **respaldo: OpenRouter** (`OPENROUTER_API_KEY`). El flujo principal no depende de un LLM.
 
 ## Decisiones
 

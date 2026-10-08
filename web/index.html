@@ -304,14 +304,14 @@
     function renderPrioridades() {
       const base = fichas();
       const needsEvidence = f => ((f.verification?.independent || 0) < 2) || ["Sin verificar", "Contradicho"].includes(f.state);
-      const TABS = [["todos", "Todos"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"], ["recirculadas", "Recirculadas"]];
+      const TABS = [["todos", "Todas las señales"], ["hoy", "Mesa de hoy"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"], ["recirculadas", "Recirculadas"]];
       const byEstado = (arr, k) => {
+        if (k === "hoy") return arr.filter(f => !f.recirculada);
         if (k === "recirculadas") return arr.filter(f => f.recirculada);
-        const fresh = arr.filter(f => !f.recirculada);
-        if (k === "evidencia") return fresh.filter(needsEvidence);
-        if (k === "revision") return fresh.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
-        if (k === "listos") return fresh.filter(f => f.review_state === "aprobado como borrador");
-        return fresh;
+        if (k === "evidencia") return arr.filter(needsEvidence);
+        if (k === "revision") return arr.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
+        if (k === "listos") return arr.filter(f => f.review_state === "aprobado como borrador");
+        return arr;
       };
       const baseEstado = byEstado(base, estadoFilter);
       const temas = Array.from(new Set(baseEstado.map(f => f.tema || "general")));
@@ -340,9 +340,9 @@
         </article>`;
       }).join("") : `<div class="empty">No hay temas en esta vista.</div>`;
       const baseFresh = base.filter(f => !f.recirculada);
-      const alto = baseFresh.filter(f => f.band === "alto").length;
-      const suf = baseFresh.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
-      const pend = baseFresh.filter(needsEvidence).length;
+      const alto = base.filter(f => f.band === "alto").length;
+      const suf = base.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
+      const pend = base.filter(needsEvidence).length;
       const h = new Date().getHours();
       const greet = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
       const first = (reviewerName().split(" ")[0] || "");
@@ -350,11 +350,11 @@
         <div class="hero">
           <div>
             <div class="hello">${greet}${first ? ", " + esc(first) : ""}</div>
-            <div class="hero-sub">Tu mesa de hoy: ${baseFresh.length} temas leídos de las fuentes, ${alto} de prioridad alta y ${pend} por comprobar.</div>
+            <div class="hero-sub">Tu mesa: ${base.length} señales leídas de las fuentes (${baseFresh.length} de los últimos 14 días), ${alto} de prioridad alta y ${pend} por comprobar.</div>
           </div>
         </div>
         <div class="stats">
-          <div class="stat"><div class="v">${baseFresh.length}</div><div class="l">Temas del día</div></div>
+          <div class="stat"><div class="v">${base.length}</div><div class="l">Señales en la mesa</div></div>
           <div class="stat"><div class="v">${alto}</div><div class="l">Prioridad alta</div></div>
           <div class="stat"><div class="v">${suf}</div><div class="l">Evidencia suficiente</div></div>
           <div class="stat"><div class="v">${pend}</div><div class="l">Por comprobar</div></div>
