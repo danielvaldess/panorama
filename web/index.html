@@ -305,16 +305,16 @@
       const base = fichas();
       const needsEvidence = f => ((f.verification?.independent || 0) < 2) || ["Sin verificar", "Contradicho"].includes(f.state);
       const TABS = [["todos", "Todos"], ["evidencia", "Requieren evidencia"], ["revision", "En revisión"], ["listos", "Listos para publicar"]];
-      const applyEstado = (arr) => {
-        if (estadoFilter === "evidencia") return arr.filter(needsEvidence);
-        if (estadoFilter === "revision") return arr.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
-        if (estadoFilter === "listos") return arr.filter(f => f.review_state === "aprobado como borrador");
+      const byEstado = (arr, k) => {
+        if (k === "evidencia") return arr.filter(needsEvidence);
+        if (k === "revision") return arr.filter(f => ["en revisión", "requiere evidencia"].includes(f.review_state));
+        if (k === "listos") return arr.filter(f => f.review_state === "aprobado como borrador");
         return arr;
       };
-      const baseEstado = applyEstado(base);
+      const baseEstado = byEstado(base, estadoFilter);
       const temas = Array.from(new Set(baseEstado.map(f => f.tema || "general")));
       const fs = temaFilter === "todos" ? baseEstado : baseEstado.filter(f => (f.tema || "general") === temaFilter);
-      const tabs = TABS.map(([k, lbl]) => `<button class="tab ${estadoFilter === k ? "on" : ""}" data-estado="${k}">${lbl} <span class="n">${applyEstado(base).length}</span></button>`).join("");
+      const tabs = TABS.map(([k, lbl]) => `<button class="tab ${estadoFilter === k ? "on" : ""}" data-estado="${k}">${lbl} <span class="n">${byEstado(base, k).length}</span></button>`).join("");
       const chips = [`<button class="fchip ${temaFilter === "todos" ? "on" : ""}" data-tema="todos">Todos · ${baseEstado.length}</button>`]
         .concat(temas.map(t => {
           const n = baseEstado.filter(f => (f.tema || "general") === t).length;
@@ -709,7 +709,7 @@
       const token = ($("gToken").value || "").trim();
       localStorage.setItem("panorama_user", JSON.stringify({ name, role }));
       if (token) localStorage.setItem("panorama_token", token); else localStorage.removeItem("panorama_token");
-      $("gate").hidden = true; $("app").hidden = false;
+      showUser();
       start();
     });
 

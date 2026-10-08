@@ -35,8 +35,9 @@ Fuente: CSS de `tvn-2.com` (`--background-accent-color: #058`, `.bbnx-btn`, etc.
 - **Densidad informativa:** tablas y listas legibles; nada de "dashboard de juguete".
 - **Estados:** verificado (verde), por verificar (ámbar), atención (rojo `#e00710`).
 - **Iconografía sobria**, líneas finas; evitar emojis en la UI.
-- **Layout:** sidebar (Inicio · Prioridades · Bandeja · Fuentes · Verificación ·
-  Borradores · Reportes) + topbar con **fecha de edición** y usuario.
+- **Layout:** pantalla de **acceso** (nombre + rol) → app con sidebar de 4 secciones
+  (**Mesa de hoy · Publicaciones · Fuentes · Calidad**) + **Cómo funciona**, y topbar
+  con búsqueda, fecha de edición y **menú de usuario** (Perfil de decisiones · Cerrar sesión).
 
 ## 3. Principios de UX
 1. **Orientado a la tarea del periodista**, no a la del ingeniero.
