@@ -386,7 +386,12 @@
       }).join("") || "<div class='c'>Sin afirmaciones.</div>";
       const aiBox = `<div class="card block"><h3>Resumen asistido</h3>${f.summary ? `<div class="assist"><small>${esc(f.method || "asistido")} · respaldo ${Math.round((f.grounding || 0) * 100)}%</small>${esc(f.summary)}</div>${f.why ? `<div class="c" style="margin-top:8px">${esc(f.why)}</div>` : ""}` : `<div class="c">Aún no generado.</div>`}<div class="actions"><button class="btn btn-ghost" id="aiBtn">Generar resumen</button></div></div>`;
       const prog = sustentoProgreso();
-      const ctx = (f.contexto || []).map(c => `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div><div class="c">${esc(c.periodo)} · ${esc(c.unidad)} · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a></div><div class="c">${esc(c.limite)}</div></div>`).join("") || "<div class='c'>Sin relación oficial sustentada (no se fuerza).</div>";
+      const ctx = (f.contexto || []).map(c => {
+        const meta = [c.periodo, c.unidad].filter(Boolean).join(" · ");
+        const link = c.fuente_url ? ` · <a href="${esc(c.fuente_url)}" target="_blank" rel="noopener">fuente</a>` : "";
+        const just = c.justificacion ? `<div class="c">Por qué es pertinente: ${esc(c.justificacion)}</div>` : "";
+        return `<div class="claim"><div class="t">${esc(c.titulo)}</div><div>${esc(c.detalle)}</div>${(meta || link) ? `<div class="c">${esc(meta)}${link}</div>` : ""}${just}${c.limite ? `<div class="c">${esc(c.limite)}</div>` : ""}</div>`;
+      }).join("") || "<div class='c'>Sin contexto oficial.</div>";
       const sources = (f.sources || []).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join("") || "<li>Sin fuentes</li>";
       const pend = (d.verificaciones_pendientes || []).map(p => `<li>${esc(p)}</li>`).join("");
       const reviewBtns = REVIEW.map(s => `<button class="btn btn-ghost" data-review="${esc(s)}">${esc(s)}</button>`).join("");

@@ -1,21 +1,22 @@
-"""Contextualización: relaciona un tema con datos oficiales (Banco Mundial / USGS).
+"""Contextualización con puerta de relevancia (T5).
 
-Regla del reto: mostrar **período, unidad y limitaciones**; si no hay relación
-sustentada, **no forzarla**.
+Solo se enlaza un indicador oficial si el tema tiene una relación explícita y
+sustentada. Si no la hay, se muestra **"Sin indicador oficial pertinente"** en vez
+de rellenar con Población/Internet. Cada contexto incluye país, año, unidad, la
+justificación y la nota de que es un dato anual histórico.
 """
 from __future__ import annotations
 
 from pipeline import snapshot
 
+# Tabla explícita tema -> indicadores permitidos (T5).
 TEMA_INDICADORES = {
     "economia": ["NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG", "SL.UEM.TOTL.ZS"],
     "logistica": ["NE.EXP.GNFS.ZS"],
-    "servicios": ["IT.NET.USER.ZS", "SP.POP.TOTL"],
-    "turismo": [],
-    "eventos_naturales": [],
-    "regulacion": [],
-    "general": [],
+    "relaciones_exteriores": ["NE.EXP.GNFS.ZS"],
+    "turismo": ["NE.EXP.GNFS.ZS"],
 }
+
 INDICADOR_NOMBRE = {
     "NY.GDP.MKTP.KD.ZG": "Crecimiento del PIB",
     "FP.CPI.TOTL.ZG": "Inflación",
@@ -24,6 +25,16 @@ INDICADOR_NOMBRE = {
     "IT.NET.USER.ZS": "Uso de Internet",
     "NE.EXP.GNFS.ZS": "Exportaciones (% del PIB)",
 }
+
+JUSTIFICACION = {
+    ("economia", "NY.GDP.MKTP.KD.ZG"): "El crecimiento del PIB enmarca el desempeño económico del país.",
+    ("economia", "FP.CPI.TOTL.ZG"): "La inflación mide la evolución de los precios.",
+    ("economia", "SL.UEM.TOTL.ZS"): "El desempleo mide el mercado laboral.",
+    ("logistica", "NE.EXP.GNFS.ZS"): "Las exportaciones (% del PIB) aproximan el peso del comercio ligado al Canal y la logística.",
+    ("relaciones_exteriores", "NE.EXP.GNFS.ZS"): "El comercio exterior se mide con las exportaciones (% del PIB).",
+    ("turismo", "NE.EXP.GNFS.ZS"): "Las exportaciones (% del PIB) aproximan el aporte del sector externo, que incluye el turismo.",
+}
+
 LIMITE = "Dato anual histórico del Banco Mundial; no es una medición de hoy."
 
 _ind_cache = None
@@ -57,6 +68,14 @@ def _fmt(v):
         return str(v)
 
 
+def _sin_contexto() -> dict:
+    return {
+        "tipo": "sin_contexto", "titulo": "Sin indicador oficial pertinente",
+        "detalle": "No hay una serie oficial que sustente este tema; no se fuerza el contexto.",
+        "periodo": "", "unidad": "", "limite": "", "fuente_url": "", "justificacion": "",
+    }
+
+
 def build(ficha: dict) -> list[dict]:
     tema = ficha.get("tema", "general")
     out: list[dict] = []
@@ -76,6 +95,7 @@ def build(ficha: dict) -> list[dict]:
             "tipo": "indicador", "titulo": INDICADOR_NOMBRE.get(ind, ind), "detalle": detalle,
             "periodo": f"{anio} (anual)", "unidad": row["unidad"], "limite": LIMITE,
             "fuente_url": row.get("fuente_url", ""),
+            "justificacion": JUSTIFICACION.get((tema, ind), "Relación temática con la serie."),
         })
 
     if tema == "eventos_naturales":
@@ -90,5 +110,9 @@ def build(ficha: dict) -> list[dict]:
                 "periodo": "2024", "unidad": "magnitud",
                 "limite": "USGS solo reporta hechos sísmicos; no implica daños ni inundaciones.",
                 "fuente_url": p.get("url", ""),
+                "justificacion": "USGS documenta hechos sísmicos verificables.",
             })
+
+    if not out:
+        out.append(_sin_contexto())
     return out
