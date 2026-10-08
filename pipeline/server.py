@@ -78,6 +78,34 @@ def _persist_operational_state(fichas: list[dict]) -> None:
         pass
 
 
+def _merge_live_news(data: dict) -> dict:
+    """Mantiene Publicaciones al día aunque el cache principal venga del snapshot."""
+    with _lock:
+        live_items = list(_live.get("items") or [])
+    if not live_items:
+        return data
+    out = dict(data)
+    all_news = list(out.get("all_news") or [])
+    seen = {(x.get("url") or "").split("?")[0] for x in all_news if x.get("url")}
+    for item in live_items:
+        key = (item.get("url") or "").split("?")[0]
+        if not key or key in seen:
+            continue
+        all_news.insert(0, _compact_news(item, editorial=True))
+        seen.add(key)
+    out["all_news"] = all_news
+    days = sorted({d for d in (_published_day(x.get("published")) for x in all_news) if d}, reverse=True)
+    cal = dict(out.get("calendar") or {})
+    cal["available_days"] = days
+    cal["latest_day"] = days[0] if days else cal.get("latest_day")
+    out["calendar"] = cal
+    counts = dict(out.get("counts") or {})
+    counts["after_dedupe"] = max(int(counts.get("after_dedupe") or 0), len(all_news))
+    counts["fetched"] = max(int(counts.get("fetched") or 0), len(all_news))
+    out["counts"] = counts
+    return out
+
+
 def _sources_catalog() -> list[dict]:
     """Catálogo alineado a las fuentes declaradas por el reto (última página del PDF)."""
     return [{"name": s["nombre"], "url": s["url"], "reliability": s["confiabilidad"],
@@ -334,7 +362,7 @@ async def fichas():
     if not data.get("fichas"):
         threading.Thread(target=refresh, daemon=True).start()
         return JSONResponse({"generating": True, "fichas": [], "counts": {}})
-    return JSONResponse(data)
+    return JSONResponse(_merge_live_news(data))
 
 
 @app.post("/api/refresh")

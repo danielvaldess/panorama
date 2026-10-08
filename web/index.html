@@ -337,21 +337,24 @@
     const newsItems = () => DATA?.all_news || DATA?.feed || [];
     const allPublishedDays = (items) => Array.from(new Set((items || []).map(x => isoDay(x.published)).filter(Boolean))).sort().reverse();
     const editionDay = () => DATA?.calendar?.edition_day || isoDay(DATA?.edicion) || DATA?.calendar?.latest_day || allPublishedDays(newsItems())[0] || "";
+    const realToday = () => isoDay(new Date().toISOString());
+    const hasLiveToday = () => newsItems().some(x => isoDay(x.published) === realToday());
     const shiftDay = (day, delta) => {
       if (!day) return "";
       const d = new Date(day + "T12:00:00"); d.setDate(d.getDate() + delta);
       return d.toLocaleDateString("en-CA", { timeZone: PANAMA_TZ });
     };
-    function dateRange() {
-      const ed = editionDay();
-      if (dateMode === "hoy") return { from: ed, to: ed, label: ed ? "Hoy editorial · " + displayDay(ed) : "Hoy editorial" };
-      if (dateMode === "ayer") { const y = shiftDay(ed, -1); return { from: y, to: y, label: y ? "Ayer editorial · " + displayDay(y) : "Ayer editorial" }; }
-      if (dateMode === "semana") return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
+    function dateRange(target = "prioridades") {
+      const base = target === "feed" && hasLiveToday() ? realToday() : editionDay();
+      const suffix = target === "feed" && base === realToday() ? "tiempo real" : "editorial";
+      if (dateMode === "hoy") return { from: base, to: base, label: base ? "Hoy " + suffix + " · " + displayDay(base) : "Hoy" };
+      if (dateMode === "ayer") { const y = shiftDay(base, -1); return { from: y, to: y, label: y ? "Ayer " + suffix + " · " + displayDay(y) : "Ayer" }; }
+      if (dateMode === "semana") return { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
       if (dateMode === "todo") return { from: "", to: "", label: "Todo el archivo" };
-      return { from: shiftDay(ed, -6), to: ed, label: "Últimos 7 días" };
+      return { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
     }
-    function matchesDate(x) {
-      const d = isoDay(x.published), r = dateRange();
+    function matchesDate(x, target = "prioridades") {
+      const d = isoDay(x.published), r = dateRange(target);
       if (!d) return !r.from && !r.to;
       return (!r.from || d >= r.from) && (!r.to || d <= r.to);
     }
@@ -376,7 +379,7 @@
       });
     };
     function filterWorkbench(target, total, shown) {
-      const r = dateRange();
+      const r = dateRange(target);
       const temas = Array.from(new Set((target === "prioridades" ? (DATA?.fichas || []) : newsItems()).map(f => f.tema || "general"))).sort();
       const topicSelect = target === "prioridades" ? `<div class="tool"><label for="temaMode">Categoría</label><select id="temaMode">
             <option value="todos" ${temaFilter === "todos" ? "selected" : ""}>Todas las categorías</option>
@@ -409,7 +412,7 @@
     function fichas() {
       const all = DATA?.fichas || [];
       const dated = all
-        .filter(matchesDate)
+        .filter(x => matchesDate(x, "prioridades"))
         .filter(f => temaFilter === "todos" || (f.tema || "general") === temaFilter)
         .filter(f => priorityFilter === "todos" || f.band === priorityFilter);
       if (semIds && semIds.length) {
@@ -673,7 +676,7 @@
     }
 
     function renderBandeja() {
-      const all = newsItems().filter(matchesDate).filter(textMatches);
+      const all = newsItems().filter(x => matchesDate(x, "feed")).filter(textMatches);
       const rows = paginate(all, feedPage).map((x, i) =>
         `<tr><td><b>${(feedPage - 1) * PAGE_SIZE + i + 1}.</b> ${esc(x.title)}${x.editorial_signal ? ` <span class="chip ok">Señal</span>` : ` <span class="chip ghost">Archivo</span>`}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published) || "Sin fecha")}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Abrir fuente</a></td></tr>`).join("");
       $("content").innerHTML = `<h1>Publicaciones</h1>
