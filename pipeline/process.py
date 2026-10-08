@@ -9,6 +9,9 @@ from rank_bm25 import BM25Okapi
 from rapidfuzz import fuzz
 
 from pipeline import score as score_mod
+from pipeline import claims
+from pipeline import origin
+from pipeline import theme as theme_mod
 
 # Confiabilidad por fuente (1-5).
 SOURCE_RELIABILITY = {
@@ -158,13 +161,19 @@ def _is_wire(x: dict) -> bool:
     return any(w in t for w in WIRE_MARKERS)
 
 
+def _reliability(x: dict) -> int:
+    """Confiabilidad 1–5 por nombre de medio o dominio."""
+    name = (x.get("source") or "").strip()
+    host = _host(x.get("url", ""))
+    for k, val in SOURCE_RELIABILITY.items():
+        if k.lower() == name.lower() or k == host:
+            return val
+    return DEFAULT_RELIABILITY
+
+
 def _independent(g: list[dict]) -> int:
-    """Nº de orígenes textuales distintos dentro del grupo (colapsa eco/reescrituras)."""
-    origins: list[dict] = []
-    for x in g:
-        if not any(_sim(x["title"], o["title"]) >= ECHO_SIM for o in origins):
-            origins.append(x)
-    return max(1, len(origins))
+    """T2: nº de orígenes reales distintos (agencia/dominio) tras colapsar eco/reescrituras."""
+    return origin.collapse_origins(g)
 
 
 def _contradiction(g: list[dict]) -> bool:
@@ -249,9 +258,14 @@ def _verify(g: list[dict]) -> dict:
     else:
         state, conf = "Sin verificar", "Bajo"
         reason = "Un solo origen o copias del mismo (eco). Falta prueba independiente u oficial."
+    rels = [_reliability(x) for x in items] or [DEFAULT_RELIABILITY]
+    reliability_avg = round((sum(rels) / len(rels)) / 5.0, 2)
+    trazabilidad = round(sum(1 for x in items if x.get("url")) / len(items), 2) if items else 0.0
     return {
         "state": state, "confidence": conf, "reason": reason,
         "official": len(official), "independent": indep, "echo": echo, "wire": wires > 0,
+        "contradict": contradict, "reliability_avg": reliability_avg, "trazabilidad": trazabilidad,
+        "origenes": sorted({origin.origen_real(x) for x in items})[:8],
     }
 
 
@@ -270,26 +284,46 @@ def priority(groups: list[list[dict]], query: list[str]) -> list[dict]:
             uniq.setdefault(x["source"], x)
         v = _verify(g)
         rel_i = rel[i] if i < len(rel) else 0.0
-        comp, tema = score_mod.compute_components(g, rel_i, v)
+        tipo = claims.clasificar_afirmacion(g[0]["title"], official=bool(v["official"]),
+                                            origen=g[0].get("source", ""))
+        tema_baseline = score_mod._dominant_topic(g)
+        tema, tema_conf, tema_cands = theme_mod.clasificar_tema(g[0]["title"])
+        comp, _ = score_mod.compute_components(g, rel_i, v, tipo, tema)
         p = score_mod.final_score(comp)
         pubs = [x.get("published") for x in g if x.get("published")]
         published = max(pubs) if pubs else None
+        age = score_mod.edad_dias(g)
+        recirculada = age is not None and age > score_mod.URGENCY_WINDOW_D
+        if recirculada and p > score_mod.RECIRCULADA_CAP:
+            p = score_mod.RECIRCULADA_CAP  # T3: sin urgencia no puede quedar en media/alta
         fichas.append({
             "id": g[0].get("id", ""),
             "title": g[0]["title"],
             "published": published,
             "score": p,
             "band": score_mod.band(p),
+            "edad_dias": round(age, 1) if age is not None else None,
+            "recirculada": recirculada,
             "components": comp,
             "rules_version": score_mod.RULES_VERSION,
-            "evidence_state": score_mod.evidence_state(v),
+            "tipo_afirmacion": tipo,
+            "tipo_afirmacion_label": claims.etiqueta(tipo),
+            "evidence_state": score_mod.evidence_state(v, tipo),
+            "evidence_reason": score_mod.evidence_reason(v, tipo),
+            "evidence_flags": {"contradiccion": bool(v.get("contradict"))},
             "confidence": v["confidence"],
             "state": v["state"],
             "status": v["state"],
             "tema": tema,
+            "tema_confianza": tema_conf,
+            "tema_candidatos": tema_cands,
+            "tema_baseline": tema_baseline,
             "verification": {
                 "state": v["state"], "reason": v["reason"], "official": v["official"],
                 "independent": v["independent"], "echo": v["echo"], "wire": v["wire"],
+                "contradict": v.get("contradict", False),
+                "reliability_avg": v.get("reliability_avg", 0.0),
+                "origenes": v.get("origenes", []),
             },
             "sources": [{"name": n, "url": x["url"]} for n, x in uniq.items()],
             "relevance": round(rel_i, 2),

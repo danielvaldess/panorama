@@ -1,0 +1,58 @@
+{
+  "caso": "MERCOSUR",
+  "v1_observado": {
+    "evidence_state": "Suficiente para el borrador",
+    "E": 1.0,
+    "tema": "servicios",
+    "medios_independientes": 1,
+    "estado": "Confirmado",
+    "prioridad": 58,
+    "urgencia": 0.0,
+    "marca_antiguedad": null,
+    "contexto": "Uso de Internet / Población (sin relación)",
+    "guion_con_meta_mensaje": true,
+    "titulo_truncado": true
+  },
+  "v2_calculado": {
+    "evidence_state": "Parcial",
+    "E": 0.36,
+    "E_detalle": {
+      "primaria": 0.5,
+      "corroboracion": 0.0,
+      "confiabilidad": 0.6,
+      "trazabilidad": 1.0,
+      "contradiccion": 0.0
+    },
+    "tipo_afirmacion": "declaracion_institucional",
+    "tema": "relaciones_exteriores",
+    "tema_candidatos": [
+      {
+        "tema": "relaciones_exteriores",
+        "score": 0.5
+      },
+      {
+        "tema": "logistica",
+        "score": 0.45
+      }
+    ],
+    "medios_independientes": 1,
+    "estado": "Confirmado",
+    "prioridad": 39,
+    "urgencia": 0.0,
+    "recirculada": true,
+    "edad_dias": 99.6,
+    "contexto": [
+      "Exportaciones (% del PIB)"
+    ],
+    "guion_al_aire": "Al aire. Ministerio de Relaciones Exteriores afirma: Panamá llega a la Cumbre del MERCOSUR como el principal conector global de la región. Por ahora es una declaración de la propia institución. El interés público de este tema: posición internacional y comercio del país.",
+    "notas_internas": [
+      "Basado únicamente en titular/metadatos; no se leyó el artículo completo.",
+      "Estado de evidencia: Parcial.",
+      "Antes de publicar falta comprobar: una segunda fuente independiente (no una copia/eco)."
+    ],
+    "titulo_propuesto": "Panamá llega a la Cumbre del MERCOSUR como el principal conector global de la región",
+    "pendientes": [
+      "una segunda fuente independiente (no una copia/eco)"
+    ]
+  }
+}

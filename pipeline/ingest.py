@@ -25,6 +25,7 @@ import feedparser
 import httpx
 
 from pipeline import process
+from pipeline import score as score_mod
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw")
@@ -75,6 +76,8 @@ TEMAS = {
     "servicios": ["agua", "electricidad", "energía", "aseo", "metro", "transporte", "salud", "hospital", "educación"],
     "eventos_naturales": ["sismo", "terremoto", "inundación", "lluvia", "huracán", "volcán", "sequía"],
     "regulacion": ["regula", "decreto", "ley", "asamblea", "contrato", "licitación", "tribunal", "corte"],
+    "relaciones_exteriores": ["canciller", "relaciones exteriores", "diplom", "tratado", "mercosur",
+                              "comercio exterior", "cumbre", "onu", "embajad", "exterior"],
 }
 
 
@@ -379,6 +382,7 @@ def main() -> int:
 
     manifest = {
         "version": "Panamá · Señales y Evidencias v1",
+        "rules_version": score_mod.RULES_VERSION,
         "fecha_corte_UTC": CORTE,
         "consultas": {
             "noticias": {

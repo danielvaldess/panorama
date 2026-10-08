@@ -1,0 +1,23 @@
+{
+  "set": "sintético, revisión del equipo",
+  "n_pares": 31,
+  "positivos": 13,
+  "baseline_lexico": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 10,
+    "precision": 1.0,
+    "recall": 0.23,
+    "f1": 0.38
+  },
+  "v2_origen_embeddings": {
+    "tp": 8,
+    "fp": 3,
+    "fn": 5,
+    "precision": 0.73,
+    "recall": 0.62,
+    "f1": 0.67
+  },
+  "baseline_cuenta_de_mas": [],
+  "embeddings_disponibles": true
+}

@@ -1,10 +1,14 @@
-"""Paquete editorial (modalidad TVN): afirmaciones con citas, brief, guion y copy.
+"""Paquete editorial (modalidad TVN).
 
-Determinista y honesto: si solo hay **titular/metadatos**, lo declara y **no inventa**
-hechos, entrevistas, citas ni cifras. Si la evidencia es insuficiente, **se abstiene**
-y explica qué falta comprobar.
+Separa **texto_al_aire** (lo que se dice en pantalla) de **notas_internas** (avisos
+para el editor: estado de evidencia, límites de lectura, pendientes). El texto al
+aire nunca contiene meta-mensajes internos. Atribuye las declaraciones ("Según …")
+y no presenta una declaración institucional como hecho. Incluye un validador de
+citas: toda afirmación debe traer fuente, campo y URL de evidencia.
 """
 from __future__ import annotations
+
+from pipeline import claims as claims_mod
 
 DISCLAIMER = "Basado únicamente en titular/metadatos; no se leyó el artículo completo."
 
@@ -15,6 +19,8 @@ TEMA_FOCO = {
     "servicios": "servicios públicos y calidad de vida",
     "eventos_naturales": "seguridad y gestión de riesgo",
     "regulacion": "marco legal y control institucional",
+    "relaciones_exteriores": "posición internacional y comercio del país",
+    "sin_clasificar": "interés público (tema por confirmar)",
     "general": "interés público general",
 }
 
@@ -26,25 +32,51 @@ def _words(s: str) -> int:
 
 
 def _fit(s: str, limit: int) -> str:
+    """Recorta a `limit` palabras **sin** puntos suspensivos (corta en palabra completa)."""
     w = (s or "").split()
-    return s if len(w) <= limit else " ".join(w[:limit]).rstrip(".,;:") + "…"
+    if len(w) <= limit:
+        return s
+    return " ".join(w[:limit]).rstrip(".,;: ")
 
 
-def _claims(title: str, sources: list[dict]) -> list[dict]:
+def _claims(title: str, sources: list[dict], tipo: str = "hecho_verificable") -> list[dict]:
     ids = [s.get("name") for s in sources] or ["sin fuente"]
     urls = [s.get("url") for s in sources if s.get("url")]
     cita = urls[0] if urls else ""
     low = title.lower()
-    claims = [{"texto": title, "tipo": "hecho reportado", "ids_fuente": ids[:1],
-               "campo": "titular", "cita": cita}]
-    if any(a in low for a in ATRIBUCION):
-        claims.append({"texto": f"Existe una declaración atribuida en el titular: “{title}”",
-                       "tipo": "declaración (atribuida)", "ids_fuente": ids,
-                       "campo": "titular", "cita": cita})
+    out = [{"texto": title, "tipo": tipo, "tipo_label": claims_mod.etiqueta(tipo),
+            "ids_fuente": ids[:1], "campo": "titular", "cita": cita}]
+    if any(a in low for a in ATRIBUCION) and tipo != "declaracion_tercero":
+        out.append({"texto": f"Existe una declaración atribuida en el titular: “{title}”",
+                    "tipo": "declaracion_tercero", "tipo_label": claims_mod.etiqueta("declaracion_tercero"),
+                    "ids_fuente": ids, "campo": "titular", "cita": cita})
     if len(ids) > 1:
-        claims.append({"texto": f"El tema circula en {len(ids)} medios", "tipo": "inferencia",
-                       "ids_fuente": ids, "campo": "conteo de fuentes", "cita": cita})
-    return claims
+        out.append({"texto": f"El tema circula en {len(ids)} medios", "tipo": "inferencia",
+                    "tipo_label": claims_mod.etiqueta("inferencia"),
+                    "ids_fuente": ids, "campo": "conteo de fuentes", "cita": cita})
+    return out
+
+
+def validar_citas(afirmaciones: list[dict], sources: list[dict]) -> tuple[bool, list[str]]:
+    """T6.6: toda afirmación debe tener fuente, campo y URL de evidencia válida."""
+    urls = {s.get("url") for s in sources if s.get("url")}
+    fallos: list[str] = []
+    for i, a in enumerate(afirmaciones):
+        if not a.get("ids_fuente"):
+            fallos.append(f"afirmación {i}: sin fuente")
+        if not a.get("campo"):
+            fallos.append(f"afirmación {i}: sin campo")
+        if not a.get("cita") or (urls and a["cita"] not in urls):
+            fallos.append(f"afirmación {i}: cita no verificable")
+    return (not fallos), fallos
+
+
+def _atribucion(tipo: str, fuente_txt: str) -> str:
+    if tipo == "declaracion_institucional":
+        return f"Según {fuente_txt},"
+    if tipo == "declaracion_tercero":
+        return f"{fuente_txt} informa que"
+    return f"Lo reporta {fuente_txt}."
 
 
 def build(ficha: dict) -> dict:
@@ -53,66 +85,76 @@ def build(ficha: dict) -> dict:
     v = ficha.get("verification", {}) or {}
     ev = ficha.get("evidence_state", "Insuficiente")
     tema = ficha.get("tema", "general")
-    fuente_txt = ", ".join(s.get("name", "") for s in sources) or "sin fuente identificable"
+    tipo = ficha.get("tipo_afirmacion", "hecho_verificable")
+    fuente_txt = ", ".join(s.get("name", "") for s in sources) or "una fuente"
     enfoque = TEMA_FOCO.get(tema, TEMA_FOCO["general"])
+    titulo_corto = _fit(title, 16)
 
-    # Qué falta comprobar
+    # Qué falta comprobar (coherente con el estado; invariante T1.4)
     pendientes: list[str] = []
-    if not v.get("official"):
-        pendientes.append("un documento o dato oficial que respalde la afirmación")
-    if v.get("independent", 0) < 2:
-        pendientes.append("una segunda fuente independiente (no una copia/eco)")
-    if not pendientes:
+    if v.get("contradict"):
+        pendientes.append("contrastar las versiones que se contradicen")
+    elif ev == "Suficiente para el borrador":
         pendientes.append("confirmar detalles y alcance antes de publicar")
+    else:
+        if v.get("independent", 0) < 2:
+            pendientes.append("una segunda fuente independiente (no una copia/eco)")
+        if not v.get("official") and v.get("independent", 0) >= 2:
+            pendientes.append("un documento o dato oficial que respalde la afirmación")
+        if not pendientes:
+            pendientes.append("confirmar detalles y alcance antes de publicar")
 
     abstain = ficha.get("state") == "Sin verificar" or ev == "Insuficiente"
     accion = ("investigar antes de producir" if abstain
-              else ("enviar a revisión editorial" if ev == "Parcial" else "listo para borrador con revisión humana"))
+              else ("enviar a revisión editorial" if ev == "Parcial"
+                    else "listo para borrador con revisión humana"))
 
-    ev_frase = {
-        "Suficiente para el borrador": "Hay evidencia suficiente para un borrador.",
-        "Parcial": "La evidencia es parcial: hay una fuente, falta corroboración.",
-        "Insuficiente": "No hay evidencia suficiente para sostener la afirmación.",
-    }.get(ev, "Evidencia por determinar.")
+    # --- Texto al aire (sin meta-mensajes internos) ---
+    atrib = _atribucion(tipo, fuente_txt)
+    guion = (f"Al aire. {atrib} {titulo_corto}. "
+             f"El interés público de este tema: {enfoque}. "
+             f"Seguimos el desarrollo de esta información.")
+    if tipo == "declaracion_institucional":
+        guion = (f"Al aire. {fuente_txt} afirma: {titulo_corto}. "
+                 f"Por ahora es una declaración de la propia institución. "
+                 f"El interés público de este tema: {enfoque}.")
+    guion = _fit(guion, 130)
+    copy = _fit(f"{titulo_corto} — {atrib} {fuente_txt}.", 80)
 
-    # Brief (≤250 palabras), en prosa
-    brief = (
-        f"{title}. Lo reporta {fuente_txt}. {ev_frase} "
-        f"Antes de publicar falta comprobar {', '.join(pendientes)}. "
-        f"El enfoque de interés público es {enfoque}, por lo que la acción recomendada es {accion}. "
-        f"{DISCLAIMER}"
-    )
-    brief = _fit(brief, 250)
+    # --- Notas internas (para el editor) ---
+    notas = [DISCLAIMER, f"Estado de evidencia: {ev}.",
+             f"Antes de publicar falta comprobar: {', '.join(pendientes)}."]
 
-    # 3 preguntas de investigación
+    afirmaciones = _claims(title, sources, tipo)
+    ok_citas, fallos = validar_citas(afirmaciones, sources)
+    if not ok_citas:
+        abstain = True
+        accion = "abstención: citas no verificables"
+        notas.append("Validador: " + "; ".join(fallos))
+
     preguntas = [
-        f"¿Cuál es la fuente primaria u oficial de “{_fit(title, 12)}”?",
-        f"¿Qué actores y datos concretos sustentan la afirmación?",
-        f"¿Existe una segunda fuente independiente que la corrobore o la contradiga?",
+        f"¿Qué datos, documentos o acuerdos concretos respaldan «{_fit(title, 12)}»?",
+        (f"¿Existe una fuente independiente de {fuente_txt} que confirme o matice lo afirmado?"
+         if v.get("independent", 0) < 2 else
+         f"¿Qué alcance tiene la información de {fuente_txt} y a quién afecta?"),
+        "¿Qué otras fuentes o datos permitirían descartar la versión contraria?",
     ]
 
-    # Guion 45–60 s (~90–130 palabras)
-    guion = (
-        f"Al aire. {title}. "
-        f"Lo reporta {fuente_txt}. {ev_frase} "
-        f"Antes de afirmarlo, verificaremos {pendientes[0]}"
-        + (f" y {pendientes[1]}." if len(pendientes) > 1 else ".")
-        + f" Seguimos el tema por su {enfoque}. {DISCLAIMER}"
-    )
-    guion = _fit(guion, 130)
-
-    # Copy digital (≤80 palabras)
-    copy = f"{title} — {fuente_txt}. {ev_frase} {DISCLAIMER}"
-    copy = _fit(copy, 80)
+    brief = (f"{title}. {atrib} {fuente_txt}. {notas[1]} "
+             f"El enfoque de interés público es {enfoque}; acción recomendada: {accion}. {DISCLAIMER}")
+    brief = _fit(brief, 250)
 
     return {
-        "titulo_propuesto": _fit(title, 16),
+        "titulo_propuesto": titulo_corto,
         "enfoque_interes_publico": enfoque,
-        "afirmaciones": _claims(title, sources),
+        "afirmaciones": afirmaciones,
+        "citas_ok": ok_citas,
         "brief": brief,
         "preguntas": preguntas,
+        "texto_al_aire": {"guion": guion, "copy": copy},
         "guion_45_60s": guion,
         "copy_digital": copy,
+        "notas_internas": notas,
         "verificaciones_pendientes": pendientes,
         "disclaimer": DISCLAIMER,
         "abstain": abstain,
