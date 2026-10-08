@@ -1,0 +1,7 @@
+# LF estable en todos los SO: los SHA-256 del snapshot y la DB reconstruible
+# deben ser reproducibles (evita el CRLF de Windows en data/raw y manifest).
+*.csv      text eol=lf
+*.geojson  text eol=lf
+*.json     text eol=lf
+*.jsonl    text eol=lf
+*.sql      text eol=lf

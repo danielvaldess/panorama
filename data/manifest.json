@@ -72,9 +72,9 @@
     "USGS": "Datos públicos (USGS)"
   },
   "sha256": {
-    "noticias.csv": "562e05f3a4a4d84aeee1879af12addd8007994331da4ea5359c5c5f002c667a1",
-    "indicadores.csv": "7907e4a034491db9fd5660cabf46c7ed656f2d43224a6db227547b7792ef5b78",
-    "eventos.geojson": "02dedbac4da148500cc9aaff9cbca23f1de921f5ab29386c74953751eea77dcb"
+    "noticias.csv": "351b4d33a39acc53d85cb4b82dbc5ec8cbb1a0ef7bb6925e32e8000ef762941b",
+    "indicadores.csv": "418489347f5f65554a32eb7a6ac4c8c2fc19c75fe7b520c8a5db644aa5e0918d",
+    "eventos.geojson": "94b898ec4dcaae49c0a6535489bfc827284ff74c2f187681fec3d9586888973f"
   },
   "transformaciones": [
     "Noticias: filtradas a la ventana del reto y dedupe por URL (sin querystring); fecha_deteccion distinta de fecha_publicacion",
