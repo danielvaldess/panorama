@@ -37,29 +37,37 @@
 
 ## Capturas
 
-**1. Mesa de prioridades** — los temas ordenados por importancia, con filtros por categoría, tiempo sugerido (Revisar hoy / Esta semana) y fecha. Un clic abre la ficha.
+**Acceso** — se entra identificándose con nombre y rol; cada decisión queda firmada por la persona responsable.
 
-![Mesa de prioridades](docs/screenshots/01-mesa-prioridades.png)
+![Acceso](docs/screenshots/00-acceso.png)
 
-**2. Ficha del tema** — resumen editorial, paquete editorial (guion y copy), afirmaciones con citas, y el desglose de por qué está en esa posición (Relevancia, Impacto, Urgencia, Novedad, Evidencia).
+**1. Mesa de hoy** — los temas del día ordenados por prioridad, con pestañas por estado (Todos · Requieren evidencia · En revisión · Listos para publicar) y filtros por categoría. Un clic abre la ficha.
 
-![Ficha del tema](docs/screenshots/02-ficha-tema.png)
+![Mesa de hoy](docs/screenshots/01-mesa.png)
 
-**3. Fuentes** — medios y datos oficiales que alimentan la mesa, con su confiabilidad.
+**2. Ficha del tema** — qué se reporta, paquete editorial (guion y copy), afirmaciones con citas y evidencia vinculada, y el desglose del puntaje (Relevancia, Impacto, Urgencia, Novedad, Evidencia).
 
-![Fuentes](docs/screenshots/03-fuentes.png)
+![Ficha del tema](docs/screenshots/02-ficha.png)
 
-**4. Verificación** — temas que necesitan más evidencia: una sola fuente, repetición entre medios o versiones contradictorias.
+**3. Requieren evidencia** — pestaña de la Mesa que reúne los temas con una sola fuente, repetición entre medios o versiones contradictorias.
 
-![Verificación](docs/screenshots/04-verificacion.png)
+![Requieren evidencia](docs/screenshots/03-requieren-evidencia.png)
 
-**5. Bandeja de entrada** — publicaciones leídas de las fuentes, sin duplicados.
+**4. Fuentes** — medios y datos oficiales que alimentan la mesa, con su confiabilidad y licencia.
 
-![Bandeja de entrada](docs/screenshots/05-bandeja.png)
+![Fuentes](docs/screenshots/04-fuentes.png)
 
-**6. Reportes** — actividad de la mesa y control de calidad del sistema.
+**5. Publicaciones** — lo publicado por las fuentes, sin duplicados y con la hora de Panamá.
 
-![Reportes](docs/screenshots/06-reportes.png)
+![Publicaciones](docs/screenshots/05-publicaciones.png)
+
+**6. Calidad** — actividad de la mesa y control de calidad del sistema.
+
+![Calidad](docs/screenshots/06-calidad.png)
+
+**7. Cómo funciona** — el recorrido en 4 pasos dentro de la propia plataforma.
+
+![Cómo funciona](docs/screenshots/07-como-funciona.png)
 
 ## Arquitectura
 

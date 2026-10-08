@@ -1,6 +1,9 @@
-"""Capturas reales de la app desplegada (para el README).
+"""Capturas reales de la app para el README (UI rediseñada).
 
-Uso: python scripts/screenshots.py
+Uso:
+    uvicorn pipeline.server:app --port 8010
+    set PANORAMA_URL=http://localhost:8010/   (o la URL desplegada)
+    python scripts/screenshots.py
 """
 import os
 import sys
@@ -22,18 +25,38 @@ def main():
         b = p.chromium.launch()
         pg = b.new_page(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
         pg.goto(BASE, wait_until="networkidle", timeout=90000)
-        pg.wait_for_selector(".item", timeout=90000)
-        shot(pg, "01-mesa-prioridades.png")
 
+        # Pantalla de acceso
+        pg.wait_for_selector("#gateForm", timeout=60000)
+        shot(pg, "00-acceso.png")
+        pg.fill("#gName", "Daniel Valdés")
+        pg.select_option("#gRole", label="Editor/a")
+        pg.click('#gateForm button[type="submit"]')
+
+        # Mesa de hoy
+        pg.wait_for_selector(".item", timeout=120000)
+        pg.wait_for_timeout(500)
+        shot(pg, "01-mesa.png")
+
+        # Ficha del tema
         pg.click(".item")
         pg.wait_for_selector(".detail-head", timeout=30000)
-        pg.wait_for_timeout(400)
-        shot(pg, "02-ficha-tema.png")
+        pg.wait_for_timeout(500)
+        shot(pg, "02-ficha.png", full=True)
 
-        for sec, name in [("fuentes", "03-fuentes.png"), ("verificacion", "04-verificacion.png"),
-                          ("bandeja", "05-bandeja.png"), ("reportes", "06-reportes.png")]:
+        # Volver y ver la pestaña "Requieren evidencia"
+        pg.click("#back")
+        pg.wait_for_selector('.tab[data-estado="evidencia"]', timeout=30000)
+        pg.click('.tab[data-estado="evidencia"]')
+        pg.wait_for_timeout(600)
+        shot(pg, "03-requieren-evidencia.png")
+
+        for sec, name, wait in [("fuentes", "04-fuentes.png", 700),
+                                ("bandeja", "05-publicaciones.png", 900),
+                                ("reportes", "06-calidad.png", 2200),
+                                ("ayuda", "07-como-funciona.png", 700)]:
             pg.click(f'a[data-section="{sec}"]')
-            pg.wait_for_timeout(1500 if sec == "reportes" else 600)
+            pg.wait_for_timeout(wait)
             shot(pg, name)
 
         b.close()
