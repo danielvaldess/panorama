@@ -112,6 +112,7 @@ Nota de fechas: la ventana reciente aplica a noticias para la demo editorial. Ba
 |---|---|---|
 | T01–T10 | `eval/acceptance.py` (10/10) | ✅ |
 | Cobertura de citas 100% | benchmark: 100% | ✅ |
+| Sustento humano ≥90% sobre ≥30 afirmaciones/≥10 fichas | `eval.sustento`: 42/43 válidas (97.67%) en 40 fichas | ✅ |
 | Abstención ≥80% | benchmark: 86% | ✅ |
 | Contradicción/ambigüedad | benchmark: 100% manejada sin elegir arbitrariamente | ✅ |
 | Clasificación/agrupación (macro-F1 / P-R) | `eval/quality.py` | ✅ (muestra pequeña, declarada) |

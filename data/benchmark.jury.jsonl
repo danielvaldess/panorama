@@ -1,13 +1,13 @@
-{"query": "Betserai Richards postulado presidir", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Panamá llega Cumbre MERCOSUR", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "conoce Diablo panameño pintando", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Banisi Pomelo alianza potencia", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Denis Chávez apuesta ejecución", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "junio Prensa Panamá", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Panamá suspende exportaciones energía", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Canal Panamá entre visión", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Interconexión eléctrica Panamá Colombia", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Selección Panamá regresa suelo", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Minsa alerta medicamentos falsificados", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Panamá baloncesto Bahamas sigue", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Alcaldía Panamá exonerará impuestos", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Instituto Geociencias reporta sismos", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Comic Panamá conoce artistas", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Presidente Panamá visitará Ecuador", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Playa Oscura hábitat crítico", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Panarusa volvió vivir Entendí", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Habilitan rápida tranque infiernal", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "conecta sistema eléctrico Panamá", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "jury", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
 {"query": "¿La obra está terminada o en pausa?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "jury", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}
 {"query": "¿Habrá aumento salarial o congelamiento?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "jury", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}
 {"query": "¿La mina reabre o sigue cerrada?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "jury", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}

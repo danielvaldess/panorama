@@ -19,7 +19,7 @@ import json
 import os
 import sys
 
-from pipeline import store
+from pipeline import db, store
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -27,6 +27,12 @@ MIN_AFIRMACIONES = 30
 MIN_FICHAS = 10
 META = 0.90
 VALIDO = "válido"
+
+
+def _ensure_store() -> None:
+    """Permite ejecutar la métrica fuera del servidor FastAPI."""
+    conn = db.ensure_ready()
+    db.migrate_legacy(conn)
 
 RUBRICA = {
     "válido": "la fuente citada respalda la afirmación tal cual se enuncia (con proposición factual real)",
@@ -37,6 +43,7 @@ RUBRICA = {
 
 def cargar_etiquetas() -> list[dict]:
     """Veredictos registrados (UI o API); gana el último por (id_caso, indice)."""
+    _ensure_store()
     ultimo: dict[tuple, dict] = {}
     for e in store.cargar_veredictos():
         k = (e.get("id_caso"), e.get("indice"))
@@ -121,6 +128,7 @@ def merge_quality(resumen: dict) -> None:
 
 def pendientes() -> dict:
     """Afirmaciones de data/processed/fichas.jsonl sin veredicto."""
+    _ensure_store()
     labeled = {(e.get("id_caso"), e.get("indice")) for e in cargar_etiquetas()}
     path = os.path.join(ROOT, "data", "processed", "fichas.jsonl")
     pend: list[dict] = []

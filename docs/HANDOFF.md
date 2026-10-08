@@ -20,12 +20,12 @@ de evidencia** y **borradores**, para **decisión humana**. **Nunca publica.**
 | Cierre de brechas (IA semántica, contexto oficial, contrato, métricas) | ✅ |
 | Rango §7 de fechas (tarea 2 del backlog) | ✅ integrado en `main` |
 | Infra revisión humana + eval sustento (tarea 1) | ✅ integrado en `main` |
-| Etiquetaje ≥30 afirmaciones → meta ≥90% | 🟡 **5/30 hechas** (continuar en la UI) |
+| Etiquetaje ≥30 afirmaciones → meta ≥90% | ✅ **43/43 revisadas** · 42 válidas · 97.67% |
 
 - **Motor:** `P = 30R+25I+20U+15N+10E` (0–100), reglas `p-1.0`, estado de evidencia independiente.
 - **IA:** embeddings **locales** (fastembed) para recuperación/agrupación semántica + baseline BM25; OpenRouter bajo demanda si hay key.
 - **Datos:** snapshot congelado filtrado a la ventana de coordinación `[2025-10-02, 2026-09-30]` → **250 noticias** (50 TVN + 200 GDELT) · 540 indicadores · 82 sismos. Fuentes: TVN RSS + GDELT + Banco Mundial + USGS.
-- **Métricas:** T01–T10 **10/10** · citas **100%** · sustentadas **90%** · abstención **100%** · contradicción **100%** · adversarial **100%** · latencia **~9 ms**.
+- **Métricas:** T01–T10 **10/10** · citas **100%** · sustento humano **97.67%** (42/43) · abstención **100%** · contradicción **100%** · adversarial **100%** · latencia **~9 ms**.
 
 ## Cómo correr (local)
 ```bash
@@ -62,24 +62,23 @@ docs/      arquitectura · cumplimiento · mentorías · prompts · IA · servid
 
 > Prioridad sugerida. Cada una es un buen PR.
 
-### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica) 🟡 EN CURSO
-- **Hecho (rama `feat/sustento-eval`):**
-  - `pipeline/store.py` — persistencia JSONL de decisiones y veredictos
-    (`data/processed/revisiones.jsonl`, `sustento_labels.jsonl`; sobrevive reinicios,
-    versionable en git).
+### 1. `feat/sustento-eval` — Validez de sustento ≥90% (rúbrica) ✅ HECHO
+- **Hecho:**
+  - `pipeline/store.py` — persistencia SQLite de decisiones y veredictos con seed
+    versionado (`data/processed/revisiones.jsonl`, `sustento_labels.jsonl`) para migrar
+    el estado humano si la DB operativa del servidor está vacía.
   - API: `POST /api/claims/verdict` · `GET /api/claims/verdicts` ·
     `GET /api/admin/profile` (preferencias del Administrador, sin re-ranking) ·
     `POST /api/review` ahora persistente.
-  - UI: botones *Válido / Parcial / Inválido* por afirmación en la ficha +
-    contador de progreso + vista **«Perfil del Admin»**.
+  - UI: ficha editorial sin botones técnicos por afirmación; la vista muestra sustento,
+    alcance, faltantes y decisión humana sobre la ficha.
   - `eval/sustento.py` — rúbrica estricta (solo «válido» cuenta), meta ≥90%,
     ≥30 afirmaciones de ≥10 fichas, descarta etiquetas de afirmaciones que cambiaron,
     merge en `eval/quality.json` (clave `sustento`; `eval/quality.py` la preserva),
     modo `--pendientes`.
-- **Falta:** etiquetar **≥30 afirmaciones** en la UI (**5/30 hoy**, 4 fichas) →
-  correr `python -m eval.sustento` → si <90%, pulir `pipeline/draft.py::_claims`
-  (hoy emite títulos vacíos tipo *"REPÚBLICA DE PANAMA?"*) → `python -m pipeline.export`
-  → re-etiquetar lo nuevo → re-medir. Luego fila CSV en `docs/notion/csv/04-pruebas-metricas.csv`.
+- **Resultado:** 43 afirmaciones revisadas en 40 fichas; 42 válidas y 1 parcial
+  (titular de opinión, no hecho verificable). `python -m eval.sustento` cumple la meta
+  con 97.67% y `python -m eval.sustento --pendientes` devuelve 0 pendientes.
 
 ### 2. `docs/date-policy` — Política de fechas del dataset ✅ HECHO
 - **Qué:** documentar la corrección de coordinación: las noticias se scrapean de **2025-10-02 a 2026-09-30** (el PDF §7 traía `[2024-01-01, 2025-10-01)`, desfasado un año); GDELT por ventanas mensuales.

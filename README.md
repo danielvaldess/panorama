@@ -154,6 +154,7 @@ curl -X POST https://panorama.sweetcode.studio/api/review \
 | Métrica | Valor | Meta |
 |---|---|---|
 | Cobertura de citas | **100%** | 100% |
+| Sustento humano de afirmaciones | **97.67%** (42/43) | ≥90% |
 | Abstención (sin respuesta) | **86%** | ≥80% |
 | Consultas sustentadas correctas | **90%** | reportar fallos |
 | Contradicción manejada | **100%** | no elegir arbitrariamente |

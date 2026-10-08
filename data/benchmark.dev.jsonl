@@ -17,7 +17,7 @@
 {"query": "Media consolida primer lugar", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
 {"query": "Costa Coffee expande Panamá", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
 {"query": "Cofiño presentan oficialmente nuevo", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
-{"query": "Décimo Tercer agosto fecha", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
+{"query": "Panamá sufre mafias cobran", "tipo": "sustentada", "esperado": "respuesta_con_citas", "split": "dev", "sintetico": false, "etiquetado": "derivado del corpus (revisión humana pendiente)"}
 {"query": "¿El proyecto minero cierra o continúa?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}
 {"query": "¿Se confirmó o desmintió el cierre?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}
 {"query": "Versiones sobre el contrato: ¿firmado o suspendido?", "tipo": "contradiccion", "esperado": "mostrar_versiones_o_abstener", "split": "dev", "sintetico": true, "etiquetado": "sintético (diseño del equipo)"}
