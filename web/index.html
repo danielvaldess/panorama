@@ -197,6 +197,7 @@
     /* Novedades / en vivo */
     .bell{position:relative;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:7px 12px;cursor:pointer;font-family:var(--f-ui);font-size:13px;display:inline-flex;align-items:center;gap:7px}
     .bell.on{border-color:#ffd166;box-shadow:0 0 0 2px rgba(255,209,102,.4)}
+    .bell .notiflabel{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
     .bell .bellcount{background:var(--red);color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:1px 7px}
     .pill.live{color:#fff;background:var(--ok)}
     /* Pestañas de estado */
@@ -225,8 +226,8 @@
       </div>
       <div class="spacer"></div>
       <input class="search" id="search" placeholder="Buscar noticias, temas o fuentes…" aria-label="Buscar noticias, temas o fuentes" />
-      <button class="bell" id="bell" type="button" aria-label="Novedades" title="Novedades">
-        <span aria-hidden="true">🔔</span><span class="bellcount" id="bellCount" hidden>0</span>
+      <button class="bell" id="bell" type="button" aria-label="Activar o desactivar notificaciones" title="Notificaciones">
+        <span aria-hidden="true">🔔</span><span class="notiflabel" id="notifLabel">ACTIVAR NOTIFICACIONES</span><span class="bellcount" id="bellCount" hidden>0</span>
       </button>
       <div class="user">
         <button class="usermenu-btn" id="userBtn" aria-haspopup="true" aria-expanded="false" type="button">Redacción ▾</button>
@@ -309,16 +310,23 @@
 
     function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 3500); }
     const canNotify = () => "Notification" in window;
-    async function ensureNotifications() {
-      if (!canNotify()) { toast("Este navegador no soporta notificaciones."); return false; }
+    const notifPref = () => localStorage.getItem("panorama_notif_enabled") !== "0";
+    function setNotifPref(v) { localStorage.setItem("panorama_notif_enabled", v ? "1" : "0"); updateNotifLabel(); }
+    const notifActive = () => canNotify() && Notification.permission === "granted" && notifPref();
+    function updateNotifLabel() {
+      const el = $("notifLabel"); if (!el) return;
+      if (!canNotify()) { el.textContent = "NOTIFICACIONES NO SOPORTADAS"; return; }
+      if (Notification.permission === "denied") { el.textContent = "NOTIFICACIONES BLOQUEADAS"; return; }
+      if (Notification.permission === "granted" && notifPref()) { el.textContent = "DESACTIVAR NOTIFICACIONES"; return; }
+      el.textContent = "ACTIVAR NOTIFICACIONES";
+    }
+    async function requestNotifications() {
+      if (!canNotify() || Notification.permission === "denied") return false;
       if (Notification.permission === "granted") return true;
-      if (Notification.permission === "denied") { toast("Las notificaciones están bloqueadas en el navegador."); return false; }
-      const permission = await Notification.requestPermission();
-      toast(permission === "granted" ? "Notificaciones activadas." : "No se activaron las notificaciones.");
-      return permission === "granted";
+      return (await Notification.requestPermission()) === "granted";
     }
     function browserNotify(item, total) {
-      if (!canNotify() || Notification.permission !== "granted" || !item) return;
+      if (!notifActive() || !item) return;
       const n = new Notification(total > 1 ? `${total} nuevas señales editoriales` : "Nueva señal editorial", {
         body: [item.title, item.source].filter(Boolean).join(" · ").slice(0, 180),
         tag: item.id || item.title || "panorama-live",
@@ -873,11 +881,18 @@
 
     $("refresh").addEventListener("click", () => load(true));
     $("bell").addEventListener("click", async () => {
-      if (canNotify() && Notification.permission !== "granted") { await ensureNotifications(); return; }
       try { await fetch("/api/seen", { method: "POST", headers: authHeaders() }); } catch (e) { /* ignore */ }
       NOVEDADES = []; lastNovShown = 0; setBell(0);
-      if (section === "prioridades" && !selectedId) renderPrioridades();
-      toast("Novedades marcadas como vistas.");
+      if (!canNotify()) { toast("Este navegador no soporta notificaciones."); return; }
+      if (Notification.permission === "denied") { toast("Las notificaciones están bloqueadas en el navegador."); return; }
+      if (Notification.permission !== "granted") {
+        const ok = await requestNotifications();
+        if (ok) { setNotifPref(true); toast("Notificaciones activadas."); }
+        else { toast("No se activaron las notificaciones."); }
+        return;
+      }
+      setNotifPref(!notifPref());
+      toast(notifPref() ? "Notificaciones activadas." : "Notificaciones desactivadas.");
     });
     async function tick() {
       if (document.hidden) return;
@@ -900,6 +915,7 @@
     let started = false;
     function start() {
       if (started) return; started = true;
+      updateNotifLabel();
       const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
       load(false);
       setInterval(tick, 30000);
