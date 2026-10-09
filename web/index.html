@@ -871,12 +871,18 @@
       else if (selectedId) { selectedId = null; render(); }
     });
 
+    let LAST_GEN = null, lastTick = Date.now();
+    function stampUpdated() {
+      lastTick = Date.now();
+      const el = $("updated"); if (el) el.textContent = "actualizado hace instantes";
+    }
     async function load(force) {
       if (force) $("content").innerHTML = `<div class="empty">Actualizando la mesa…</div>`;
       try {
         const r = force ? await fetch("/api/refresh", { method: "POST", headers: authHeaders() }) : await fetch("/api/fichas");
         if (!r.ok) throw new Error("load failed");
         DATA = await r.json();
+        LAST_GEN = DATA.generated_at || LAST_GEN;
         if (DATA.generating || !DATA.fichas || !DATA.fichas.length) {
           $("content").innerHTML = `<div class="empty">Preparando la mesa…</div>`;
           setTimeout(() => load(false), 6000); return;
@@ -891,7 +897,7 @@
           browserNotify(NOVEDADES[0], NOVEDADES.length);
         }
         lastNovShown = NOVEDADES.length;
-        $("updated").textContent = "actualizado hace instantes";
+        stampUpdated();
         $("status").textContent = `${newsItems().length || c.after_dedupe || c.fetched || 0} publicaciones · ${c.fichas || 0} temas` + (live.last_poll ? " · en vivo" : "");
         render();
       } catch (e) { $("content").innerHTML = `<div class="empty">No se pudo cargar la mesa.</div>`; }
@@ -905,12 +911,31 @@
       if (section === "prioridades" && !selectedId) renderPrioridades();
       toast("Novedades marcadas como vistas.");
     });
+    async function tick() {
+      if (document.hidden) return;
+      try {
+        const r = await fetch("/api/state");
+        if (!r.ok) return;
+        const s = await r.json();
+        if (!DATA || !LAST_GEN || (s.generated_at && s.generated_at !== LAST_GEN)) { load(false); return; }
+        const live = DATA.live || {};
+        const n = s.live?.novedades ?? 0;
+        const shown = NOVEDADES.length;
+        if (n !== shown) {
+          NOVEDADES = live.novedades || [];
+          setBell(n);
+        }
+        const secs = Math.round((Date.now() - lastTick) / 1000);
+        const el = $("updated"); if (el) el.textContent = secs < 60 ? `actualizado hace ${secs} s` : `actualizado hace ${Math.round(secs / 60)} min`;
+      } catch (e) { /* silencioso */ }
+    }
     let started = false;
     function start() {
       if (started) return; started = true;
       const m0 = location.hash.match(/^#\/tema\/(.+)$/); if (m0) selectedId = m0[1];
       load(false);
-      setInterval(() => { if (!selectedId && section === "prioridades") load(false); }, 30000);
+      setInterval(tick, 30000);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
     }
     start();
   </script>

@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, Header
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -238,6 +239,13 @@ def refresh() -> dict:
         _build_lock.release()
 
 
+def _schedule_refresh() -> None:
+    """Lanza un refresco en segundo plano sin bloquear el request (evita picos de latencia)."""
+    if _build_lock.locked():
+        return
+    threading.Thread(target=refresh, daemon=True).start()
+
+
 def _poll_live() -> None:
     """Trae noticias nuevas de las fuentes en vivo, las clasifica y registra novedades."""
     try:
@@ -329,6 +337,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Panorama API", lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.get("/health")
@@ -385,16 +394,32 @@ async def benchmark():
     return JSONResponse(_read_json(os.path.join("eval", "results.json")) or {})
 
 
+@app.get("/api/state")
+async def state_meta():
+    """Metadatos livianos para que la UI decida si vale la pena recargar el payload completo."""
+    with _lock:
+        data = dict(_cache)
+        live = dict(_live)
+    counts = data.get("counts") or {}
+    return JSONResponse({
+        "generated_at": data.get("generated_at"),
+        "ready": bool(data.get("fichas")),
+        "counts": {"fetched": counts.get("fetched"), "fichas": counts.get("fichas")},
+        "live": {"last_poll": live.get("last_poll"), "items": len(live.get("items") or []),
+                 "novedades": len(live.get("novedades") or []), "ok": live.get("ok")},
+    })
+
+
 @app.get("/api/fichas")
 async def fichas():
     with _lock:
         data = dict(_cache)
         live_count = len(_live.get("items") or [])
-    if live_count and int(data.get("live_count_in_fichas") or 0) < live_count:
-        data = refresh()
     if not data.get("fichas"):
-        threading.Thread(target=refresh, daemon=True).start()
+        _schedule_refresh()
         return JSONResponse({"generating": True, "fichas": [], "counts": {}})
+    if live_count and int(data.get("live_count_in_fichas") or 0) < live_count:
+        _schedule_refresh()  # se sirve el cache de inmediato; la mesa se actualiza en segundo plano
     return JSONResponse(_merge_live_news(data))
 
 
