@@ -337,20 +337,35 @@
     const allPublishedDays = (items) => Array.from(new Set((items || []).map(x => isoDay(x.published)).filter(Boolean))).sort().reverse();
     const editionDay = () => DATA?.calendar?.edition_day || isoDay(DATA?.edicion) || DATA?.calendar?.latest_day || allPublishedDays(newsItems())[0] || "";
     const realToday = () => isoDay(new Date().toISOString());
-    const hasLiveToday = () => newsItems().some(x => isoDay(x.published) === realToday());
+    let _liveToday = null, _liveTodayGen = null;
+    function hasLiveToday() {
+      const gen = DATA?.generated_at || "";
+      if (_liveTodayGen === gen && _liveToday !== null) return _liveToday;
+      const t = realToday();
+      _liveToday = newsItems().some(x => isoDay(x.published) === t);
+      _liveTodayGen = gen;
+      return _liveToday;
+    }
     const shiftDay = (day, delta) => {
       if (!day) return "";
       const d = new Date(day + "T12:00:00"); d.setDate(d.getDate() + delta);
       return d.toLocaleDateString("en-CA", { timeZone: PANAMA_TZ });
     };
+    let _rangeCache = {};
     function dateRange(target = "prioridades") {
+      const key = `${target}|${dateMode}|${DATA?.generated_at || ""}`;
+      const hit = _rangeCache[key];
+      if (hit) return hit;
       const base = target === "feed" && hasLiveToday() ? realToday() : editionDay();
       const suffix = target === "feed" && base === realToday() ? "tiempo real" : "editorial";
-      if (dateMode === "hoy") return { from: base, to: base, label: base ? "Hoy " + suffix + " · " + displayDay(base) : "Hoy" };
-      if (dateMode === "ayer") { const y = shiftDay(base, -1); return { from: y, to: y, label: y ? "Ayer " + suffix + " · " + displayDay(y) : "Ayer" }; }
-      if (dateMode === "semana") return { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
-      if (dateMode === "todo") return { from: "", to: "", label: "Todo el archivo" };
-      return { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
+      let r;
+      if (dateMode === "hoy") r = { from: base, to: base, label: base ? "Hoy " + suffix + " · " + displayDay(base) : "Hoy" };
+      else if (dateMode === "ayer") { const y = shiftDay(base, -1); r = { from: y, to: y, label: y ? "Ayer " + suffix + " · " + displayDay(y) : "Ayer" }; }
+      else if (dateMode === "semana") r = { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
+      else if (dateMode === "todo") r = { from: "", to: "", label: "Todo el archivo" };
+      else r = { from: shiftDay(base, -6), to: base, label: "Últimos 7 días" };
+      _rangeCache[key] = r;
+      return r;
     }
     function matchesDate(x, target = "prioridades") {
       const d = isoDay(x.published), r = dateRange(target);
@@ -835,6 +850,7 @@
         if (!r.ok) throw new Error("load failed");
         DATA = await r.json();
         LAST_GEN = DATA.generated_at || LAST_GEN;
+        _rangeCache = {}; _liveToday = null; _liveTodayGen = null;
         if (DATA.generating || !DATA.fichas || !DATA.fichas.length) {
           $("content").innerHTML = `<div class="empty">Preparando la mesa…</div>`;
           setTimeout(() => load(false), 6000); return;
