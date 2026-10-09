@@ -64,6 +64,16 @@ def _compact_news(x: dict, *, editorial: bool) -> dict:
             "official": bool(x.get("official")), "editorial_signal": editorial}
 
 
+def _db_news() -> list[dict]:
+    conn = db.connection()
+    if conn is None:
+        return []
+    try:
+        return [_compact_news(x, editorial=False) for x in db.get_noticias(conn) if x.get("url") and x.get("titulo")]
+    except Exception:
+        return []
+
+
 def _persist_operational_state(fichas: list[dict]) -> None:
     conn = db.connection()
     if conn is None:
@@ -85,7 +95,7 @@ def _merge_live_news(data: dict) -> dict:
     if not live_items:
         return data
     out = dict(data)
-    all_news = list(out.get("all_news") or [])
+    all_news = list(out.get("all_news") or []) + _db_news()
     seen = {(x.get("url") or "").split("?")[0] for x in all_news if x.get("url")}
     for item in live_items:
         key = (item.get("url") or "").split("?")[0]
@@ -241,7 +251,7 @@ def _poll_live() -> None:
     conn = db.connection()
     if conn is not None:
         try:
-            persist.persist_noticias(conn, editorial)
+            persist.persist_noticias(conn, items)
         except Exception:
             pass
     nuevos: list[dict] = []

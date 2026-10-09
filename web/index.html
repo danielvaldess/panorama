@@ -456,6 +456,8 @@
       const fs = baseEstado;
       const pageItems = paginate(fs, page);
       const tabs = TABS.map(([k, lbl]) => `<button class="tab ${estadoFilter === k ? "on" : ""}" data-estado="${k}">${lbl} <span class="n">${byEstado(base, k).length}</span></button>`).join("");
+      const fallbackNews = !fs.length ? newsItems().filter(x => matchesDate(x, "feed")).filter(textMatches).slice(0, 12) : [];
+      const fallbackList = fallbackNews.length ? `<div class="card block"><h3>Publicaciones disponibles en este rango</h3><div class="c" style="margin-bottom:10px">No hay fichas priorizadas para esta fecha, pero sí hay noticias almacenadas. Abre Publicaciones para ver el listado completo.</div><table><thead><tr><th>Titular</th><th>Medio</th><th>Publicado</th></tr></thead><tbody>${fallbackNews.map(x => `<tr><td>${esc(x.title)}</td><td>${esc(x.source)}</td><td>${esc(panamaTime(x.published) || "Sin fecha")}</td></tr>`).join("")}</tbody></table><div class="actions"><button class="btn btn-primary" id="openPublicaciones">Ver publicaciones</button></div></div>` : "";
       const list = pageItems.length ? pageItems.map((f, i) => {
         const rank = (page - 1) * PAGE_SIZE + i + 1;
         return `<article class="item" data-id="${esc(f.id)}">
@@ -475,7 +477,7 @@
           </div>
           <div class="go">›</div>
         </article>`;
-      }).join("") : `<div class="empty"><strong>No hay señales con esos filtros.</strong>Cambia la fecha, el tema o la búsqueda para ampliar la mesa.</div>`;
+      }).join("") : (fallbackList || `<div class="empty"><strong>No hay señales con esos filtros.</strong>Cambia la fecha, el tema o la búsqueda para ampliar la mesa.</div>`);
       const baseFresh = base.filter(f => !f.recirculada);
       const alto = base.filter(f => f.band === "alto").length;
       const suf = base.filter(f => (f.evidence_state || "").startsWith("Suficiente")).length;
@@ -503,6 +505,8 @@
         ${pager(fs.length, page, "topics")}`;
       bindWorkbench();
       bindPager("topics", fs.length);
+      const openPub = $("openPublicaciones");
+      if (openPub) openPub.onclick = () => { section = "bandeja"; selectedId = null; feedPage = 1; render(); };
       $("content").querySelectorAll(".tab").forEach(b => b.onclick = () => { estadoFilter = b.dataset.estado; page = 1; renderPrioridades(); });
       $("content").querySelectorAll(".item").forEach(a => a.onclick = () => openDetail(a.dataset.id));
     }
