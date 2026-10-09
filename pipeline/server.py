@@ -14,7 +14,7 @@ import os
 import threading
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, Header
 from fastapi.responses import JSONResponse
@@ -47,11 +47,15 @@ MAX_LIVE = int(os.environ.get("MAX_LIVE", "200"))
 _live: dict = {"items": [], "raw_items": [], "seen": set(), "novedades": [], "last_poll": None, "ok": None}
 
 
+PANAMA_TZ = timezone(timedelta(hours=-5))  # Panamá no observa horario de verano
+
+
 def _published_day(value: str | None) -> str | None:
+    """Día de publicación en hora de Panamá (misma zona que usa la interfaz)."""
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).date().isoformat()
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(PANAMA_TZ).date().isoformat()
     except Exception:
         return None
 
