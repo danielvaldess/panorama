@@ -1,4 +1,4 @@
-"""Capturas reales de la app para el README (UI rediseñada).
+"""Capturas reales de la app para el README (UI actual).
 
 Uso:
     uvicorn pipeline.server:app --port 8010
@@ -24,40 +24,54 @@ def main():
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
-        pg.goto(BASE, wait_until="networkidle", timeout=90000)
+        pg.goto(BASE, wait_until="domcontentloaded", timeout=90000)
 
-        # Pantalla de acceso
-        pg.wait_for_selector("#gateForm", timeout=60000)
-        shot(pg, "00-acceso.png")
-        pg.fill("#gName", "Daniel Valdés")
-        pg.select_option("#gRole", label="Editor/a")
-        pg.click('#gateForm button[type="submit"]')
-
-        # Mesa de hoy
+        # Mesa de hoy (vista principal)
         pg.wait_for_selector(".item", timeout=120000)
-        pg.wait_for_timeout(500)
+        pg.wait_for_timeout(700)
         shot(pg, "01-mesa.png")
 
-        # Ficha del tema
-        pg.click(".item")
-        pg.wait_for_selector(".detail-head", timeout=30000)
-        pg.wait_for_timeout(500)
-        shot(pg, "02-ficha.png", full=True)
-
-        # Volver y ver la pestaña "Requieren evidencia"
-        pg.click("#back")
-        pg.wait_for_selector('.tab[data-estado="evidencia"]', timeout=30000)
+        # Pestaña "Requieren evidencia"
         pg.click('.tab[data-estado="evidencia"]')
         pg.wait_for_timeout(600)
-        shot(pg, "03-requieren-evidencia.png")
+        shot(pg, "02-requieren-evidencia.png")
 
-        for sec, name, wait in [("fuentes", "04-fuentes.png", 700),
-                                ("bandeja", "05-publicaciones.png", 900),
-                                ("reportes", "06-calidad.png", 2200),
-                                ("ayuda", "07-como-funciona.png", 700)]:
-            pg.click(f'a[data-section="{sec}"]')
-            pg.wait_for_timeout(wait)
-            shot(pg, name)
+        # Ficha del tema (volver a "Todas")
+        pg.click('.tab[data-estado="todos"]')
+        pg.wait_for_selector(".item", timeout=30000)
+        pg.click(".item")
+        pg.wait_for_selector(".detail-head", timeout=30000)
+        pg.wait_for_timeout(700)
+        shot(pg, "03-ficha.png", full=True)
+        pg.click("#back")
+
+        # Publicaciones (con etiquetas Señal / Archivo)
+        pg.click('a[data-section="bandeja"]')
+        pg.wait_for_selector("table", timeout=30000)
+        pg.wait_for_timeout(900)
+        shot(pg, "04-publicaciones.png")
+
+        # Fuentes
+        pg.click('a[data-section="fuentes"]')
+        pg.wait_for_timeout(700)
+        shot(pg, "05-fuentes.png")
+
+        # Calidad
+        pg.click('a[data-section="reportes"]')
+        pg.wait_for_timeout(2400)
+        shot(pg, "06-calidad.png")
+
+        # Cómo funciona
+        pg.click('a[data-section="ayuda"]')
+        pg.wait_for_timeout(700)
+        shot(pg, "07-como-funciona.png")
+
+        # Perfil de decisiones (menú de usuario)
+        pg.click("#userBtn")
+        pg.wait_for_timeout(300)
+        pg.click('[data-menu="perfil"]')
+        pg.wait_for_timeout(1200)
+        shot(pg, "08-perfil.png")
 
         b.close()
     print("LISTO ->", OUT)

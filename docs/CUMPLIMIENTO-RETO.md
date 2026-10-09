@@ -50,7 +50,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 | CU-03 agrupar repetidos vs corroboración independiente | `process._verify` (eco vs independientes) | ✅ |
 | CU-04 cifra inexistente/contradicción → abstención | `benchmark.decide` + T05/T06 | ✅ |
 | CU-05 banca | Fuera de alcance (D1) | ✅ (no exigido) |
-| P=30R+25I+20U+15N+10E (0–100), rangos bajo/medio/alto, empates, versión de reglas | `score.py` (reglas `p-1.0`) | ✅ |
+| P=30R+25I+20U+15N+10E (0–100), rangos bajo/medio/alto, empates, versión de reglas | `score.py` (reglas `p-3.0`) | ✅ |
 | Estado de evidencia independiente (insuf./parcial/suficiente) | `score.evidence_state` | ✅ |
 | No etiqueta verdadero/falso | Documentado; el sistema se abstiene | ✅ |
 
@@ -72,7 +72,7 @@ Leyenda: ✅ cubierto · 🟡 parcial · ⬜ pendiente.
 
 | Componente | Dónde | Estado |
 |---|---|---|
-| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (211; 151 TVN) | ✅ |
+| A · Noticias (TVN RSS + GDELT) | `data/raw/noticias.csv` (130; 50 TVN + 80 GDELT) | ✅ |
 | B · Banco Mundial (6 países × 6 ind. × 2010–2024) | `data/raw/indicadores.csv` (540) | ✅ |
 | C · USGS sismos 2024 | `data/raw/eventos.geojson` (82) | ✅ |
 | D · SBP (opcional) | — | ⬜ (opcional) |
