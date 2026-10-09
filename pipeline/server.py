@@ -92,10 +92,10 @@ def _merge_live_news(data: dict) -> dict:
     """Mantiene Publicaciones al día aunque el cache principal venga del snapshot."""
     with _lock:
         live_items = list(_live.get("raw_items") or []) + list(_live.get("items") or [])
-    if not live_items:
-        return data
     out = dict(data)
     all_news = list(out.get("all_news") or []) + _db_news()
+    if not all_news and not live_items:
+        return data
     seen = {(x.get("url") or "").split("?")[0] for x in all_news if x.get("url")}
     for item in live_items:
         key = (item.get("url") or "").split("?")[0]
