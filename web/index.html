@@ -252,7 +252,6 @@
         <a data-section="prioridades" class="active"><span class="dot"></span> Mesa de hoy</a>
         <a data-section="bandeja"><span class="dot"></span> Publicaciones</a>
         <a data-section="fuentes"><span class="dot"></span> Fuentes</a>
-        <a data-section="reportes"><span class="dot"></span> Calidad</a>
         <a data-section="ayuda"><span class="dot"></span> Cómo funciona</a>
       </nav>
 
@@ -269,7 +268,7 @@
     const bandChip = b => b === "alto" ? "ok" : b === "bajo" ? "rev" : "m";
     const stateChip = s => s === "Confirmado" ? "ok" : s === "Corroborado" ? "m" : s === "Contradicho" ? "a" : "rev";
     const bandLabel = b => ({ alto: "Prioridad alta", medio: "Prioridad media", bajo: "Prioridad baja" }[b] || "Prioridad");
-    const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", reportes: "Calidad", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
+    const SECTIONS = { prioridades: "Mesa de hoy", bandeja: "Publicaciones", fuentes: "Fuentes", ayuda: "Cómo funciona", perfil: "Perfil de decisiones" };
     const REVIEW = ["nuevo", "en revisión", "requiere evidencia", "aprobado como borrador", "descartado"];
     const COMP = [["R", "Relevancia"], ["I", "Impacto"], ["U", "Urgencia"], ["N", "Novedad"], ["E", "Evidencia"]];
     const TEMA_LABEL = { economia: "Economía", logistica_canal: "Logística / Canal", turismo: "Turismo", servicios_publicos: "Servicios públicos", eventos_naturales: "Eventos naturales", regulacion: "Regulación", relaciones_exteriores_comercio: "Relaciones exteriores / comercio", deportes: "Deportes", entretenimiento_cultura: "Entretenimiento / cultura", sucesos_judicial: "Sucesos / judicial", politica_interna_general: "Política interna", otros: "Otros", sin_clasificar_con_certeza: "Sin clasificar con certeza", general: "General" };
@@ -430,7 +429,6 @@
       if (section === "prioridades") return renderPrioridades();
       if (section === "bandeja") return renderBandeja();
       if (section === "fuentes") return renderFuentes();
-      if (section === "reportes") return renderReportes();
       if (section === "ayuda") return renderAyuda();
       if (section === "perfil") return renderPerfil();
     }
@@ -722,52 +720,6 @@
             <li><b>La decisión es tuya.</b> El sistema propone; la redacción aprueba.</li>
           </ul>
         </div>`;
-    }
-
-    function renderReportes() {
-      const m = DATA.metrics || {}, c = DATA.counts || {};
-      const total = (m.band_alto || 0) + (m.band_medio || 0) + (m.band_bajo || 0) || 1;
-      const ev = (m.evidence_sufficient || 0) + (m.evidence_partial || 0) + (m.evidence_insufficient || 0) || 1;
-      const bar = (lab, val, tot, cls) => `<div class="viz"><div class="lab">${lab}</div><div class="track"><span class="${cls}" style="width:${Math.round((val / tot) * 100)}%"></span></div><div class="num">${val}</div></div>`;
-      $("content").innerHTML = `<h1>Calidad</h1>
-        <p class="sub">Un vistazo a la actividad de la mesa y al control de calidad del sistema.</p>
-        <div class="stats">
-          <div class="stat"><div class="v">${c.fetched || 0}</div><div class="l">Publicaciones leídas</div></div>
-          <div class="stat"><div class="v">${c.fichas || 0}</div><div class="l">Temas priorizados</div></div>
-          <div class="stat"><div class="v">${m.official || 0}</div><div class="l">Con fuente oficial</div></div>
-          <div class="stat"><div class="v">${Math.round(m.avg_score || 0)}</div><div class="l">Prioridad promedio</div></div>
-        </div>
-        <div class="repgrid">
-          <div class="card"><h3 style="font-family:var(--f-title)">Prioridad de los temas</h3>
-            ${bar("Alta", m.band_alto || 0, total, "bar-alto")}
-            ${bar("Media", m.band_medio || 0, total, "bar-medio")}
-            ${bar("Baja", m.band_bajo || 0, total, "bar-bajo")}
-          </div>
-          <div class="card"><h3 style="font-family:var(--f-title)">Evidencia disponible</h3>
-            ${bar("Suficiente", m.evidence_sufficient || 0, ev, "bar-suf")}
-            ${bar("Parcial", m.evidence_partial || 0, ev, "bar-par")}
-            ${bar("Insuficiente", m.evidence_insufficient || 0, ev, "bar-ins")}
-          </div>
-        </div>
-        <div class="card" id="quality" style="margin-top:16px"><h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">Cargando…</div></div>`;
-      loadQuality();
-    }
-
-    async function loadQuality() {
-      try {
-        const [a, b] = await Promise.all([fetch("/api/acceptance").then(r => r.json()), fetch("/api/benchmark").then(r => r.json())]);
-        const mm = b.metrics || {};
-        const pass = (a || []).filter(x => x.pass).length, tot = (a || []).length || 1;
-        const pct = (v) => Math.round((v ?? 0) * 100);
-        const viz = (lab, p, cls) => `<div class="viz"><div class="lab">${lab}</div><div class="track"><span class="${cls}" style="width:${p}%"></span></div><div class="num">${p}%</div></div>`;
-        const el = $("quality"); if (!el) return;
-        el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3>
-          <div class="viz"><div class="lab">Controles superados</div><div class="track"><span class="bar-suf" style="width:${Math.round(pass / tot * 100)}%"></span></div><div class="num">${pass}/${tot}</div></div>
-          ${viz("Temas con cita", pct(mm.citation_coverage), "bar-suf")}
-          ${viz("Sin respuesta rechazada", pct(mm.abstencion_correcta), "bar-par")}
-          ${viz("Instrucciones bloqueadas", pct(mm.adversarial_seguro), "bar-suf")}
-          <div class="viz"><div class="lab">Respuesta (mediana)</div><div class="track"><span class="bar-suf" style="width:100%"></span></div><div class="num">${mm.latencia_ms_mediana ?? 0} ms</div></div>`;
-      } catch (e) { const el = $("quality"); if (el) el.innerHTML = `<h3 style="font-family:var(--f-title)">Control de calidad del sistema</h3><div class="empty">No disponible.</div>`; }
     }
 
     async function renderPerfil() {

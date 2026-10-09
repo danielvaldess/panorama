@@ -56,22 +56,17 @@ def main():
         pg.wait_for_timeout(700)
         shot(pg, "05-fuentes.png")
 
-        # Calidad
-        pg.click('a[data-section="reportes"]')
-        pg.wait_for_timeout(2400)
-        shot(pg, "06-calidad.png")
-
         # Cómo funciona
         pg.click('a[data-section="ayuda"]')
         pg.wait_for_timeout(700)
-        shot(pg, "07-como-funciona.png")
+        shot(pg, "06-como-funciona.png")
 
         # Perfil de decisiones (menú de usuario)
         pg.click("#userBtn")
         pg.wait_for_timeout(300)
         pg.click('[data-menu="perfil"]')
         pg.wait_for_timeout(1200)
-        shot(pg, "08-perfil.png")
+        shot(pg, "07-perfil.png")
 
         b.close()
     print("LISTO ->", OUT)

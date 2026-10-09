@@ -99,19 +99,14 @@ confiabilidad, licencia y estado.
 
 ![Fuentes](docs/screenshots/05-fuentes.png)
 
-**6. Calidad** — actividad de la mesa, distribución de prioridad y evidencia, y
-control de calidad del sistema (T01–T10 + benchmark).
+**6. Cómo funciona** — el recorrido en 4 pasos dentro de la propia plataforma.
 
-![Calidad](docs/screenshots/06-calidad.png)
+![Cómo funciona](docs/screenshots/06-como-funciona.png)
 
-**7. Cómo funciona** — el recorrido en 4 pasos dentro de la propia plataforma.
-
-![Cómo funciona](docs/screenshots/07-como-funciona.png)
-
-**8. Perfil de decisiones** — preferencias aprendidas de las decisiones del editor
+**7. Perfil de decisiones** — preferencias aprendidas de las decisiones del editor
 (qué temas aprueba o descarta) y validez de sustento de las afirmaciones.
 
-![Perfil de decisiones](docs/screenshots/08-perfil.png)
+![Perfil de decisiones](docs/screenshots/07-perfil.png)
 
 ## Arquitectura
 
